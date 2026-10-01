@@ -7,6 +7,12 @@ extends RefCounted
 ## ready_at (food is cooked by then), deadline, sign_name (doc), status}.
 ## Fees only pay pickup -> dropoff distance; the ride to the pickup is free
 ## labour, like the real apps.
+##
+## Hidden problems (P1, decided here, found out while playing):
+##   pin_wrong + true_dropoff  the customer's pin is on a neighbouring place
+##   no_show                   COD parcel: nobody home at the drop-off
+##   will_cancel               cash food order: the customer cancels after the
+##                             rider paid the restaurant (the platform shrugs)
 
 const KIND_WEIGHTS := {"food": 6, "parcel": 3, "doc": 1}
 const KIND_NAMES := {"food": "อาหาร", "parcel": "พัสดุ", "doc": "เอกสาร"}
@@ -14,6 +20,12 @@ const KIND_NAMES := {"food": "อาหาร", "parcel": "พัสดุ", "do
 const BASE_FEE := {"food": 28, "parcel": 32, "doc": 40}
 const PER_KM := {"food": 5, "parcel": 5, "doc": 7}
 const RAIN_SURGE := 10
+const CASH_FOOD_CHANCE := 0.3
+const CANCEL_CHANCE := 0.25
+const NO_SHOW_CHANCE := 0.3
+const WRONG_PIN_CHANCE := 0.25
+## Slack (minutes) on top of the riding time by kind; see set_deadline().
+const SLACK := {"food": 15.0, "parcel": 90.0, "doc": 30.0}
 ## Minutes an offer stays on screen before it goes to another rider.
 const OFFER_MINUTES := Vector2i(6, 12)
 
@@ -90,19 +102,38 @@ static func make(
 		"food":
 			order["item"] = FOOD_ITEMS[rng.randi() % FOOD_ITEMS.size()]
 			order["ready_at"] = minute + rng.randi_range(5, 25)
+			if rng.randf() < CASH_FOOD_CHANCE:
+				order["cod"] = rng.randi_range(8, 25) * 10
+				order["will_cancel"] = rng.randf() < CANCEL_CHANCE
 			order["deadline"] = order["ready_at"] + 30 + km * 4.0
 		"parcel":
 			order["item"] = PARCEL_ITEMS[rng.randi() % PARCEL_ITEMS.size()]
 			order["size"] = 2 if rng.randf() < 0.3 else 1
 			if rng.randf() < 0.35:
 				order["cod"] = rng.randi_range(3, 12) * 50
+				order["no_show"] = rng.randf() < NO_SHOW_CHANCE
 			order["deadline"] = minute + 180
 		"doc":
 			order["item"] = DOC_ITEMS[rng.randi() % DOC_ITEMS.size()]
 			order["sign_name"] = order["customer"]
 			order["deadline"] = minute + 75 + km * 4.0
 	order["deadline"] = snappedf(order["deadline"], 1.0)
+	if city["nodes"][dropoff]["type"] in ["house", "condo"] and rng.randf() < WRONG_PIN_CHANCE:
+		var real := _neighbour(rng, city, dropoff, pickup)
+		if real >= 0:
+			order["pin_wrong"] = true
+			order["true_dropoff"] = real
 	return order
+
+
+## A place next to `id` on the road map (not `avoid`), or -1.
+static func _neighbour(rng: RandomNumberGenerator, city: Dictionary, id: int, avoid: int) -> int:
+	var near: Array = []
+	for e in city["edges"]:
+		for pair in [[e["a"], e["b"]], [e["b"], e["a"]]]:
+			if int(pair[0]) == id and int(pair[1]) != avoid:
+				near.append(int(pair[1]))
+	return -1 if near.is_empty() else near[rng.randi() % near.size()]
 
 
 static func _pick_node(
@@ -120,12 +151,22 @@ static func _pick_node(
 	return pool[rng.randi() % pool.size()]
 
 
+## Realistic deadline from the routes the rider actually has to ride
+## (owner 2026-10-01: "ส่งช้าตลอด" — straight-line guesses were too tight):
+## get to the pickup (and wait for the kitchen), then the trip with 25% spare.
+static func set_deadline(order: Dictionary, minute: float, to_pickup: float, trip: float) -> void:
+	var start := minute + to_pickup + 2.0
+	if order["kind"] == "food":
+		start = maxf(start, float(order["ready_at"]))
+	order["deadline"] = snappedf(start + trip * 1.25 + float(SLACK[order["kind"]]), 1.0)
+
+
 ## Food heat: 2 hot, 1 warm, 0 cold, from minutes since it was ready.
 static func heat(order: Dictionary, minute: float) -> int:
 	if order["kind"] != "food":
 		return 2
 	var age := minute - float(order["ready_at"])
-	return 2 if age < 20.0 else (1 if age < 40.0 else 0)
+	return 2 if age < 25.0 else (1 if age < 50.0 else 0)
 
 
 static func heat_text(h: int) -> String:
@@ -148,7 +189,11 @@ static func rate(rng: RandomNumberGenerator, order: Dictionary, minute: float) -
 		stars -= 1
 		notes.append("น้ำซุปหก")
 	if rng.randf() < 0.08:
-		return {"stars": 1, "review": UNFAIR_REVIEWS[rng.randi() % UNFAIR_REVIEWS.size()]}
+		return {
+			"stars": 1,
+			"review": UNFAIR_REVIEWS[rng.randi() % UNFAIR_REVIEWS.size()],
+			"unfair": notes.is_empty()
+		}
 	stars = clampi(stars, 1, 5)
 	var review := "ขอบคุณค่ะ" if notes.is_empty() else ", ".join(notes)
-	return {"stars": stars, "review": review}
+	return {"stars": stars, "review": review, "unfair": false}

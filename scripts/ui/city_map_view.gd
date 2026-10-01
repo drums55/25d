@@ -138,5 +138,5 @@ func _pins() -> Dictionary:
 		if o["status"] == "accepted":
 			out[int(o["pickup"])] = "รับ"
 		else:
-			out[int(o["dropoff"])] = "ส่ง"
+			out[Orders.shown_dropoff(o)] = "ส่ง"
 	return out

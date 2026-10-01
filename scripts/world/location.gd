@@ -9,6 +9,12 @@ const PROP_SCENE := preload("res://scenes/props/prop_block.tscn")
 const NPC_SCENE := preload("res://scenes/props/npc.tscn")
 const INT_SCENE := preload("res://scenes/props/interactable.tscn")
 const BIKE_FOOT := Vector2(1.2, 0.6)
+const BOT_SCENE := preload("res://scenes/props/patrol_bot.tscn")
+## Chance a debt collector waits at a place (missed a payment / just in debt).
+const COLLECTOR_CHANCE := {"missed": 0.55, "debt": 0.1}
+
+## Tests turn the random debt collector off (and on for its own test).
+static var allow_collector := true
 
 ## Set by tests to build a given place without moving the rider.
 var node_override := -1
@@ -59,14 +65,46 @@ func _build(t: Dictionary, id: int) -> void:
 		it.prompt = m.get("prompt", "คุย")
 	var spots: Array = t.get("customers", [])
 	var n := 0
-	for o in Orders.dropoffs_at(id) + _accepted_drops(id):
-		var spot: Vector2 = spots[n % spots.size()] + Vector2(0.9, 0.0) * int(n / spots.size())
-		var c := _add_npc(world, "Customer%d" % int(o["id"]), spot, "je_muay", Color(1, 0.85, 0.9))
+	for o in Orders.waiting_customers(id):
+		var c := _add_npc(
+			world, "Customer%d" % int(o["id"]), _spot(spots, n), "je_muay", Color(1, 0.85, 0.9)
+		)
 		var cit := c.get_node("Interactable") as Interactable
 		cit.npc_id = "customer_%d" % int(o["id"])
 		cit.dialog_id = "talk_customer_waiting"
 		_name_tag(c, str(o["customer"]))
 		n += 1
+	# wrong pin: a local who knows where the customer really lives
+	for o in Orders.misled_here(id):
+		var l := _add_npc(
+			world, "Local%d" % int(o["id"]), _spot(spots, n), "lung_pradit", Color(0.9, 1, 0.85)
+		)
+		var lit := l.get_node("Interactable") as Interactable
+		lit.npc_id = "local_%d" % int(o["id"])
+		_name_tag(l, "คนแถวนี้ (ถามทาง)")
+		n += 1
+	# COD no-show: just a door to ring
+	for o in Orders.no_shows_here(id):
+		var door := INT_SCENE.instantiate() as Interactable
+		door.name = "Door%d" % int(o["id"])
+		door.npc_id = "door_%d" % int(o["id"])
+		door.pick_rect = Rect2(-90, -120, 180, 140)
+		door.position = Iso.grid_to_world(_spot(spots, n))
+		var tag := Label.new()
+		tag.text = "ห้อง/บ้าน %s\n(กดกริ่ง)" % o["customer"]
+		tag.position = Vector2(-110, -110)
+		tag.size = Vector2(220, 80)
+		tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		tag.add_theme_font_size_override("font_size", 24)
+		tag.add_theme_color_override("font_outline_color", Color(0.1, 0.06, 0.04))
+		tag.add_theme_constant_override("outline_size", 8)
+		door.add_child(tag)
+		world.add_child(door)
+		n += 1
+	if place["type"] == "condo":
+		_add_lift_guard(world)
+	if allow_collector and _collector_shows_up(id):
+		_add_collector(world, t)
 	var bike := PROP_SCENE.instantiate()
 	bike.name = "MyBike"
 	bike.art_name = "rider_bike"
@@ -95,12 +133,63 @@ static func bike_cell(t: Dictionary) -> Vector2:
 	return g - Vector2(1.4, 1.1)
 
 
-## Customers wait for orders that are on the way too (accepted, not picked),
-## so arriving with the food finds them already there.
-func _accepted_drops(id: int) -> Array:
-	return GameState.orders.filter(
-		func(o): return o["status"] == "accepted" and int(o["dropoff"]) == id
-	)
+static func _spot(spots: Array, n: int) -> Vector2:
+	return spots[n % spots.size()] + Vector2(0.9, 0.0) * int(n / spots.size())
+
+
+## Condo: a second guard paces in front of the lift (stares, never chases).
+## Sneaking up the lift unseen = delivery at the door (Orders.sneak_lift).
+func _add_lift_guard(world: Node) -> void:
+	var g := BOT_SCENE.instantiate() as PatrolBot
+	g.name = "LiftGuard"
+	g.bot_id = "lift_guard"
+	g.character_name = "lung_pradit"
+	g.tint = Color(0.7, 0.75, 1.0)
+	g.chases = false
+	g.tamperable = false
+	g.talk_dialog = "talk_lift_guard"
+	g.steam_powered = false
+	g.speed = 55.0
+	g.view_range = 300.0
+	g.position = Iso.grid_to_world(Vector2(5.0, 1.7))
+	g.patrol = PackedVector2Array([Vector2.ZERO, Iso.grid_to_world(Vector2(2.4, 0.0))])
+	g.start_facing = Vector2(1, 0.5)
+	g.add_to_group("guard")
+	world.add_child(g)
+	_name_tag(g, "รปภ. เฝ้าลิฟต์")
+
+
+func _collector_shows_up(id: int) -> bool:
+	if GameState.debt <= 0 or GameState.minute <= GameState.DAY_START + 1.0:
+		return false
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([GameState.city_seed, GameState.day, int(GameState.minute), id, "debt"])
+	var chance: float = COLLECTOR_CHANCE["missed" if GameState.missed_payments > 0 else "debt"]
+	return rng.randf() < chance
+
+
+## The loan shark's man waits here: chases anyone, takes cash on a catch.
+func _add_collector(world: Node, t: Dictionary) -> void:
+	var g := Vector2(t["grid"])
+	var c := BOT_SCENE.instantiate() as PatrolBot
+	c.name = "Collector"
+	c.bot_id = "collector"
+	c.character_name = "lung_pradit"
+	c.tint = Color(0.75, 0.45, 0.45)
+	c.chases = true
+	c.needs_cargo = false
+	c.catch_kind = "collect"
+	c.tamperable = false
+	c.talk_dialog = "talk_collector"
+	c.steam_powered = false
+	c.speed = 70.0
+	c.chase_speed = 200.0
+	c.position = Iso.grid_to_world(Vector2(g.x * 0.3, g.y * 0.5))
+	c.patrol = PackedVector2Array([Vector2.ZERO, Iso.grid_to_world(Vector2(g.x * 0.4, 0.0))])
+	c.start_facing = Vector2(0, 1)
+	world.add_child(c)
+	_name_tag(c, "เจ้าหนี้")
+	GameState.notice.emit("ระวัง! ลูกน้องเจ้าหนี้มายืนรออยู่แถวนี้")
 
 
 func _add_prop(world: Node, p: Dictionary, node_name: String) -> void:
@@ -115,6 +204,7 @@ func _add_prop(world: Node, p: Dictionary, node_name: String) -> void:
 		var it := INT_SCENE.instantiate() as Interactable
 		it.dialog_id = p["dialog"]
 		it.prompt = p.get("prompt", "ดู")
+		it.action = p.get("action", "")
 		prop.add_child(it)
 	world.add_child(prop)
 

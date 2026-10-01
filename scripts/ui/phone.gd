@@ -97,6 +97,8 @@ func _refresh_if_live() -> void:
 
 
 func refresh() -> void:
+	if tab == "appeal":
+		return
 	if _map.get_parent():
 		_map.get_parent().remove_child(_map)
 	if _map_info.get_parent():
@@ -184,7 +186,12 @@ func _trip_text(o: Dictionary) -> String:
 	var pick_min := "?" if to_pick.is_empty() else "%d นาที" % roundi(to_pick["minutes"])
 	return (
 		"รับ: %s (ห่างคุณ %s)\nส่ง: %s → %s"
-		% [City.node_name(o["pickup"]), pick_min, o["customer"], City.node_name(o["dropoff"])]
+		% [
+			City.node_name(o["pickup"]),
+			pick_min,
+			o["customer"],
+			City.node_name(Orders.shown_dropoff(o))
+		]
 	)
 
 
@@ -193,7 +200,10 @@ func _extra_text(o: Dictionary) -> String:
 	if o["kind"] == "food":
 		parts.append("อาหารเสร็จ %s" % Weather.clock_text(o["ready_at"]))
 	if int(o["cod"]) > 0:
-		parts.append("เก็บเงินปลายทาง %d (ต้องสำรองจ่าย)" % int(o["cod"]))
+		if o["kind"] == "food":
+			parts.append("ออเดอร์เงินสด: สำรองจ่ายค่าอาหาร %d" % int(o["cod"]))
+		else:
+			parts.append("เก็บเงินปลายทาง %d (ต้องสำรองจ่าย)" % int(o["cod"]))
 	if int(o["size"]) > 1:
 		parts.append("ของใหญ่ กิน 2 ช่อง")
 	if o["kind"] == "doc":
@@ -203,7 +213,7 @@ func _extra_text(o: Dictionary) -> String:
 
 func _active_card(o: Dictionary) -> Control:
 	var picked: bool = o["status"] == "picked"
-	var where: int = o["dropoff"] if picked else o["pickup"]
+	var where: int = Orders.shown_dropoff(o) if picked else int(o["pickup"])
 	var verb := "ไปส่ง" if picked else "ไปรับ"
 	var state := "%s ที่ %s" % [verb, City.node_name(where)]
 	if picked and o["kind"] == "food":
@@ -221,10 +231,31 @@ func _active_card(o: Dictionary) -> Control:
 	var go := UiKit.button("นำทาง", _navigate.bind(where), 26, 64)
 	go.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var row := [go]
+	var id := int(o["id"])
 	if not picked:
-		row.append(UiKit.button("ยกเลิก", func(): Orders.cancel(int(o["id"])), 26, 64))
+		row.append(UiKit.button("ยกเลิก", func(): Orders.cancel(id), 26, 64))
+	else:
+		row.append(UiKit.button("โทรหาลูกค้า", func(): Orders.call_customer(id), 26, 64))
 	items.append(UiKit.row(row))
+	if picked and o.get("no_show", false) and Orders.real_dropoff(o) == GameState.location:
+		items.append(UiKit.label("ลูกค้าไม่อยู่ ... จะรอหรือตีกลับ?", 24, UiKit.WARN))
+		items.append(
+			UiKit.row(
+				[
+					UiKit.button("รอลูกค้า 10 นาที", _wait.bind(id), 26, 64),
+					UiKit.button(
+						"ตีกลับ (ได้คืนครึ่งเดียว)", func(): Orders.return_parcel(id), 26, 64
+					),
+				]
+			)
+		)
 	return UiKit.card(items)
+
+
+func _wait(id: int) -> void:
+	if Orders.wait_for_customer(id):
+		close()
+		SceneRouter.go_to(GameState.LOCATION_SCENE, "arrival", false)
 
 
 func _navigate(node_id: int) -> void:
@@ -320,6 +351,24 @@ func _build_wallet() -> void:
 			)
 		)
 	)
+	var open_appeals := g.appeals.filter(func(a): return a.get("open", false))
+	if not open_appeals.is_empty():
+		_body.add_child(UiKit.label("รีวิว 1 ดาวที่ไม่ยุติธรรม", 32, UiKit.WARN))
+		for a in open_appeals:
+			(
+				_body
+				. add_child(
+					(
+						UiKit
+						. card(
+							[
+								UiKit.label('"%s" — %s' % [a["review"], a["item"]], 24),
+								UiKit.button("อุทธรณ์กับแชทบอท", _appeal.bind(a), 26, 64),
+							]
+						)
+					)
+				)
+			)
 	_body.add_child(UiKit.label("วันนี้", 32, UiKit.ACCENT))
 	_body.add_child(UiKit.label(slip_text(g.log_today), 26))
 
@@ -341,6 +390,14 @@ static func slip_text(log: Dictionary) -> String:
 			-int(log.get("debt", 0)),
 		]
 	)
+
+
+func _appeal(a: Dictionary) -> void:
+	tab = "appeal"  # refresh() leaves the chat alone while it runs
+	UiKit.clear(_body)
+	var chat := AppealChat.new(a)
+	chat.closed.connect(func(): show_tab("wallet"))
+	_body.add_child(chat)
 
 
 # --- เมนู --------------------------------------------------------------

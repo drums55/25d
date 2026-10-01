@@ -57,6 +57,18 @@ func start_lines(lines: Array, id := "adhoc") -> bool:
 	return true
 
 
+## Drops the current dialog at once (several deliveries in one go show only
+## the last review).
+func end_now() -> void:
+	if not is_active():
+		return
+	var done_id := _id
+	_index = -1
+	_lines = []
+	_id = ""
+	finished.emit(done_id)
+
+
 func advance() -> void:
 	if not is_active():
 		return

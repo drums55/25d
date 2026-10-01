@@ -57,6 +57,6 @@ func test_settings_persist():
 	Settings.clock_speed = "ปกติ"
 	Settings.load_settings(path)
 	assert_eq(Settings.clock_speed, "เร็ว")
-	assert_almost_eq(Settings.seconds_per_minute(), 0.6, 0.001)
+	assert_almost_eq(Settings.seconds_per_minute(), 1.2, 0.001)
 	Settings.clock_speed = old
 	DirAccess.remove_absolute(path)

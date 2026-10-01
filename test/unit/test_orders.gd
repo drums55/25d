@@ -63,7 +63,7 @@ func test_offers_appear_and_expire():
 
 func test_full_food_delivery_pays_and_rates():
 	var here := GameState.location
-	var condo := _first("condo")
+	var condo := _first("house")  # condo residents wait upstairs (P1)
 	var o := _order("food", here, condo, {"ready_at": GameState.minute + 5})
 	assert_true(Orders.accept(int(o["id"])))
 	assert_eq(GameState.acceptance(), 1.0)

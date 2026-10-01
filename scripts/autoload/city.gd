@@ -62,6 +62,11 @@ func water_now() -> Dictionary:
 	return Weather.edge_levels(get_city(), forecast(), GameState.minute)
 
 
+## Riding estimate between any two places under the current weather.
+func route_between(from: int, to: int) -> Dictionary:
+	return CityGen.route(get_city(), from, to, water_now(), Weather.rain_factor(rain_now()), true)
+
+
 func route_to(dest: int, allow_wade := true) -> Dictionary:
 	return CityGen.route(
 		get_city(),
@@ -107,6 +112,7 @@ func travel(dest: int, r := {}) -> bool:
 	GameState.location = dest
 	SceneRouter.go_to(GameState.LOCATION_SCENE, "arrival")
 	arrived.emit(dest)
+	Orders.check_cancellations()
 	return true
 
 
@@ -160,3 +166,4 @@ func finish_ride(result: Dictionary) -> void:
 	pending_ride = {}
 	SceneRouter.go_to(GameState.LOCATION_SCENE, "arrival")
 	arrived.emit(dest)
+	Orders.check_cancellations()

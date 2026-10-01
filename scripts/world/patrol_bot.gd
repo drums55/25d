@@ -41,6 +41,18 @@ const CONE_RAYS := 14
 @export var art_name := "brass_automaton"
 @export var tint := Color(1.0, 0.55, 0.45)
 @export var pick_rect := Rect2(-50, -170, 100, 200)
+## People instead of automatons (P1): a CharacterView sprite (tinted).
+@export var character_name := ""
+## false = only stares (condo lift guard); true = chases.
+@export var chases := true
+## Chase only riders carrying cargo (inspection) or anyone (debt collector).
+@export var needs_cargo := true
+## What a catch does: "inspect" (time + shaken food) or "collect" (money).
+@export var catch_kind := "inspect"
+## Can its fuse be pulled from behind (machines only)?
+@export var tamperable := true
+## Dialog when tapped while not tamperable.
+@export var talk_dialog := ""
 
 var state := State.PATROL
 ## Facing in ground space.
@@ -51,6 +63,7 @@ var _timer := 0.0
 var _lost := 0.0
 var _calm := 0.0
 var _t := 0.0
+var _rig: CharacterView
 
 @onready var _body: Node2D = $Body
 @onready var _cone: Polygon2D = $Cone
@@ -78,6 +91,14 @@ func off_flag() -> String:
 
 
 func _apply_art() -> void:
+	if not character_name.is_empty():
+		for child in _body.get_children():
+			child.visible = false
+		_rig = (load("res://scenes/characters/character_view.tscn") as PackedScene).instantiate()
+		_rig.character_name = character_name
+		_rig.modulate = tint
+		_body.add_child(_rig)
+		return
 	var tex := ArtLibrary.prop(art_name)
 	if tex == null:
 		return
@@ -141,7 +162,7 @@ func _physics_process(delta: float) -> void:
 	_calm = maxf(_calm - delta, 0.0)
 	var player := get_tree().get_first_node_in_group("player") as Node2D
 	var sees := player != null and _calm == 0.0 and can_see(player.global_position)
-	if sees and Orders.carrying_cargo():
+	if sees and chases and (not needs_cargo or Orders.carrying_cargo()):
 		if state != State.CHASE:
 			_lost = 0.0
 			_set_state(State.CHASE)
@@ -172,7 +193,11 @@ func _physics_process(delta: float) -> void:
 				_move_towards(player.global_position, chase_speed)
 				if global_position.distance_to(player.global_position) < CATCH_RANGE:
 					_catch(player)
-	_body.position.y = -absf(sin(_t * 9.0)) * 6.0 if velocity.length() > 1.0 else 0.0
+	if _rig:
+		_rig.set_facing(Iso.dir8(_screen(facing)))
+		_rig.set_walk(1.0 if velocity.length() > 1.0 else 0.0)
+	else:
+		_body.position.y = -absf(sin(_t * 9.0)) * 6.0 if velocity.length() > 1.0 else 0.0
 	_update_cone()
 
 
@@ -205,15 +230,49 @@ func _catch(player: Node2D) -> void:
 	_set_state(State.WAIT)
 	if player.has_method("caught_by"):
 		player.caught_by(self)
-	Orders.on_player_caught()
-	GameState.advance_minutes(10)
-	GameState.notice.emit("โดนเรียกตรวจ! เสียเวลาไป 10 นาที")
+	if catch_kind == "collect":
+		_collect()
+	else:
+		Orders.on_player_caught()
+		GameState.advance_minutes(10)
+		GameState.notice.emit("โดนเรียกตรวจ! เสียเวลาไป 10 นาที")
 	caught_player.emit()
+
+
+## Debt collector caught the rider: takes what cash there is (up to two
+## days of interest + "ค่าเดินทาง") and counts it as a payment.
+func _collect() -> void:
+	var take := mini(GameState.money, GameState.DEBT_INTEREST * 2 + 100)
+	GameState.add_money(-take, "collector")
+	if take >= GameState.DEBT_INTEREST and GameState.missed_payments > 0:
+		GameState.missed_payments -= 1
+	GameState.stats_changed.emit()
+	(
+		Dialog
+		. start_lines(
+			[
+				{
+					"speaker": "เจ้าหนี้",
+					"text": "เจอตัวจนได้นะ ไรเดอร์ ... ดอกเมื่อวานยังไม่จ่ายเลย"
+				},
+				{
+					"speaker": "เจ้าหนี้",
+					"text": "เอามา %d บาท รวมค่าน้ำมันพี่ด้วย ขับมาตามตั้งไกล" % take
+				},
+				"(เงินในกระเป๋าหายไป %d บาท)" % take,
+			],
+			"collector"
+		)
+	)
 
 
 ## Player tapped it and walked up. From behind = fuse pulled; from the front
 ## it notices (and chases if the rider carries cargo).
 func tamper(player: Node2D) -> void:
+	if not tamperable:
+		if not talk_dialog.is_empty():
+			Dialog.start(talk_dialog)
+		return
 	if state == State.OFF:
 		GameState.notice.emit("หุ่นปิดอยู่ ... ไว้ยุ่งกับมันพรุ่งนี้")
 		return

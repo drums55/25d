@@ -5,7 +5,8 @@ signal changed
 
 const PATH := "user://settings.cfg"
 ## Real seconds per game minute while standing in a place.
-const CLOCK_SPEEDS := {"ช้า": 2.0, "ปกติ": 1.2, "เร็ว": 0.6}
+## (slowed 2026-10-01: walking around a place ate too many game minutes)
+const CLOCK_SPEEDS := {"ช้า": 3.0, "ปกติ": 2.0, "เร็ว": 1.2}
 ## Ride (lane runner) speed multiplier.
 const RIDE_SPEEDS := {"ชิล": 0.75, "ปกติ": 1.0, "บิด": 1.4}
 const TEXT_SPEEDS := {"ช้า": 25.0, "ปกติ": 45.0, "เร็ว": 90.0, "ทันที": 10000.0}
@@ -24,7 +25,7 @@ func _ready() -> void:
 
 
 func seconds_per_minute() -> float:
-	return CLOCK_SPEEDS.get(clock_speed, 1.2)
+	return CLOCK_SPEEDS.get(clock_speed, 2.0)
 
 
 func ride_speed_factor() -> float:

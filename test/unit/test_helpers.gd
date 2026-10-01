@@ -9,6 +9,7 @@ const SEED := 4242
 ## Trips resolve instantly unless a test turns the ride back on.
 static func start_at(type: String) -> int:
 	Settings.skip_ride = true
+	LocationRoom.allow_collector = false
 	GameState.new_game(SEED)
 	var id: int = CityGen.nodes_of_type(City.get_city(), type)[0]["id"]
 	GameState.location = id

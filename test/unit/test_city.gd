@@ -75,8 +75,8 @@ func test_orders_by_kind():
 func test_food_cools_and_late_costs_stars():
 	var o := {"kind": "food", "ready_at": 600.0, "deadline": 640.0}
 	assert_eq(OrderGen.heat(o, 610), 2)
-	assert_eq(OrderGen.heat(o, 630), 1)
-	assert_eq(OrderGen.heat(o, 650), 0)
+	assert_eq(OrderGen.heat(o, 635), 1)
+	assert_eq(OrderGen.heat(o, 660), 0)
 	var rng := RandomNumberGenerator.new()
 	var on_time := 0
 	var late := 0
@@ -86,3 +86,14 @@ func test_food_cools_and_late_costs_stars():
 		rng.seed = i
 		late += OrderGen.rate(rng, o, 700)["stars"]
 	assert_gt(on_time, late)
+
+
+func test_deadline_covers_the_real_ride():
+	var o := {"kind": "food", "ready_at": 610.0}
+	OrderGen.set_deadline(o, 600.0, 20.0, 30.0)
+	assert_almost_eq(
+		float(o["deadline"]), 600.0 + 22.0 + 37.5 + 15.0, 1.0, "pickup ride + trip + slack"
+	)
+	var p := {"kind": "parcel", "ready_at": 600.0}
+	OrderGen.set_deadline(p, 600.0, 10.0, 20.0)
+	assert_gt(p["deadline"], o["deadline"], "parcels are relaxed")

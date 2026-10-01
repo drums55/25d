@@ -35,6 +35,13 @@ func interact(by: Node) -> void:
 		"open_map":
 			get_tree().call_group("hud", "open_phone", "map")
 			return
+		"sneak_lift":
+			var seen := false
+			for g in get_tree().get_nodes_in_group("guard"):
+				if g.state != PatrolBot.State.OFF and g.can_see(by.global_position):
+					seen = true
+			Orders.sneak_lift(seen)
+			return
 		"refuel":
 			var cost := GameState.refuel()
 			var line := (

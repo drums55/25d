@@ -46,6 +46,10 @@ func _ready() -> void:
 	_build_boundary()
 	_build_navigation()
 	apply_art()
+	# the placeholder floor (this node's _draw) goes under floor overlays such
+	# as patrol vision cones (z -1); World is lifted back to z 0
+	z_index = -20
+	get_world().z_index = 20
 
 
 ## Uses assets/art/rooms/<art_name>.png as backdrop when present. The image

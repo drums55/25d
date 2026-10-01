@@ -62,6 +62,10 @@ var missed_payments := 0
 ## All live orders (offered / accepted / picked); see Orders.
 var orders: Array = []
 var next_order_id := 1
+## COD money the platform "will refund" (half), paid the next morning.
+var pending_refund := 0
+## Unfair 1-star reviews the rider can appeal: [{id, item, review, index, open}].
+var appeals: Array = []
 ## Today's numbers for the evening slip.
 var log_today := {}
 var finished := ""
@@ -190,6 +194,10 @@ func morning_charges() -> Dictionary:
 	var paid := mini(due, money)
 	money -= paid
 	var short := due - paid
+	if pending_refund > 0:
+		notice.emit("แพลตฟอร์มคืนเงิน COD ให้ %d บาท (ครึ่งเดียว ตามนโยบาย)" % pending_refund)
+		money += pending_refund
+		pending_refund = 0
 	if short > 0:
 		missed_payments += 1
 		notice.emit(
@@ -249,6 +257,8 @@ func new_game(seed := -1) -> void:
 	missed_payments = 0
 	orders = []
 	next_order_id = 1
+	pending_refund = 0
+	appeals = []
 	log_today = {}
 	finished = ""
 	input_locked = false
@@ -277,6 +287,8 @@ func snapshot() -> Dictionary:
 		"missed_payments": missed_payments,
 		"orders": orders.duplicate(true),
 		"next_order_id": next_order_id,
+		"pending_refund": pending_refund,
+		"appeals": appeals.duplicate(true),
 		"log_today": log_today.duplicate(true),
 		"finished": finished,
 	}
@@ -303,6 +315,12 @@ func restore(d: Dictionary) -> void:
 			if o.has(key):
 				o[key] = int(o[key])
 	next_order_id = int(d.get("next_order_id", 1))
+	pending_refund = int(d.get("pending_refund", 0))
+	appeals = d.get("appeals", [])
+	for o in orders:
+		for key in ["true_dropoff"]:
+			if o.has(key):
+				o[key] = int(o[key])
 	log_today = d.get("log_today", {})
 	finished = str(d.get("finished", ""))
 	inventory_changed.emit(inventory)

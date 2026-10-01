@@ -147,7 +147,7 @@ func _refresh_orders() -> void:
 	var rows: Array[String] = []
 	for o in Orders.active():
 		var picked: bool = o["status"] == "picked"
-		var where: int = o["dropoff"] if picked else o["pickup"]
+		var where: int = Orders.shown_dropoff(o) if picked else int(o["pickup"])
 		var left := int(float(o.get("deadline", GameState.minute)) - GameState.minute)
 		var due := "สายแล้ว!" if left < 0 else "เหลือ %d นาที" % left
 		var heat := ""

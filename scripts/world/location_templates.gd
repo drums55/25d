@@ -200,7 +200,9 @@ const T := {
 				"foot": Vector2(1.4, 0.6),
 				"h": 170.0,
 				"color": Color(0.7, 0.72, 0.75),
-				"dialog": "talk_lift"
+				"dialog": "talk_lift",
+				"action": "sneak_lift",
+				"prompt": "แอบขึ้นลิฟต์"
 			},
 		],
 		"extras":
