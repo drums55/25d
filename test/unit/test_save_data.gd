@@ -13,10 +13,26 @@ func test_dict_round_trip():
 	s.room_path = "res://scenes/rooms/steam_market.tscn"
 	s.spawn_id = "from_soi"
 	s.flags = {"met_pradit": true}
+	s.money = 120
+	s.inventory = ["brass_gear"]
+	s.hp = 3
 	var back := SaveData.from_dict(s.to_dict())
 	assert_eq(back.room_path, s.room_path)
 	assert_eq(back.spawn_id, s.spawn_id)
 	assert_eq(back.flags, s.flags)
+	assert_eq(back.money, 120)
+	assert_eq(back.inventory, ["brass_gear"])
+	assert_eq(back.hp, 3)
+
+
+func test_old_save_without_v2_fields_loads_with_defaults():
+	var s := SaveData.from_dict({"room_path": "x", "flags": {}})
+	assert_eq(s.money, 0)
+	assert_eq(s.inventory, [])
+	assert_eq(s.hp, -1, "-1 = unknown -> GameState uses MAX_HP")
+	GameState.apply_save_data(s)
+	assert_eq(GameState.hp, GameState.MAX_HP)
+	GameState.new_game()
 
 
 func test_from_dict_defaults_on_missing_or_bad_fields():

@@ -2,11 +2,14 @@ class_name SaveData
 extends RefCounted
 ## Serializable game progress. Pure data so it can be unit-tested headless.
 
-const VERSION := 1
+const VERSION := 2
 
 var room_path := ""
 var spawn_id := "default"
 var flags := {}
+var money := 0
+var inventory: Array = []
+var hp := -1
 
 
 func to_dict() -> Dictionary:
@@ -15,6 +18,9 @@ func to_dict() -> Dictionary:
 		"room_path": room_path,
 		"spawn_id": spawn_id,
 		"flags": flags.duplicate(true),
+		"money": money,
+		"inventory": inventory.duplicate(),
+		"hp": hp,
 	}
 
 
@@ -25,6 +31,12 @@ static func from_dict(d: Dictionary) -> SaveData:
 	var f = d.get("flags", {})
 	if f is Dictionary:
 		s.flags = f.duplicate(true)
+	s.money = int(d.get("money", 0))
+	var inv = d.get("inventory", [])
+	if inv is Array:
+		for item in inv:
+			s.inventory.append(str(item))
+	s.hp = int(d.get("hp", -1))
 	return s
 
 

@@ -16,12 +16,15 @@ const ATTACK_RANGE := 80.0
 @export var speed := 460.0
 @export var attack_cooldown := 0.35
 @export var hitbox_distance := 70.0
+## Seconds of invulnerability after a hit.
+@export var invuln_time := 0.8
 
 var facing: int = Iso.Dir.S
 var order := Order.NONE
 var order_target: Node2D = null
 var _cooldown := 0.0
 var _move_finger := -1
+var _invuln := 0.0
 
 @onready var rig: CharacterView = $Rig
 @onready var camera: Camera2D = $Camera2D
@@ -97,6 +100,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	_cooldown = maxf(_cooldown - delta, 0.0)
+	if _invuln > 0.0:
+		_invuln = maxf(_invuln - delta, 0.0)
+		rig.modulate.a = 0.45 if fmod(_invuln, 0.16) < 0.08 else 1.0
+		if _invuln == 0.0:
+			rig.modulate.a = 1.0
 	var busy := GameState.input_locked or Dialog.is_active()
 	var keys := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var dir := Vector2.ZERO
@@ -171,6 +179,31 @@ func _face(dir: Vector2) -> void:
 
 func _to_world(screen_pos: Vector2) -> Vector2:
 	return get_canvas_transform().affine_inverse() * screen_pos
+
+
+## Damage from enemies. Knocks back, flashes, and on 0 HP the player is
+## revived at the room's default spawn with full HP (no game over yet).
+func take_hit(amount: int, from: Vector2) -> void:
+	if _invuln > 0.0 or GameState.input_locked:
+		return
+	_invuln = invuln_time
+	GameState.hp -= amount
+	cancel_order()
+	var push := (global_position - from).normalized()
+	if push.length_squared() > 0.0:
+		velocity = push * 420.0
+		move_and_slide()
+	if GameState.hp <= 0:
+		_knocked_out()
+
+
+func _knocked_out() -> void:
+	GameState.notice.emit("หมดแรง... กลับไปตั้งหลักที่ปากซอย")
+	GameState.hp = GameState.MAX_HP
+	var room := get_parent().get_parent() as IsoRoom
+	if room:
+		global_position = room.get_spawn_position("default")
+	_invuln = invuln_time * 2.0
 
 
 func _on_interact() -> void:

@@ -20,7 +20,11 @@
   ตุ๊กตุ๊ก ศาลพระภูมิ เสาไฟ + ทองเหลือง/ทองแดง ท่อไอน้ำ เฟือง. ห้องแรก `soi_brass` (ซอยทองเหลือง),
   ห้องสอง `steam_market` (ตลาดไอน้ำ). NPC: ลุงประดิษฐ์, เจ๊หมวย. ข้อความในเกมเป็นภาษาไทย.
   style guide + prompt template สำหรับ AI art อยู่ที่ `assets/art/README.md`
-- **ตัวเอก = ไรเดอร์** (ไรเดอร์ส่งของ/วินฯ ใส่หมวกกันน็อก+แว่นกันลม ถือประแจท่อเป็นอาวุธ) — เรื่องหลัก/เป้าหมายยังไม่คุย
+- **ตัวเอก = ไรเดอร์** (ไรเดอร์ส่งของ/วินฯ ใส่หมวกกันน็อก+แว่นกันลม ถือประแจท่อเป็นอาวุธ)
+- **เรื่องหลัก = แบบ B (เจ้าของเลือก 2026-10-01)**: ไรเดอร์ติดหนี้ค่าเช่ามอเตอร์ไซค์ไอน้ำ 300 บาท (`GameState.RENT_DUE`)
+  ต้องรับงานส่งของจากคนในย่านทีละงาน (คุย → ไปเอาของ → ส่ง → ได้เงิน) แต่ละงานพาไปเจอความลับของย่าน (เครื่องจักรเริ่มรวน)
+  งานที่ 1 ทำแล้ว: ลุงประดิษฐ์ (flag `job1_accepted`) → เจ๊หมวยให้ `brass_gear` (`job1_pickup`) → หุ่นเฝ้าตลาดรวน (Enemy
+  `MarketGuard`, flag `market_guard_down` เมื่อตาย) → ส่งลุง +80 บาท (`job1_done`). งานถัดไปยังไม่มี
 - **Art ตอนนี้ = vector SVG ที่วาดด้วยโค้ด** `tools/art/gen_svg.py` (รันแล้วได้ `assets/art/**.svg` ทุกชิ้น) —
   ใน cloud ไม่มี AI image gen; วิดีโอที่ Cowork ทำก็ใช้ภาพถ่าย+overlay ไม่ได้วาดเอง. แก้ art = แก้ generator
   แล้วรันใหม่ (อย่าแก้ .svg ตรงๆ จะโดนทับ). ถ้าได้ภาพ AI (png) มาทีหลัง วางชื่อเดียวกัน → .svg ชนะ ต้องลบ .svg ออก
@@ -101,8 +105,17 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   ไม่ทับ collision ประตู ไม่งั้นเด้งกลับ. test_scenes ตรวจว่า target/spawn มีจริง
 - **Save**: JSON ที่ `user://save_0.json` (room, spawn, flags). autosave ทุกครั้งที่เปลี่ยนห้อง.
   save ที่ชี้ห้องที่ถูกลบ → กลับห้องเริ่มต้น
-- **Dialog**: JSON-driven, `if_flag`/`else` สำหรับ branch, `set_flag` ต่อบรรทัด. แตะกล่อง/ATK/USE = next
-  (ถ้ากำลังพิมพ์ = แสดงทั้งบรรทัด)
+- **Dialog**: JSON-driven; เงื่อนไขต่อ entry: `if_flag`/`if_not_flag`/`if_item`/`if_not_item` (+`else` chain);
+  action ต่อบรรทัด: `set_flag`/`give_item`/`take_item`/`money` (ทำตอนบรรทัดโชว์ → HUD ขึ้น notice). แตะที่ไหนก็ได้ = next
+  (ถ้ากำลังพิมพ์ = แสดงทั้งบรรทัด). Quest = flags + inventory ใน dialog.json ล้วนๆ ไม่มี quest system แยก
+- **Inventory/เงิน/HP** อยู่ใน `GameState` (`inventory` = Array ของ item id, ชื่อโชว์ใน `GameState.ITEMS`;
+  `money`; `hp`/`MAX_HP`=5) + save v2 (`SaveData` อ่าน save เก่าได้ ค่า default). HUD มุมซ้ายบน: หัวใจ, ฿/หนี้, กระเป๋า,
+  และ notice ต่อคิว (`GameState.notice`)
+- **Enemy** (`scripts/world/enemy.gd`, `scenes/props/enemy.tscn`): CharacterBody2D layer world+hittable, idle จนผู้เล่นเข้า
+  `aggro_range` 330 → ไล่ (speed 170) → ตีเมื่อระยะ < 70 ทุก 1.1s (wind-up 0.3s ก่อนครั้งแรก); `take_hit` ลด hp (3) +
+  knockback; ตายแล้วเป็นเศษเหล็ก (ยังชนได้ ตีไม่ได้) และตั้ง `defeat_flag` → โหลดห้องใหม่ไม่ฟื้น. art = prop png
+  (`art_name`, default brass_automaton ย้อมแดง). Player `take_hit`: invuln 0.8s กะพริบ, knockback, hp 0 → ฟื้นที่ spawn
+  default ของห้องเต็มหลอด (ยังไม่มี game over). เอาไปวางห้องอื่น = instance `enemy.tscn` ใน World + ตั้ง `defeat_flag`
 - **CharacterView** (ตัวจริง): ดูหัวข้อ sprite 8 ทิศด้านบน. Player แตะทิศ → `rig.set_facing(Iso.dir8)` → เปลี่ยนแถว
   โดยคงเฟรมเดิมถ้า anim เดียวกัน (เดินหันทิศไม่กระตุก); attack ไม่ถูก walk ขัด จบแล้วกลับ state ค้างไว้
 - **Cut-out rig**: animate แบบ procedural (walk swing, idle, attack) ใน `cutout_rig.gd`; rig ออกแบบหันขวา
@@ -160,4 +173,6 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
 ## สถานะ / ยังไม่ได้ทำ
 - ธีมตกลงแล้ว (BKK steampunk) แต่ยังไม่มีเรื่องหลัก/ตัวเอก/เป้าหมายของเกม
 - save เก่าที่ชี้ room_01/room_02 (ถูก rename) จะเริ่มใหม่ที่ซอยทองเหลืองเอง
-- ยังไม่มี: ศัตรู/HP, inventory, เสียง, เมนู/new game (ลบ save = `adb shell run-as com.drums55.game25d rm files/save_0.json`)
+- test "path bends around the pillar" (test_point_click) เคย fail 1 ครั้งตอนรันทั้งชุดหลังเพิ่ม test_quest แล้วผ่านรอบถัดไป
+  (navmesh sync timing?) — ถ้าเจออีกให้เพิ่ม wait_physics_frames ใน before_each
+- ยังไม่มี: งานที่ 2+, game over จริง, เสียง, เมนู/new game (ลบ save = `adb shell run-as com.drums55.game25d rm files/save_0.json`)

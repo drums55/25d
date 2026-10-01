@@ -29,7 +29,7 @@ func is_active() -> bool:
 func start(id: String) -> bool:
 	if is_active():
 		return false
-	_lines = DialogData.resolve(_data, id, GameState.flags)
+	_lines = DialogData.resolve(_data, id, GameState.flags, GameState.inventory)
 	if _lines.is_empty():
 		push_warning("Dialog: unknown or empty dialog '%s'" % id)
 		return false
@@ -59,5 +59,9 @@ func advance() -> void:
 
 func _show_current() -> void:
 	var line: Dictionary = _lines[_index]
-	GameState.set_flag(line.get("set_flag", ""))
 	line_shown.emit(line["speaker"], line["text"])
+	# Actions after the line is on screen so notices stack above it.
+	GameState.set_flag(line.get("set_flag", ""))
+	GameState.give_item(line.get("give_item", ""))
+	GameState.take_item(line.get("take_item", ""))
+	GameState.add_money(line.get("money", 0))
