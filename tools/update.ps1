@@ -23,6 +23,15 @@ $Package = 'com.drums55.game25d'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $Apk = Join-Path $RepoRoot 'build\game25d.apk'
 
+# Windows PowerShell 5.1 turns native stderr into terminating errors under
+# ErrorActionPreference=Stop (git/adb/godot all print to stderr). Run native
+# tools through this and check $LASTEXITCODE instead.
+function Invoke-Native([scriptblock]$Block) {
+    $old = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try { & $Block | ForEach-Object { "$_" } } finally { $ErrorActionPreference = $old }
+}
+
 function Step($msg) { Write-Host "`n==> $msg" -ForegroundColor Cyan }
 
 $Godot = $env:GODOT
@@ -34,19 +43,20 @@ Push-Location $RepoRoot
 try {
     if (-not $NoPull) {
         Step "git pull"
-        git pull --ff-only
+        Invoke-Native { git pull --ff-only 2>&1 }
         if ($LASTEXITCODE -ne 0) { throw "git pull failed" }
     }
-    git log -1 --format='%h %s'
+    Invoke-Native { git log -1 --format='%h %s' }
 
     Step "Import (headless)"
-    & $Godot --headless --path . --import
+    if (-not (Test-Path 'addons\gut\plugin.cfg')) { & (Join-Path $PSScriptRoot 'fetch_gut.ps1') }
+    Invoke-Native { & $Godot --headless --path . --import 2>&1 }
     if ($LASTEXITCODE -ne 0) { throw "godot --import failed ($LASTEXITCODE)" }
 
     Step "Export debug APK"
     New-Item -ItemType Directory -Force -Path (Split-Path $Apk) | Out-Null
     if (Test-Path $Apk) { Remove-Item $Apk }
-    & $Godot --headless --path . --export-debug 'Android' $Apk
+    Invoke-Native { & $Godot --headless --path . --export-debug 'Android' $Apk 2>&1 }
     # Godot can exit 0 on a failed export; the APK file is the real signal.
     if (-not (Test-Path $Apk)) { throw "Export failed: no APK. Read the Godot output above." }
     Write-Host ("APK: {0} ({1:N1} MB)" -f $Apk, ((Get-Item $Apk).Length / 1MB))
@@ -64,22 +74,22 @@ try {
     if ($env:ADB_SERIAL) { $dev = @('-s', $env:ADB_SERIAL) }
 
     Step "adb install $(if ($env:ADB_SERIAL) { $env:ADB_SERIAL } else { '(default device)' })"
-    $out = & $adb @dev install -r $Apk 2>&1 | Out-String
+    $out = Invoke-Native { & $adb @dev install -r $Apk 2>&1 } | Out-String
     Write-Host $out.Trim()
     if ($out -match 'INSTALL_FAILED_UPDATE_INCOMPATIBLE') {
         Write-Warning "Installed app was signed with another key (e.g. other PC). Uninstalling - this wipes the save."
-        & $adb @dev uninstall $Package | Out-Null
-        $out = & $adb @dev install $Apk 2>&1 | Out-String
+        Invoke-Native { & $adb @dev uninstall $Package 2>&1 } | Out-Null
+        $out = Invoke-Native { & $adb @dev install $Apk 2>&1 } | Out-String
         Write-Host $out.Trim()
     }
     if ($out -notmatch 'Success') { throw "adb install failed (is the device connected? 'adb devices')" }
 
     Step "Launch"
-    if ($Log) { & $adb @dev logcat -c }
-    & $adb @dev shell monkey -p $Package -c android.intent.category.LAUNCHER 1 | Out-Null
+    if ($Log) { Invoke-Native { & $adb @dev logcat -c 2>&1 } | Out-Null }
+    Invoke-Native { & $adb @dev shell monkey -p $Package -c android.intent.category.LAUNCHER 1 2>&1 } | Out-Null
     if ($Log) {
         Write-Host "logcat (Ctrl+C to stop)..."
-        & $adb @dev logcat -s godot:V
+        Invoke-Native { & $adb @dev logcat -s godot:V 2>&1 }
     }
 } finally {
     Pop-Location

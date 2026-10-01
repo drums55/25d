@@ -7,7 +7,7 @@ if [ -f addons/gut/plugin.cfg ] && grep -q "version=\"${GUT_TAG#v}\"" addons/gut
   echo "GUT ${GUT_TAG} already present"; exit 0
 fi
 tmp="$(mktemp -d)"
-git clone -q --depth 1 --branch "$GUT_TAG" https://github.com/bitwes/Gut "$tmp/gut"
+git -c advice.detachedHead=false clone -q --depth 1 --branch "$GUT_TAG" https://github.com/bitwes/Gut "$tmp/gut"
 rm -rf addons/gut && mkdir -p addons && cp -r "$tmp/gut/addons/gut" addons/gut
 rm -rf "$tmp"
 echo "GUT ${GUT_TAG} -> addons/gut"

@@ -17,6 +17,7 @@ done
 
 if [ $pull = 1 ]; then echo "==> git pull"; git pull --ff-only; fi
 git log -1 --format='%h %s'
+[ -f addons/gut/plugin.cfg ] || bash tools/fetch_gut.sh
 echo "==> import"; "$GODOT" --headless --path . --import
 echo "==> export"; mkdir -p build; rm -f "$APK"
 "$GODOT" --headless --path . --export-debug Android "$APK"

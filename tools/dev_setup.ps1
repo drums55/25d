@@ -8,7 +8,7 @@
      into %APPDATA%\Godot\export_templates\4.4.1.stable
   3. Finds the Android SDK + JDK that Flutter already uses and writes them
      into %APPDATA%\Godot\editor_settings-4.4.tres
-  4. Runs a headless import (also makes Godot generate its debug keystore)
+  4. Fetches GUT (tests) and runs a headless import (also makes Godot generate its debug keystore)
   5. Sets the user env var GODOT to the console exe (used by tools\update.ps1)
 
   Safe to re-run: finished steps are skipped.
@@ -36,6 +36,15 @@ $GodotData = Join-Path $env:APPDATA 'Godot'
 $TemplatesDir = Join-Path $GodotData "export_templates\$Version.stable"
 $EditorSettings = Join-Path $GodotData 'editor_settings-4.4.tres'
 $GodotExe = Join-Path $GodotDir "Godot_v$($Tag)_win64_console.exe"
+
+# Windows PowerShell 5.1 turns native stderr into terminating errors under
+# ErrorActionPreference=Stop (git/adb/godot all print to stderr). Run native
+# tools through this and check $LASTEXITCODE instead.
+function Invoke-Native([scriptblock]$Block) {
+    $old = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try { & $Block | ForEach-Object { "$_" } } finally { $ErrorActionPreference = $old }
+}
 
 function Step($msg) { Write-Host "`n==> $msg" -ForegroundColor Cyan }
 
@@ -132,7 +141,9 @@ Write-Host "ok"
 Step "Headless import of the project"
 Push-Location $RepoRoot
 try {
-    & $GodotExe --headless --path . --import
+    # GUT must exist before import, otherwise test/*.gd log "Could not find base class GutTest".
+    if (-not (Test-Path 'addons\gut\plugin.cfg')) { & (Join-Path $PSScriptRoot 'fetch_gut.ps1') }
+    Invoke-Native { & $GodotExe --headless --path . --import 2>&1 }
     if ($LASTEXITCODE -ne 0) { throw "godot --import failed ($LASTEXITCODE)" }
 } finally {
     Pop-Location
