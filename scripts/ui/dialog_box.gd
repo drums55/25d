@@ -1,6 +1,7 @@
 extends PanelContainer
-## Bottom-of-screen dialog box with a typewriter effect. Tap it (or press
-## attack/interact) to advance; a tap while typing shows the full line.
+## Bottom-of-screen dialog box with a typewriter effect. It ignores input:
+## the player advances dialog with any tap (Player.click_at) or E/J, and a
+## tap while typing shows the full line.
 
 @export var chars_per_second := 45.0
 
@@ -17,13 +18,6 @@ func _ready() -> void:
 	Dialog.finished.connect(func(_id): hide())
 	Dialog.line_shown.connect(_on_line)
 	Dialog.skip_typing_requested.connect(_finish_typing)
-
-
-func _gui_input(event: InputEvent) -> void:
-	var mb := event as InputEventMouseButton
-	if mb and mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
-		Dialog.advance()
-		accept_event()
 
 
 func _on_line(speaker: String, text: String) -> void:

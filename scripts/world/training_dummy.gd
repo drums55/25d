@@ -5,6 +5,9 @@ extends StaticBody2D
 
 signal hit(total: int)
 
+## Tap area relative to the origin (feet).
+@export var pick_rect := Rect2(-50, -170, 100, 200)
+
 var hits := 0
 
 
@@ -12,6 +15,7 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	collision_layer = 1 | 8  # world + hittable
+	add_to_group("pickable")
 
 
 func take_hit(_damage: int, from: Vector2) -> void:

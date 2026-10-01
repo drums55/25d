@@ -40,7 +40,9 @@ powershell -ExecutionPolicy Bypass -File tools\run.ps1 --rendering-driver opengl
 powershell -ExecutionPolicy Bypass -File tools\run.ps1 -Editor                      # Godot editor (F5 = run)
 ```
 
-WASD/arrows move, J/Space attack, E/K interact; the mouse drives the on-screen joystick.
+Point & click: click/tap the floor to walk (hold and drag to steer), click a character or sign to
+talk/read, the training dummy to attack it, a door to go through; any click advances dialog.
+ATK button (or J/Space) attacks where you face. Keyboard WASD/E also works on the PC.
 
 ## Tests / CI
 

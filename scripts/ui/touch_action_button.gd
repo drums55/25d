@@ -2,7 +2,8 @@
 class_name TouchActionButton
 extends Control
 ## Round on-screen button that presses an InputMap action while a finger is
-## on it. Multi-touch safe (handles screen touches in _input).
+## on it. Multi-touch safe (handles screen touches in _input) and marks its
+## touches handled so the player does not also walk to that spot.
 
 @export var action: StringName = &"attack"
 @export var label := "ATK":
@@ -38,8 +39,10 @@ func _input(event: InputEvent) -> void:
 			_finger = event.index
 			Input.action_press(action)
 			queue_redraw()
+			get_viewport().set_input_as_handled()
 	elif not event.pressed and event.index == _finger:
 		_release()
+		get_viewport().set_input_as_handled()
 
 
 func _notification(what: int) -> void:

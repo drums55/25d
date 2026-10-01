@@ -17,6 +17,9 @@
 - Graphics ทั้งหมด AI generate → ตัวละครเป็น **cut-out** (ชิ้นแยก + Skeleton2D) ไม่ใช่ sprite sheet;
   ฉาก/prop เป็นภาพนิ่ง ดู `assets/art/README.md`. ตอนนี้ใช้ placeholder polygon
 - Target: Redmi Pad Pro (2560×1600, 16:10, Android 16) + Samsung S24 FE; landscape; touch
+- **Control = point & click** (เจ้าของสั่ง 2026-10-01 แทน virtual joystick): แตะพื้น = เดิน (กดค้างลาก = บังคับต่อ),
+  แตะ NPC/ป้าย = เดินไปคุย, แตะของที่ตีได้ = เดินไปตี, แตะประตู = เดินเข้า, ระหว่าง dialog แตะที่ไหนก็ได้ = next.
+  บนจอเหลือปุ่ม ATK ปุ่มเดียว (ตีไปทางที่หันอยู่). joystick/USE ถูกลบ (ดูได้ใน git ที่ e252590)
 - Dev loop = PC: `tools\update.ps1` (pull → headless export → adb install wireless → launch)
 - **CI ห้าม build APK** (quota Actions 500 MB เคยเต็มใน repo blackbox) — CI = gdformat/gdlint + GUT เท่านั้น
 - Godot Android editor บน tablet = ของแถม ไม่ใช่ทางหลัก
@@ -29,7 +32,7 @@ scenes/main.tscn         root: RoomHolder + Player (persistent) + HUD
 scenes/rooms/*.tscn      IsoRoom: World (y-sort) + Spawns (Marker2D ชื่อ = spawn id)
 scenes/characters/       cutout_rig.tscn (Skeleton2D: Hip > LegL/LegR/Torso > ArmL/ArmR/Head)
 scenes/props/            prop_block, door, npc, interactable, training_dummy
-scenes/ui/               hud (joystick + ATK/USE + prompt), dialog_box
+scenes/ui/               hud (ปุ่ม ATK + dialog box), dialog_box
 scripts/autoload/        GameState (flags, save/load), Dialog (runner), SceneRouter (fade + room swap)
 scripts/core/            Iso (math), SaveData, DialogData — pure logic, unit-tested
 assets/dialog/dialog.json  dialog ทั้งหมด (format อยู่หัวไฟล์ scripts/core/dialog_data.gd)
@@ -38,11 +41,18 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
 ```
 
 ## Architecture / decisions
-- **Input**: gameplay อ่านแค่ InputMap (`move_*`, `attack`, `interact`). Joystick/ปุ่มบนจอเรียก
-  `Input.action_press` → คีย์บอร์ด/จอย/ทัช ใช้โค้ดเดียวกัน. Touch control จัดการใน `_input`
-  (ไม่ใช่ gui_input) เพื่อรองรับ multi-touch, `mouse_filter = IGNORE`
-- `emulate_touch_from_mouse=true` → ทดสอบ joystick ด้วยเมาส์บน PC ได้
-- **การเดิน**: analog ใน screen space (แบบ Hades) + facing snap 8 ทิศ (`Iso.dir8`, 0=E หมุนตามเข็ม: E SE S SW W NW N NE)
+- **Input**: tap ถูกจัดการเป็น `InputEventScreenTouch` อย่างเดียวใน `Player._unhandled_input`
+  (`emulate_touch_from_mouse=true` → คลิกเมาส์บน PC = แตะ). ไม่ใช้ mouse event (มือถือส่ง mouse จำลองซ้ำ).
+  ปุ่ม ATK (`TouchActionButton`) จับ touch ใน `_input` แล้ว `set_input_as_handled` → ไม่ทำให้เดินไปที่ปุ่ม.
+  DialogBox `mouse_filter = IGNORE` ทั้งหมด. คีย์บอร์ด WASD/E/J ยังใช้ได้และยกเลิกคำสั่งคลิก
+- **Point & click**: `Player.click_at(world_pos)` → `Player.pick()` หา node ใน group `pickable` ที่ `pick_rect`
+  (Rect2 รอบ origin/เท้า ครอบภาพด้านบน) โดนจุดแตะ เลือกตัวที่ y มากสุด (อยู่หน้า). Interactable → order INTERACT
+  (หยุดเมื่อ InteractArea ทับ), มี `take_hit` → ATTACK (หยุดที่ระยะ 80), อื่นๆ/พื้น → MOVE.
+  ของใหม่ที่อยากให้แตะได้: ใส่ `@export var pick_rect` + `add_to_group("pickable")`
+- **Pathfinding**: `IsoRoom._build_navigation()` อบ NavigationPolygon ตอน runtime = พื้นห้อง − footprint
+  collision ของ StaticBody2D ลูกของ World (CollisionPolygon2D / CircleShape2D), agent_radius 28.
+  Player ใช้ NavigationAgent2D (`NavAgent`). แตะนอกพื้น = ไปจุดใกล้สุดที่ไปได้
+- **การเดิน**: ความเร็วคงที่ใน screen space + facing snap 8 ทิศ (`Iso.dir8`, 0=E หมุนตามเข็ม: E SE S SW W NW N NE)
 - **Iso grid**: tile 128×64 (2:1). cell (0,0) = มุมบนของห้อง; `Iso.grid_to_world`
 - **Y-sort**: origin ของทุก object = จุดที่แตะพื้น (เท้า / กลาง footprint). ห้องมี World เป็น y-sort node,
   Main ย้าย Player เข้า World ของห้องทุกครั้งที่เปลี่ยนห้อง (player persistent ไม่ instance ใหม่)
@@ -56,8 +66,8 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   (ถ้ากำลังพิมพ์ = แสดงทั้งบรรทัด)
 - **Cut-out rig**: animate แบบ procedural (walk swing, idle, attack) ใน `cutout_rig.gd`; rig ออกแบบหันขวา
   หันซ้าย = `scale.x = -1`; หันหลัง (NW/N/NE) = ซ่อนหน้า / สลับ texture `*_back`. ใส่ art ด้วย `CutoutSkin`
-- **Attack**: Hitbox (Area2D mask layer 4) ขยับตาม facing; ตอนกดตี เรียก `take_hit(damage, from)`
-  กับทุก body ที่ทับ. Physics layers: 1 world, 2 player, 3 interactable, 4 hittable
+- **Attack**: Hitbox (Area2D, ใช้แค่เป็นที่เก็บ shape) ขยับตาม facing; ตอนตี query `intersect_shape` (mask layer 4)
+  แล้วเรียก `take_hit(damage, from)`. Physics layers: 1 world, 2 player, 3 interactable, 4 hittable
 
 ## Gotchas (เจอแล้ว)
 - GDScript `:=` กับค่าที่ type ไม่แน่นอน (เช่น `event.pressed and ...`, `"str" + obj.prop`) = parse error
@@ -76,6 +86,8 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   `tools/godot_path.ps1` (Resolve-Godot): `tools/.godot_path` (dev_setup เขียนทันทีหลังโหลด, gitignored) →
   env → user env (registry) → `<parent ของ repo>\godot\4.4.1` → `%USERPROFILE%\godot\4.4.1`
 - เจ้าของใช้ repo ที่ `G:\dev\25d`, Godot ที่ `G:\dev\godot\4.4.1` (ไดรฟ์ G: ที่ว่างเยอะ)
+- Area2D ของ hitbox (ลูกของ Player ที่ถูก reparent ข้ามห้อง) `get_overlapping_bodies()` ไม่เคยเจอหุ่น
+  (Area2D ที่สร้างใหม่เจอ) → การตีใช้ `intersect_shape` ตอนกดตี (`Player.get_hit_bodies`) ไม่พึ่ง overlap
 - `adb` ไม่อ่าน `ADB_SERIAL` เอง (มันอ่าน `ANDROID_SERIAL`) — script ส่ง `-s $env:ADB_SERIAL` ให้
 - Export template มี 1.1 GB; dev_setup แตกเฉพาะไฟล์ android_* เก็บไว้
 

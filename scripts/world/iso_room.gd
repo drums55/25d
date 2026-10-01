@@ -9,6 +9,15 @@ extends Node2D
 ##   Backdrop (Node2D, optional)  painted floor/walls, not y-sorted
 ##   World    (Node2D, y_sort_enabled)  props, NPCs, doors; the player is moved in here
 ##   Spawns   (Node2D)  Marker2D per arrival point, named by spawn id
+##
+## At runtime it also builds the floor boundary collision and a navigation
+## mesh (floor diamond minus the collision footprints of StaticBody2D props in
+## World) for point & click pathfinding.
+
+## Navmesh is shrunk by this much from walls/props (player feet radius + margin).
+const NAV_AGENT_RADIUS := 28.0
+## Circle collision shapes become polygons with this many sides.
+const CIRCLE_SIDES := 12
 
 @export var room_title := ""
 @export var grid_size := Vector2i(12, 12):
@@ -29,6 +38,7 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	_build_boundary()
+	_build_navigation()
 
 
 func get_world() -> Node2D:
@@ -79,6 +89,40 @@ func _build_boundary() -> void:
 	poly.polygon = c
 	body.add_child(poly)
 	add_child(body)
+
+
+func _build_navigation() -> void:
+	var geo := NavigationMeshSourceGeometryData2D.new()
+	geo.add_traversable_outline(get_corners())
+	for outline in get_obstacle_outlines():
+		geo.add_obstruction_outline(outline)
+	var nav := NavigationPolygon.new()
+	nav.agent_radius = NAV_AGENT_RADIUS
+	NavigationServer2D.bake_from_source_geometry_data(nav, geo)
+	var region := NavigationRegion2D.new()
+	region.name = "Navigation"
+	region.navigation_polygon = nav
+	add_child(region)
+
+
+## Collision footprints (room-local) of StaticBody2D children of World.
+func get_obstacle_outlines() -> Array[PackedVector2Array]:
+	var out: Array[PackedVector2Array] = []
+	var to_room := global_transform.affine_inverse()
+	for body in get_world().get_children():
+		if not body is StaticBody2D:
+			continue
+		for shape in body.get_children():
+			var pts := PackedVector2Array()
+			if shape is CollisionPolygon2D:
+				pts = shape.polygon
+			elif shape is CollisionShape2D and shape.shape is CircleShape2D:
+				var r: float = shape.shape.radius
+				for i in CIRCLE_SIDES:
+					pts.append(Vector2.RIGHT.rotated(TAU * i / CIRCLE_SIDES) * r)
+			if pts.size() >= 3:
+				out.append((to_room * shape.global_transform) * pts)
+	return out
 
 
 func _draw() -> void:

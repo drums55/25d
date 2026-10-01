@@ -13,6 +13,8 @@ enum WallAxis { BACK_RIGHT, BACK_LEFT }
 		wall_axis = v
 		queue_redraw()
 @export var door_height := 170.0
+## Tap area relative to the origin; tapping the door walks the player into it.
+@export var pick_rect := Rect2(-70, -190, 140, 220)
 
 
 func _ready() -> void:
@@ -21,6 +23,7 @@ func _ready() -> void:
 	collision_layer = 0
 	collision_mask = 2  # player
 	body_entered.connect(_on_body_entered)
+	add_to_group("pickable")
 
 
 func _on_body_entered(body: Node) -> void:
