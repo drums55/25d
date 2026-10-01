@@ -75,6 +75,11 @@ target_room = "res://scenes/rooms/soi_brass.tscn"
 target_spawn = "from_market"
 wall_axis = 1
 
+[node name="DoorToCanal" parent="World" instance=ExtResource("4_door")]
+position = Vector2(425.6, 235.2)
+target_room = "res://scenes/rooms/canal_pier.tscn"
+target_spawn = "from_market"
+
 [node name="MooPingCart" parent="World" instance=ExtResource("2_prop")]
 position = Vector2(441.6, 323.2)
 footprint_cells = Vector2(1.0, 0.6)
@@ -102,3 +107,6 @@ position = Vector2(64, 288)
 
 [node name="from_soi" type="Marker2D" parent="Spawns"]
 position = Vector2(-153.6, 179.2)
+
+[node name="from_canal" type="Marker2D" parent="Spawns"]
+position = Vector2(352, 284.8)

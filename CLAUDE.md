@@ -61,6 +61,12 @@
   bus_stop (ป้ายรถเมล์ 8/73/503 "มาเมื่อมา"), moo_ping_cart (หมูปิ้ง 10.-), shop_cat (แมวส้มบนลังน้ำแดง), tire_planter
   (ยางรถทาสีปลูกต้นไม้). ทุกชิ้นแตะได้ มีบทพูดตลกใน dialog.json. ป้ายภาษาไทยในภาพ = `Canvas.text(txt, p0, p1, h, col)`
   (PIL+raqm+Kanit วางบนหน้า iso; หน้า +x ต้องให้ p0 อยู่ฝั่ง +gy ไม่งั้นตัวหนังสือกลับด้าน)
+- **ห้องที่ 4 `canal_pier` ท่าเรือคลองไอน้ำ** (M2, 2026-10-01): 12×8, เข้าจากประตูผนังขวาของตลาด (grid 7,0.35 → `door_u=7.0`
+  ใน `brick_wall` R) ↔ ประตูผนังซ้ายของท่า (u=3.0). ผนังไม้สัก (`teak_wall`) + ป้าย "ท่าเรือคลองไอน้ำ", พื้นไม้กระดาน gy<5
+  แล้วเป็นคลอง (`canal_floor`: ขอบปูนมีหลักผูกเรือ, ผักตบ, แสงโคมสะท้อนน้ำ). น้ำ = StaticBody2D `Canal` (polygon เลยขอบห้อง)
+  → navmesh ตัดทิ้งเอง เดินลงน้ำไม่ได้. Prop: longtail_boat (ลอยในน้ำ ชิดขอบ gy 5.7 ให้ InteractArea เอื้อมถึง), dragon_jar ×2,
+  pier_sign. NPC พี่แจ่ม (`npc_id: boatman`, ใช้ sprite lung_pradit ย้อมส้ม — ยังไม่มี sprite จริง).
+  งาน: `mackerel_for_lung` (ปลาทูแม่กลอง พี่แจ่ม→ลุง), `garland_for_boat` (พวงมาลัย เจ๊หมวย→พี่แจ่ม, set `garland_given`)
 - Brief สำหรับ Cowork (desktop) gen ภาพแล้ววางลง `G:\dev\25d\assets\art\...` โดยตรง: `assets/art/COWORK_BRIEF.md`
   (กติกาขนาด/จุดฐาน/ชื่อไฟล์ทั้งหมดอยู่ที่นั่น ถ้าเปลี่ยนกติกาใน ArtLibrary ต้องแก้ brief ด้วย)
 - ฟอนต์ project = Kanit Medium (OFL) ที่ `assets/fonts/` — ฟอนต์ default ของ Godot ไม่มีอักษรไทย
@@ -83,7 +89,7 @@
 project.godot            viewport 1920x1200, stretch canvas_items/expand, sensor landscape
 export_presets.cfg       preset "Android": arm64 only, non-gradle, package com.drums55.game25d
 scenes/main.tscn         root: RoomHolder + Player (persistent) + HUD
-scenes/rooms/*.tscn      soi_brass, steam_market, steam_garage — IsoRoom: World (y-sort) + Spawns (Marker2D ชื่อ = spawn id)
+scenes/rooms/*.tscn      soi_brass, steam_market, steam_garage, canal_pier — IsoRoom: World (y-sort) + Spawns (Marker2D ชื่อ = spawn id)
 scenes/characters/       character_view.tscn (sprite 8 ทิศ; ใช้จริง), cutout_rig.tscn (placeholder fallback)
 scenes/props/            prop_block, door, npc, interactable, training_dummy
 scenes/ui/               hud (สถานะ/นาฬิกา/notice + dialog box + job board), dialog_box, job_board
@@ -195,4 +201,4 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
 - ธีมตกลงแล้ว (BKK steampunk) แต่ยังไม่มีเรื่องหลัก/ตัวเอก/เป้าหมายของเกม
 - save เก่าที่ชี้ room_01/room_02 (ถูก rename) จะเริ่มใหม่ที่ซอยทองเหลืองเอง
 - test "path bends around the pillar" flake = navmesh map ยังไม่ sync หลังเปลี่ยนห้อง → test รอจน `map_get_path` ได้ path (≤30 เฟรม)
-- ยังไม่มี: บทที่ 2 (ใครแกะวาล์ว), เสียง, เมนู/new game, sprite จริงของเฮียเป้ง (ลบ save = `adb shell run-as com.drums55.game25d rm files/save_0.json`)
+- ยังไม่มี: บทที่ 2 (ใครแกะวาล์ว), เสียง, เมนู/new game, sprite จริงของเฮียเป้ง/พี่แจ่ม (ลบ save = `adb shell run-as com.drums55.game25d rm files/save_0.json`)

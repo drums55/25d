@@ -460,7 +460,7 @@ def steam_market(out):
     gw, gh, wh = 10, 8, 240
     c = RoomCanvas(gw, gh, wh, ss=1)
     brick, mortar = hexc("#7A3E2E"), hexc("#4A2A24")
-    brick_wall(c, "R", gw, wh, brick, mortar, seed=3)
+    brick_wall(c, "R", gw, wh, brick, mortar, door_u=7.0, seed=3)
     brick_wall(c, "L", gh, wh, brick, mortar, door_u=3.65, seed=4)
     wall_edge(c, gw, gh, wh)
     tile_floor(c, gw, gh, hexc("#8A5A3C"), hexc("#6B4530"))
@@ -533,7 +533,141 @@ def steam_garage(out):
     c.finish(out, sil=0)
 
 
-ROOMS = {"soi_brass": soi_brass, "steam_market": steam_market, "steam_garage": steam_garage}
+def teak_wall(c, side, length, wall_h, door_u=None, sign=None, seed=8):
+    """Old teak-plank canal-side shophouses: vertical boards, green louvred
+    shutters, hanging orchid pots, lanterns, optional big pier sign."""
+    s = c.ss
+    H = wall_h * 2
+    k_face = 1.0 if side == "L" else 0.8
+    teak = hexc("#6B4428")
+    quad = c.wall_quad(side, 0, length, 0, H)
+    yt, yb = min(q[1] for q in quad), max(q[1] for q in quad)
+    field = c.grad(teak * k_face, 1.08, 0.78, yt, yb)
+    field = field * (1 + 0.06 * np.clip(c.noise(30, seed), -1, 1))[..., None]
+    c.paint(c.mask_poly(quad), field, outline=0, tex=0.07)
+    rng = np.random.default_rng(seed)
+    u = 0.0
+    while u < length:
+        c.stroke([c.wp(side, u, 0), c.wp(side, u, H)], 2.0, teak * 0.55 * k_face, 0.8)
+        c.stroke([c.wp(side, u + 0.03, 0), c.wp(side, u + 0.03, H)], 1.2, teak * 1.3 * k_face, 0.35)
+        u += 0.22
+    # ground-floor shutters + upper louvred windows, every 2.5 cells
+    shutter = hexc("#3E6E5A")
+    for u0 in np.arange(0.4, length - 1.0, 2.5):
+        if door_u is not None and abs((u0 + 0.8) - door_u) < 1.3:
+            continue
+        m = c.mask_poly(c.wall_quad(side, u0, u0 + 1.6, 0, 230))
+        c.paint(m, c.grad(shutter * k_face, 1.05, 0.8, yt, yb), 2.0, 0.3, tex=0.08)
+        for k in range(1, 8):
+            uu = u0 + k * 0.2
+            c.stroke([c.wp(side, uu, 6), c.wp(side, uu, 224)], 1.6, shutter * 0.6 * k_face, 0.8)
+        wm = c.mask_poly(c.wall_quad(side, u0 + 0.3, u0 + 1.3, 290, 420))
+        c.paint(wm, c.grad(shutter * 0.9 * k_face, 1.05, 0.8, yt, yb), 2.0, 0.3)
+        for z in range(298, 416, 14):
+            c.stroke([c.wp(side, u0 + 0.34, z), c.wp(side, u0 + 1.26, z - 4)], 2.0, shutter * 0.55 * k_face, 0.85)
+        # hanging orchid pot
+        px, py = c.wp(side, u0 + 1.9, 330)
+        c.stroke([c.wp(side, u0 + 1.9, 420), (px, py)], 1.4, SOOT, 0.8)
+        c.disc(px, py, 10 * s, 7 * s, hexc("#8A5A3C"), 1.4, 0.4)
+        for k in range(5):
+            a = rng.uniform(-2.6, -0.6)
+            c.stroke([(px, py - 4 * s), (px + math.cos(a) * 26 * s, py + math.sin(a) * 18 * s + 20 * s)], 3.0, hexc("#4F8A3C"))
+        for k in range(3):
+            c.disc(px + rng.uniform(-14, 14) * s, py + rng.uniform(4, 24) * s, 4 * s, 3 * s, hexc("#C77DD8"), 0.6, 0.2)
+    if door_u is not None:
+        doorway(c, side, door_u)
+    if sign:
+        u0 = length * 0.5 - 2.0
+        bm = c.mask_poly(c.wall_quad(side, u0, u0 + 4.0, 250, 330))
+        c.paint(bm, c.grad(hexc("#F2EFE6") * k_face, 1.05, 0.9, yt, yb), 2.4, 0.5)
+        c.text(sign, c.wp(side, u0 + 0.2, 322), c.wp(side, u0 + 3.8, 322), 64, hexc("#1E3F8C"))
+        # express-boat orange flag
+        fx, fy = c.wp(side, u0 + 4.3, 330)
+        c.stroke([c.wp(side, u0 + 4.3, 240), (fx, fy - 40 * s)], 3.0, STEEL)
+        c.paint(c.mask_poly([(fx, fy - 40 * s), (fx + 40 * s, fy - 30 * s), (fx, fy - 18 * s)]),
+                c.flat(hexc("#F07A1E")), 1.4, 0.4)
+    c.glaze(c.mask_poly(c.wall_quad(side, 0, length, 0, 50)), SOOT, 0.3)
+    c.pipe([c.wp(side, 0, 32), c.wp(side, length, 32)], 8, COPPER, spec=0.7)
+    for u in np.arange(1.2, length, 2.5):
+        lx, ly = c.wp(side, u, 450)
+        c.stroke([c.wp(side, u, 470), (lx, ly)], 3, SOOT)
+        c.disc(lx, ly + 8 * s, 10 * s, 13 * s, BRASS_L, 1.4, 0.4, spec=1.0)
+        c.glaze(c.mask_ellipse(lx, ly + 10 * s, 55 * s, 55 * s), WARM, 0.12)
+
+
+def canal_floor(c, gw, gh, wf, seed=12):
+    """Plank deck for gy < wf, concrete lip, murky canal for gy >= wf with
+    ripples, lantern reflections and water hyacinth."""
+    s = c.ss
+    rng = np.random.default_rng(seed)
+    yt, yb = c.p(0, 0)[1], c.p(gw, gh)[1]
+    deck = c.mask_poly([c.p(0, 0), c.p(gw, 0), c.p(gw, wf), c.p(0, wf)])
+    wood = hexc("#8B6038")
+    c.paint(deck, c.grad(wood, 1.05, 0.85, yt, yb) * (1 + 0.06 * np.clip(c.noise(20, seed), -1, 1))[..., None],
+            outline=0, tex=0.1)
+    for gy in np.arange(0.25, wf, 0.25):
+        c.stroke([c.p(0, gy), c.p(gw, gy)], 1.6, wood * 0.55, 0.8)
+    for gy in np.arange(0.0, wf, 0.25):
+        for gx in np.arange(rng.uniform(0, 1.5), gw, rng.uniform(1.5, 2.6)):
+            c.stroke([c.p(gx, gy), c.p(gx, gy + 0.25)], 1.4, wood * 0.5, 0.8)
+            x, y = c.p(gx + 0.08, gy + 0.12)
+            c.disc(x, y, 1.6 * s, 1.2 * s, SOOT, 0.3, 0)
+    # water
+    water = c.mask_poly([c.p(0, wf), c.p(gw, wf), c.p(gw, gh), c.p(0, gh)])
+    murk = hexc("#2F5A55")
+    wfield = c.grad(murk, 0.9, 1.1, c.p(0, wf)[1], yb)
+    wfield = wfield * (1 + 0.1 * np.clip(c.noise(25, seed + 3) * 0.7 + c.noise(4, seed + 4) * 0.3, -1, 1))[..., None]
+    c.paint(water, wfield, outline=0, tex=0.04)
+    for _ in range(140):
+        gx, gy = rng.uniform(0.2, gw - 0.2), rng.uniform(wf + 0.2, gh - 0.1)
+        L = rng.uniform(0.15, 0.5)
+        c.stroke([c.p(gx, gy), c.p(gx + L, gy)], rng.uniform(1.2, 2.4), hexc("#8FC3B8"), rng.uniform(0.2, 0.45))
+    for gx in np.arange(1.2, gw, 2.5):
+        x0, y0 = c.p(gx, wf + 0.2)
+        for k in range(6):
+            c.stroke([(x0 - 6 * s, y0 + k * 16 * s), (x0 + 6 * s, y0 + k * 16 * s + 4 * s)], 3.0, WARM, 0.35 - k * 0.05)
+    # water hyacinth clumps (ผักตบชวา)
+    for _ in range(9):
+        gx, gy = rng.uniform(0.4, gw - 0.4), rng.uniform(wf + 0.6, gh - 0.3)
+        x, y = c.p(gx, gy)
+        for k in range(7):
+            ox, oy = rng.uniform(-30, 30) * s, rng.uniform(-12, 12) * s
+            c.disc(x + ox, y + oy, rng.uniform(9, 14) * s, rng.uniform(5, 8) * s, hexc("#4F8A3C"), 1.0, 0.4, spec=0.4)
+        for k in range(3):
+            c.disc(x + rng.uniform(-14, 14) * s, y - rng.uniform(8, 18) * s, 4 * s, 4 * s, hexc("#B48AD8"), 0.6, 0.2)
+    # floating bottle, for comedy
+    x, y = c.p(gw * 0.8, gh - 0.8)
+    c.disc(x, y, 12 * s, 4 * s, hexc("#C0392B"), 1.0, 0.3)
+    # concrete lip + drop into the water
+    lip = c.mask_poly([c.p(0, wf - 0.18), c.p(gw, wf - 0.18), c.p(gw, wf), c.p(0, wf)])
+    c.paint(lip, c.grad(hexc("#8C8580"), 1.1, 0.9, yt, yb), 1.6, 0.6)
+    drop = c.mask_poly([c.p(0, wf, 0), c.p(gw, wf, 0), c.p(gw, wf, -40), c.p(0, wf, -40)])
+    c.paint(drop, c.grad(hexc("#6A6460"), 0.9, 0.6, yt, yb), 1.6, 0)
+    c.glaze(ndimage.gaussian_filter(c.mask_poly([c.p(0, wf), c.p(gw, wf), c.p(gw, wf + 0.6), c.p(0, wf + 0.6)]), 10 * s) * water,
+            SOOT, 0.35)
+    for gx in np.arange(1.5, gw, 3.0):
+        bx, by = c.p(gx, wf - 0.09)
+        c.disc(bx, by - 10 * s, 9 * s, 12 * s, SOOT * 1.4, 1.4, 0.4, spec=0.6)
+        c.stroke([(bx - 8 * s, by - 14 * s), (bx + 30 * s, by + 20 * s)], 2.4, hexc("#C9A46A"), 0.9)
+    # ambient occlusion along the back walls on the deck
+    ao = np.maximum(c.mask_poly([c.p(0, 0), c.p(gw, 0), c.p(gw, 0.9), c.p(0, 0.9)]),
+                    c.mask_poly([c.p(0, 0), c.p(0, wf), c.p(0.9, wf), c.p(0.9, 0)]))
+    c.glaze(ndimage.gaussian_filter(ao, 24 * s) * deck, SOOT, 0.4)
+
+
+def canal_pier(out):
+    gw, gh, wh = 12, 8, 240
+    c = RoomCanvas(gw, gh, wh, ss=1)
+    teak_wall(c, "R", gw, wh, sign="ท่าเรือคลองไอน้ำ", seed=8)
+    teak_wall(c, "L", gh, wh, door_u=3.0, seed=9)
+    wall_edge(c, gw, gh, wh)
+    canal_floor(c, gw, gh, 5.0)
+    c.apply_door_pools()
+    c.finish(out, sil=0)
+
+
+ROOMS = {"soi_brass": soi_brass, "steam_market": steam_market, "steam_garage": steam_garage,
+         "canal_pier": canal_pier}
 
 if __name__ == "__main__":
     name = sys.argv[1]

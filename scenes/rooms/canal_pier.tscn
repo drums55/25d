@@ -1,0 +1,85 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/iso_room.gd" id="1_room"]
+[ext_resource type="PackedScene" path="res://scenes/props/prop_block.tscn" id="2_prop"]
+[ext_resource type="PackedScene" path="res://scenes/props/interactable.tscn" id="3_int"]
+[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="4_door"]
+[ext_resource type="PackedScene" path="res://scenes/props/npc.tscn" id="5_npc"]
+
+[node name="CanalPier" type="Node2D"]
+script = ExtResource("1_room")
+room_title = "ท่าเรือคลองไอน้ำ"
+grid_size = Vector2i(12, 8)
+floor_color_a = Color(0.5, 0.36, 0.24, 1)
+floor_color_b = Color(0.45, 0.32, 0.21, 1)
+wall_color = Color(0.42, 0.27, 0.16, 1)
+
+[node name="World" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Canal" type="StaticBody2D" parent="World"]
+position = Vector2(-64, 416)
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="World/Canal"]
+polygon = PackedVector2Array(-320, -288, 576, 160, 320, 288, -576, -160)
+
+[node name="LongtailBoat" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(51.2, 390.4)
+footprint_cells = Vector2(3, 0.6)
+height = 80.0
+art_name = "longtail_boat"
+
+[node name="Interactable" parent="World/LongtailBoat" instance=ExtResource("3_int")]
+prompt = "ดู"
+dialog_id = "longtail_boat"
+
+[node name="Boatman" parent="World" instance=ExtResource("5_npc")]
+position = Vector2(19.2, 278.4)
+
+[node name="Rig" parent="World/Boatman"]
+modulate = Color(1, 0.86, 0.72, 1)
+character_name = "lung_pradit"
+
+[node name="Interactable" parent="World/Boatman"]
+dialog_id = "boatman"
+npc_id = "boatman"
+
+[node name="DragonJar" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(0, 76.8)
+footprint_cells = Vector2(0.6, 0.6)
+height = 100.0
+art_name = "dragon_jar"
+
+[node name="Interactable" parent="World/DragonJar" instance=ExtResource("3_int")]
+prompt = "ดู"
+dialog_id = "dragon_jar"
+
+[node name="DragonJar2" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(608, 400)
+footprint_cells = Vector2(0.6, 0.6)
+height = 100.0
+art_name = "dragon_jar"
+
+[node name="PierSign" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(332.8, 441.6)
+footprint_cells = Vector2(0.6, 0.2)
+height = 150.0
+art_name = "pier_sign"
+
+[node name="Interactable" parent="World/PierSign" instance=ExtResource("3_int")]
+prompt = "อ่าน"
+dialog_id = "pier_sign"
+
+[node name="DoorToMarket" parent="World" instance=ExtResource("4_door")]
+position = Vector2(-169.6, 107.2)
+target_room = "res://scenes/rooms/steam_market.tscn"
+target_spawn = "from_canal"
+wall_axis = 1
+
+[node name="Spawns" type="Node2D" parent="."]
+
+[node name="default" type="Marker2D" parent="Spawns"]
+position = Vector2(160, 240)
+
+[node name="from_market" type="Marker2D" parent="Spawns"]
+position = Vector2(-89.6, 147.2)

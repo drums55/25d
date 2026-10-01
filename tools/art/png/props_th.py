@@ -310,7 +310,100 @@ def tire_planter(out):
     c.finish(out)
 
 
-PROPS = {f.__name__: f for f in (win_stand, payphone, bus_stop, moo_ping_cart, shop_cat, tire_planter)}
+def longtail_boat(out):
+    """เรือหางยาวไอน้ำ: long narrow hull along gx (bow at +gx), three-colour
+    ribbons on the raised bow, garland, plank seats, brass boiler at the stern
+    and the long-tail propeller shaft."""
+    c = Canvas(640, 500, seed=47)
+    p, s = c.p, c.ss
+    # dark water shadow + foam
+    cx, cy = p(0, 0, 0)
+    c.a = np.maximum(c.a, ndimage.gaussian_filter(c.mask_ellipse(cx, cy + 6 * s, 230 * s, 70 * s), 10 * s) * 0.3)
+    hull = [(-1.5, -0.22), (0.9, -0.3), (1.5, 0.0), (0.9, 0.3), (-1.5, 0.22)]
+    c.prism(hull, -12, 34, hexc("#5A3A22"), top_c=hexc("#3A2618"), rim=0.8, smooth=True)
+    # painted stripes on the visible (+y, +x) sides
+    for z, col in ((26, hexc("#E8E1CF")), (18, hexc("#C0392B")), (12, hexc("#2F5FD0"))):
+        c.stroke([p(-1.5, 0.22, z), p(0.9, 0.3, z), p(1.5, 0.0, z)], 2.6, col, 0.95)
+    for gx in (-0.9, -0.4, 0.1, 0.6):
+        c.box(gx - 0.05, -0.22, gx + 0.05, 0.22, 24, 30, WOOD_L, rim=0.5)
+    # raised bow post + ribbons + garland
+    bx, by = p(1.5, 0.0, 34)
+    tip = (bx + 34 * s, by - 60 * s)
+    c.stroke([(bx, by), (bx + 18 * s, by - 34 * s), tip], 9, hexc("#5A3A22"))
+    for k, col in enumerate((hexc("#E66AA0"), YELLOW, hexc("#3FAE5A"))):
+        rib = [(tip[0] - 2 * s, tip[1] + (4 + k * 5) * s), (tip[0] - 30 * s - k * 6 * s, tip[1] + (30 + k * 10) * s),
+               (tip[0] - 14 * s - k * 4 * s, tip[1] + (44 + k * 12) * s)]
+        c.stroke(rib, 5.0, col, 0.95)
+    for k in range(7):
+        t = k / 6
+        gx_, gy_ = tip[0] - 6 * s - t * 20 * s, tip[1] + 10 * s + math.sin(t * math.pi) * 14 * s
+        c.disc(gx_, gy_, 4 * s, 4 * s, hexc("#F39C1E") if k % 2 == 0 else WHITE, 0.6, 0.3)
+    # stern boiler + chimney + gauge
+    c.cylinder(-1.25, 0.0, 0.14, 30, 104, BRASS, spec=1.0)
+    for z in (50, 84):
+        c.band(-1.25, 0.0, 0.14, z, z + 5, COPPER)
+    hx, hy = p(-1.25, 0.0, 104)
+    c.pipe([(hx, hy), (hx, hy - 40 * s)], 8, STEEL * 0.8)
+    gx_, gy_ = p(-1.25, 0.15, 70)
+    c.gauge(gx_, gy_, 8)
+    # long tail: shaft from the engine down-back into the water + propeller
+    a, b = p(-1.4, 0.0, 70), p(-2.3, 0.0, -6)
+    c.pipe([a, b], 7, STEEL * 0.9, spec=0.9)
+    c.gear(b[0], b[1], 13 * s, BRASS, teeth=3, flat=0.2, hole=0.3, outline=1.2)
+    c.stroke([(b[0] - 20 * s, b[1] + 8 * s), (b[0] + 16 * s, b[1] + 12 * s)], 3, hexc("#CFE8E2"), 0.6)
+    # foam along the hull
+    c.stroke([p(-1.4, 0.26, -10), p(0.9, 0.34, -10), p(1.55, 0.02, -10)], 3.0, hexc("#CFE8E2"), 0.55)
+    c.finish(out)
+
+
+def dragon_jar(out):
+    """โอ่งมังกร (Ratchaburi dragon jar): glazed brown jar, yellow dragon,
+    wooden lid with a coconut-shell dipper."""
+    c = Canvas(220, 420, seed=48)
+    p, s = c.p, c.ss
+    c.ground_shadow(0.6, 0.6)
+    bx, by = p(0, 0, 0)
+    body = np.maximum(c.mask_ellipse(bx, by - 62 * s, 62 * s, 62 * s), c.mask_ellipse(bx, by - 6 * s, 36 * s, 12 * s))
+    glaze = hexc("#6E3B1E")
+    c.paint(body, c.cyl_field(glaze, bx, 62 * s, 1.0, spec_col=hexc("#FFE6B0")), 2.2, 0.6, tex=0.05)
+    # shoulder band + dragon
+    c.stroke([(bx - 52 * s, by - 96 * s), (bx + 52 * s, by - 96 * s)], 3.0, hexc("#D9A441"), 0.9)
+    pts = [(bx - 44 * s + k * 8 * s, by - 62 * s + 14 * s * math.sin(k * 0.9)) for k in range(12)]
+    c.stroke(pts, 7.0, hexc("#E8B13A"))
+    c.stroke(pts, 1.4, hexc("#7A4A12"), 0.8)
+    hx_, hy_ = pts[-1]
+    c.disc(hx_ + 4 * s, hy_ - 2 * s, 9 * s, 7 * s, hexc("#E8B13A"), 1.2, 0.4)
+    c.disc(hx_ + 7 * s, hy_ - 4 * s, 1.6 * s, 1.6 * s, INK, 0.3, 0)
+    for k in range(5):
+        x, y = pts[k * 2 + 1]
+        c.disc(x, y - 6 * s, 2.2 * s, 2.2 * s, hexc("#7A4A12"), 0.3, 0)
+    # mouth + wooden lid + coconut dipper
+    c.disc(bx, by - 120 * s, 36 * s, 12 * s, glaze * 0.8, 1.6, 0.4, dome=False)
+    c.disc(bx, by - 124 * s, 40 * s, 13 * s, WOOD_L, 1.6, 0.6, dome=False)
+    c.disc(bx + 8 * s, by - 132 * s, 14 * s, 9 * s, hexc("#6B4A2A"), 1.2, 0.5, spec=0.5)
+    c.stroke([(bx + 18 * s, by - 134 * s), (bx + 44 * s, by - 146 * s)], 3.0, WOOD)
+    c.finish(out)
+
+
+def pier_sign(out):
+    """ป้ายท่าเรือ: white board on two posts + orange express-boat flag."""
+    c = Canvas(260, 560, seed=49)
+    p, s = c.p, c.ss
+    c.ground_shadow(0.6, 0.2)
+    for gx in (-0.26, 0.26):
+        c.pipe([p(gx, 0, 0), p(gx, 0, 250)], 7, STEEL * 0.8, spec=0.8)
+    c.box(-0.34, -0.02, 0.34, 0.02, 170, 270, WHITE, rim=0.6)
+    c.text("ท่าเรือ", p(-0.3, 0.02, 264), p(0.3, 0.02, 264), 40, NAVY)
+    c.text("คลองไอน้ำ", p(-0.3, 0.02, 222), p(0.3, 0.02, 222), 30, NAVY)
+    c.text("เรือออกเมื่อคนเต็ม", p(-0.3, 0.02, 190), p(0.3, 0.02, 190), 14, RED)
+    fx, fy = p(0.3, 0, 270)
+    c.pipe([(fx, fy), (fx, fy - 120 * s)], 4, BRASS)
+    c.paint(c.mask_poly([(fx, fy - 120 * s), (fx + 64 * s, fy - 104 * s), (fx, fy - 82 * s)]), c.flat(ORANGE), 1.4, 0.5)
+    c.finish(out)
+
+
+PROPS = {f.__name__: f for f in (win_stand, payphone, bus_stop, moo_ping_cart, shop_cat, tire_planter,
+                                 longtail_boat, dragon_jar, pier_sign)}
 
 if __name__ == "__main__":
     name = sys.argv[1]

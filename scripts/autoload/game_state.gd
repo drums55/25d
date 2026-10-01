@@ -23,6 +23,8 @@ const ITEMS := {
 	"hot_noodles": "ก๋วยเตี๋ยวร้อนๆ",
 	"machine_oil": "น้ำมันเครื่อง",
 	"red_soda": "น้ำแดงถวายศาล",
+	"mackerel": "ปลาทูแม่กลอง",
+	"boat_garland": "พวงมาลัยผูกหัวเรือ",
 }
 ## Day clock: 6 slots of TICKS_PER_SLOT ticks. Changing rooms costs 1 tick,
 ## a delivery 2; past DAY_TICKS it is night and only sleeping starts a new day.
