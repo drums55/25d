@@ -264,6 +264,71 @@ class Canvas:
         m = ndimage.gaussian_filter(m, 3 * self.ss) * opacity
         self.a = np.maximum(self.a, m)   # black: premultiplied rgb stays 0
 
+    def ink_ring(self, mask, outline):
+        """Dark outline just inside a mask (for parts painted in pieces)."""
+        m = np.clip(mask, 0, 1)
+        er = ndimage.binary_erosion(m > 0.5, iterations=max(1, int(outline * self.ss)))
+        ring = np.clip(m - ndimage.gaussian_filter(er.astype(np.float32), 0.6 * self.ss), 0, 1)
+        self.glaze(ring, np.array(OUT, np.float32) / 255.0, 1.0)
+
+    def wheel(self, gx, gy, zc, r_cells, r_z, axis="x", spokes=True):
+        """Wheel standing on its rim. axis="x": wheel plane is x-z (rolls along
+        x); axis="y": plane y-z (rolls along y)."""
+        p, s = self.p, self.ss
+
+        def at(t, k):
+            dx = math.cos(t) * r_cells * k
+            return p(gx + (dx if axis == "x" else 0), gy + (dx if axis == "y" else 0), zc + math.sin(t) * r_z * k)
+
+        def ring(k):
+            return [at(t, k) for t in np.linspace(0, 2 * math.pi, 64, endpoint=False)]
+        cx, cy = p(gx, gy, zc)
+        self.paint(self.mask_poly(ring(1.0)), self.grad(SOOT * 1.3, 1.2, 0.7, cy - r_z * s, cy + r_z * s), 2.2, 0.5)
+        self.paint(self.mask_poly(ring(0.74)), self.grad(STEEL * 0.55, 1.1, 0.8, cy - r_z * s, cy + r_z * s), 1.4, 0.2)
+        if spokes:
+            for t in np.linspace(0, math.pi, 6, endpoint=False):
+                self.stroke([at(t, 0.72), at(t + math.pi, 0.72)], 1.6, STEEL * 0.95)
+        self.glaze(self.mask_poly(ring(0.58)), SOOT, 0.25)
+        hr = max(5.0, r_z * 0.18)
+        self.disc(cx, cy, hr * s * 0.8, hr * s, BRASS, 1.2, 0.3, spec=1.0)
+        self.stroke([at(t, 0.92) for t in np.linspace(math.radians(110), math.radians(200), 12)], 1.6, WARM * 0.8, 0.6)
+
+    def prism(self, poly, z0, z1, c, top_c=None, rim=0.7, outline=2.2, side_only=False, smooth=False):
+        """Vertical extrusion of a convex grid-space polygon (list of (gx, gy),
+        any winding). Faces lit by their outward normal; top on top."""
+        p, s = self.p, self.ss
+        cxg = sum(q[0] for q in poly) / len(poly)
+        cyg = sum(q[1] for q in poly) / len(poly)
+        n = len(poly)
+        sides = None
+        ytop = min(p(*q, z1)[1] for q in poly)
+        ybot = max(p(*q, z0)[1] for q in poly)
+        for i in range(n):
+            a, b = poly[i], poly[(i + 1) % n]
+            ex, ey = b[0] - a[0], b[1] - a[1]
+            nx, ny = ey, -ex
+            mx, my = (a[0] + b[0]) / 2 - cxg, (a[1] + b[1]) / 2 - cyg
+            if nx * mx + ny * my < 0:
+                nx, ny = -nx, -ny
+            L = math.hypot(nx, ny) or 1
+            nx, ny = nx / L, ny / L
+            if nx + ny <= 0.02:
+                continue
+            k = 0.705 + 0.155 * (ny - nx)
+            face = [p(*a, z0), p(*b, z0), p(*b, z1), p(*a, z1)]
+            ao = self._ao_z(z0, z1, *a)
+            fm = self.mask_poly(face)
+            sides = fm if sides is None else np.maximum(sides, fm)
+            self.paint(fm, self.grad(c, k * 1.08, k * 0.82, ytop, ybot), 0.0 if smooth else outline,
+                       rim * 0.4 if ny > nx else 0, ao=ao)
+        if smooth and sides is not None:
+            self.ink_ring(sides, outline)
+        if not side_only:
+            tc = c if top_c is None else top_c
+            top = [p(*q, z1) for q in poly]
+            ty0 = min(q[1] for q in top)
+            self.paint(self.mask_poly(top), self.grad(tc, 1.16, 1.0, ty0, ty0 + 120 * s), outline, rim)
+
     # ---------------- finish ----------------
     def finish(self, path, sil=2.6):
         s = self.ss
