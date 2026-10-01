@@ -7,10 +7,15 @@ signal arrived(node_id: int)
 ## Chance that soup / drinks spill when riding in rain or wading.
 const SPILL_RAIN := 0.15
 const SPILL_WADE := 0.5
+const RIDE_SCENE := "res://scenes/ride/ride.tscn"
+## Food spills when the ride ends with the steadiness meter below this.
+const SPILL_STEADINESS := 50.0
 ## Running dry: the rest of the way is pushed at this many minutes per km.
 const PUSH_MIN_PER_KM := 12.0
 
 var city := {}
+## Set by travel() for RideScene: {"dest", "route", "track"}.
+var pending_ride := {}
 var rng := RandomNumberGenerator.new()
 var _seed := -1
 var _forecast_day := -1
@@ -68,13 +73,18 @@ func route_to(dest: int, allow_wade := true) -> Dictionary:
 	)
 
 
-## Ride to `dest` along `r` (from route_to). Applies time, fuel, spills, then
-## loads the place. Returns false when there is no way there.
+## Ride to `dest` along `r` (from route_to). Normally this starts the playable
+## ride (RideScene, which calls finish_ride); with Settings.skip_ride the trip
+## resolves at once (time, fuel, spill chance) and the place loads.
+## Returns false when there is no way there.
 func travel(dest: int, r := {}) -> bool:
 	if r.is_empty():
 		r = route_to(dest)
 	if r.is_empty() or dest == GameState.location:
 		return false
+	if not Settings.skip_ride:
+		start_ride(dest, r)
+		return true
 	var km: float = r["km"]
 	var minutes: float = r["minutes"]
 	var need := km / GameState.KM_PER_LITRE
@@ -98,3 +108,52 @@ func travel(dest: int, r := {}) -> bool:
 	SceneRouter.go_to(GameState.LOCATION_SCENE, "arrival")
 	arrived.emit(dest)
 	return true
+
+
+## Map roads of a route as RideTrack segments (kind, km, water now).
+func ride_segments(r: Dictionary) -> Array:
+	var water := water_now()
+	var out: Array = []
+	for i in r.get("edges", []):
+		var e: Dictionary = get_city()["edges"][i]
+		out.append({"kind": e["kind"], "km": e["km"], "water": int(water.get(i, 0))})
+	return out
+
+
+func start_ride(dest: int, r: Dictionary) -> void:
+	var seed := hash([GameState.city_seed, GameState.day, int(GameState.minute), dest])
+	pending_ride = {
+		"dest": dest,
+		"route": r,
+		"track": RideTrack.generate(seed, ride_segments(r), r["minutes"], rain_now()),
+	}
+	GameState.riding = true
+	SceneRouter.go_to(RIDE_SCENE, "")
+
+
+## RideScene is done: fuel, extra delay, food steadiness -> spills, arrive.
+func finish_ride(result: Dictionary) -> void:
+	var dest := int(result["dest"])
+	var r: Dictionary = result["route"]
+	var km: float = r["km"]
+	if result.get("branch", "") == "A":
+		km *= RideTrack.BRANCH_FACTOR["A"]
+	var need := km / GameState.KM_PER_LITRE
+	if need > GameState.fuel:
+		var dry_km := (need - GameState.fuel) * GameState.KM_PER_LITRE
+		GameState.notice.emit("น้ำมันหมดกลางทาง! เข็นรถไปอีก %.1f กม." % dry_km)
+		GameState.advance_minutes(dry_km * PUSH_MIN_PER_KM)
+		GameState.use_fuel(GameState.fuel)
+	else:
+		GameState.use_fuel(need)
+	GameState.advance_minutes(float(result.get("delay", 0.0)))
+	var steady := float(result.get("steadiness", 100.0))
+	for o in GameState.orders:
+		if o["status"] == "picked" and o["kind"] == "food" and steady < SPILL_STEADINESS:
+			o["spilled"] = true
+			GameState.notice.emit("ของในกล่องหก! (%s)" % o["item"])
+	GameState.location = dest
+	GameState.riding = false
+	pending_ride = {}
+	SceneRouter.go_to(GameState.LOCATION_SCENE, "arrival")
+	arrived.emit(dest)

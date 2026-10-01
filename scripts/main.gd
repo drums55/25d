@@ -72,6 +72,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if (
 		GameState.clock_paused
+		or GameState.riding
 		or GameState.input_locked
 		or Dialog.is_active()
 		or not GameState.finished.is_empty()
@@ -93,18 +94,29 @@ func load_room(room_path: String, spawn_id: String) -> bool:
 	if packed == null:
 		push_error("Main: cannot load room %s" % room_path)
 		return false
-	var room := packed.instantiate() as IsoRoom
-	if room == null:
-		push_error("Main: %s root is not an IsoRoom" % room_path)
-		return false
-	_player.get_parent().remove_child(_player)
+	var node := packed.instantiate()
+	if _player.get_parent():
+		_player.get_parent().remove_child(_player)
 	for old in _room_holder.get_children():
 		_room_holder.remove_child(old)
 		old.queue_free()
+	if node is RideScene:
+		# on the road: the walking rider is parked off-tree until arrival
+		_room_holder.add_child(node)
+		_hud.set_riding(true)
+		_hud.show_title("")
+		return true
+	var room := node as IsoRoom
+	if room == null:
+		push_error("Main: %s root is not an IsoRoom" % room_path)
+		node.free()
+		return false
+	_hud.set_riding(false)
 	_room_holder.add_child(room)
 	room.get_world().add_child(_player)
 	_player.global_position = room.get_spawn_position(spawn_id)
 	_player.cancel_order()
+	_player.camera.make_current()
 	_fit_camera(room)
 	_hud.show_title(room.room_title)
 	return true

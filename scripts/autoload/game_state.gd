@@ -71,6 +71,8 @@ var input_locked := false
 var ui_open := false
 ## The game clock does not run (phone menu tab, slips, endings).
 var clock_paused := false
+## On the road (RideScene drives the clock itself).
+var riding := false
 
 
 func set_flag(flag: String, value := true) -> void:
@@ -252,6 +254,7 @@ func new_game(seed := -1) -> void:
 	input_locked = false
 	ui_open = false
 	clock_paused = false
+	riding = false
 	inventory_changed.emit(inventory)
 	stats_changed.emit()
 	time_changed.emit(day, minute)

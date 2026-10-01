@@ -424,7 +424,118 @@ def minimart(out):
     c.finish(out)
 
 
-PROPS = {f.__name__: f for f in (rider_bike, parked_scooter, food_counter, steel_table, red_stool,
+def car_body(c, length, width, body_col, cabin_col, z_body=70, z_cab=120, cab=(0.2, 0.75)):
+    """Car along gx (front at +gx). length/width in cells."""
+    p, s = c.p, c.ss
+    hl, hw = length / 2, width / 2
+    for gx in (-hl * 0.6, hl * 0.6):
+        c.wheel(gx, hw * 0.98, 22, 0.1, 22, spokes=False)
+    c.box(-hl, -hw, hl, hw, 16, z_body, body_col, rim=0.9, top_k=1.15)
+    x0 = -hl + length * cab[0]
+    x1 = -hl + length * cab[1]
+    c.prism([(x0, -hw * 0.9), (x1, -hw * 0.9), (x1 - 0.08, -hw * 0.8), (x1 - 0.08, hw * 0.8),
+             (x1, hw * 0.9), (x0, hw * 0.9)], z_body, z_cab, cabin_col)
+    win = c.mask_poly([p(x0 + 0.06, hw * 0.9, z_body + 8), p(x1 - 0.12, hw * 0.9, z_body + 8),
+                       p(x1 - 0.12, hw * 0.9, z_cab - 6), p(x0 + 0.06, hw * 0.9, z_cab - 6)])
+    c.glaze(win, GLASS, 0.6)
+    c.ink_ring(win, 1.0)
+    for gy in (-hw * 0.6, hw * 0.6):
+        hx, hy = p(hl, gy, z_body - 18)
+        c.disc(hx, hy, 6 * s, 5 * s, hexc("#FFF1B8"), 1.0, 0.6)
+
+
+def taxi(out):
+    """แท็กซี่สีชมพู + ป้าย TAXI บนหลังคา."""
+    c = Canvas(560, 420, seed=80)
+    c.ground_shadow(1.6, 0.7)
+    car_body(c, 1.6, 0.66, hexc("#E85C9A"), hexc("#E85C9A") * 0.95)
+    p = c.p
+    c.box(-0.12, -0.12, 0.12, 0.12, 120, 136, YELLOW, rim=0.6)
+    c.text("TAXI", p(-0.11, 0.121, 134), p(0.11, 0.121, 134), 12, INK)
+    c.finish(out)
+
+
+def city_bus(out):
+    """รถเมล์ครีม-แดง: long bus, route number on the side."""
+    c = Canvas(900, 560, seed=81)
+    p, s = c.p, c.ss
+    c.ground_shadow(3.2, 0.8)
+    hl, hw = 1.6, 0.4
+    for gx in (-1.0, 1.0):
+        c.wheel(gx, hw * 0.98, 26, 0.12, 26, spokes=False)
+    c.box(-hl, -hw, hl, hw, 18, 200, CREAM, rim=0.9, top_k=1.1)
+    c.box(-hl - 0.01, -hw - 0.01, hl + 0.01, hw + 0.01, 18, 70, PLASTIC_RED, rim=0.8)
+    win = c.mask_poly([p(-1.4, hw + 0.002, 110), p(1.3, hw + 0.002, 110), p(1.3, hw + 0.002, 180), p(-1.4, hw + 0.002, 180)])
+    c.glaze(win, GLASS, 0.7)
+    c.ink_ring(win, 1.2)
+    for k in range(8):
+        x = -1.4 + k * 0.34
+        c.stroke([p(x, hw + 0.003, 110), p(x, hw + 0.003, 180)], 2.0, INK, 0.6)
+    c.text("8", p(-0.2, hw + 0.004, 66), p(0.2, hw + 0.004, 66), 40, WHITE)
+    c.text("สาย 8 มาเมื่อมา", p(1.61, 0.36, 196), p(1.61, -0.36, 196), 18, YELLOW)
+    c.finish(out)
+
+
+def soi_dog(out):
+    """หมาซอย: tan street dog standing, tail up."""
+    c = Canvas(220, 260, seed=82)
+    p, s = c.p, c.ss
+    c.ground_shadow(0.5, 0.3)
+    col = hexc("#C9A06A")
+    for gx, gy in ((-0.12, -0.05), (0.12, -0.05), (-0.12, 0.05), (0.12, 0.05)):
+        c.pipe([p(gx, gy, 0), p(gx, gy, 34)], 5, col * 0.85)
+    c.prism([(-0.17, -0.07), (0.17, -0.07), (0.17, 0.07), (-0.17, 0.07)], 32, 58, col, smooth=True)
+    hx, hy = p(0.22, 0.0, 66)
+    c.disc(hx, hy, 15 * s, 13 * s, col, 1.4, 0.5)
+    c.disc(hx + 9 * s, hy + 4 * s, 7 * s, 5 * s, col * 0.8, 1.0, 0.3)
+    c.disc(hx - 4 * s, hy - 13 * s, 5 * s, 7 * s, col * 0.7, 1.0, 0.3)
+    c.pipe([p(-0.17, 0.0, 54), p(-0.24, 0.0, 80)], 4, col)
+    c.finish(out)
+
+
+def police_check(out):
+    """ด่านตรวจ: traffic cones + sign "ด่านตรวจ ชะลอความเร็ว"."""
+    c = Canvas(300, 420, seed=83)
+    p, s = c.p, c.ss
+    c.ground_shadow(0.8, 0.5)
+    for gx, gy in ((-0.25, 0.15), (0.25, 0.15)):
+        c.frustum(0.08, 0.01, 0, 50, ORANGE, cx=gx, cy=gy)
+        c.band(gx, gy, 0.04, 28, 34, WHITE)
+    c.pipe([p(0, -0.1, 0), p(0, -0.1, 150)], 4, GREY)
+    c.box(-0.3, -0.12, 0.3, -0.08, 140, 210, WHITE, rim=0.6)
+    c.text("ด่านตรวจ", p(-0.28, -0.08, 204), p(0.28, -0.08, 204), 26, PLASTIC_RED)
+    c.text("ชะลอความเร็ว", p(-0.28, -0.08, 172), p(0.28, -0.08, 172), 16, INK)
+    c.finish(out)
+
+
+def shophouse(out):
+    """ตึกแถว (roadside backdrop block): 3 storeys, shutters, signs, AC units."""
+    c = Canvas(560, 760, seed=84)
+    p, s = c.p, c.ss
+    rng = np.random.default_rng(int(c.rng.integers(1000)))
+    wall = [hexc("#D9CFB8"), hexc("#B8D1C6"), hexc("#E3C9A8")][rng.integers(3)]
+    c.box(-0.8, -0.8, 0.8, 0.8, 0, 420, wall, rim=0.6)
+    for z in (150, 290):
+        c.box(-0.82, 0.8, 0.82, 0.86, z, z + 10, wall * 0.85, rim=0.5)
+    sh = c.mask_poly([p(-0.7, 0.801, 10), p(0.7, 0.801, 10), p(0.7, 0.801, 130), p(-0.7, 0.801, 130)])
+    c.paint(sh, c.grad(CHROME * 0.85, 1.1, 0.8), 1.0, 0.3)
+    for z in range(20, 130, 8):
+        c.stroke([p(-0.7, 0.802, z), p(0.7, 0.802, z)], 1.0, GREY, 0.6)
+    sign_col = [PLASTIC_RED, GREEN, PLASTIC_BLUE, YELLOW][rng.integers(4)]
+    c.paint(c.mask_poly([p(-0.75, 0.802, 148), p(0.75, 0.802, 148), p(0.75, 0.802, 126), p(-0.75, 0.802, 126)]),
+            c.flat(sign_col), 0.8, 0)
+    c.text(["ร้านทอง", "ซ่อมมือถือ", "ข้าวแกง", "ร้านยา"][rng.integers(4)],
+           p(-0.7, 0.803, 147), p(0.7, 0.803, 147), 20, WHITE)
+    for z in (190, 330):
+        for gx in (-0.45, 0.15):
+            w = c.mask_poly([p(gx, 0.801, z), p(gx + 0.3, 0.801, z), p(gx + 0.3, 0.801, z + 70), p(gx, 0.801, z + 70)])
+            c.glaze(w, hexc("#2B3A48"), 0.8)
+            c.ink_ring(w, 1.0)
+        c.box(0.5, 0.8, 0.7, 0.9, z + 10, z + 40, WHITE, rim=0.5)   # aircon
+    c.finish(out)
+
+
+PROPS = {f.__name__: f for f in (taxi, city_bus, soi_dog, police_check, shophouse, rider_bike, parked_scooter, food_counter, steel_table, red_stool,
                                  market_stall, fruit_crates, house_gate, plant_pots, guard_desk,
                                  lift_door, parcel_shelf, reception_desk, water_dispenser, sofa,
                                  fuel_pump, fuel_pump_green, tire_stack, trash_bin, tool_bench, minimart)}

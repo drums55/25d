@@ -12,6 +12,8 @@ var clock_speed := "ปกติ"
 var text_speed := "ปกติ"
 var volume := 0.8
 var show_hints := true
+## Skip the playable ride: trips resolve instantly (accessibility / tests).
+var skip_ride := false
 
 
 func _ready() -> void:
@@ -26,24 +28,26 @@ func chars_per_second() -> float:
 	return TEXT_SPEEDS.get(text_speed, 45.0)
 
 
-func load_settings() -> void:
+func load_settings(path := PATH) -> void:
 	var cfg := ConfigFile.new()
-	if cfg.load(PATH) != OK:
+	if cfg.load(path) != OK:
 		return
 	clock_speed = str(cfg.get_value("game", "clock_speed", clock_speed))
 	text_speed = str(cfg.get_value("game", "text_speed", text_speed))
 	volume = float(cfg.get_value("audio", "volume", volume))
 	show_hints = bool(cfg.get_value("game", "show_hints", show_hints))
+	skip_ride = bool(cfg.get_value("game", "skip_ride", skip_ride))
 	_apply()
 
 
-func save_settings() -> void:
+func save_settings(path := PATH) -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("game", "clock_speed", clock_speed)
 	cfg.set_value("game", "text_speed", text_speed)
 	cfg.set_value("game", "show_hints", show_hints)
+	cfg.set_value("game", "skip_ride", skip_ride)
 	cfg.set_value("audio", "volume", volume)
-	cfg.save(PATH)
+	cfg.save(path)
 	_apply()
 
 

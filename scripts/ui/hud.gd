@@ -91,8 +91,17 @@ func blocks_point(screen_pos: Vector2) -> bool:
 	return false
 
 
+## On the road the app is put away (eyes on the road).
+func set_riding(on: bool) -> void:
+	if on:
+		phone.close()
+	_phone_button.visible = not on
+	_deliveries.visible = not on
+	_banner.hide()
+
+
 func open_phone(tab := "orders") -> void:
-	if not GameState.finished.is_empty():
+	if not GameState.finished.is_empty() or GameState.riding:
 		return
 	_banner.hide()
 	phone.open(tab)
@@ -100,7 +109,7 @@ func open_phone(tab := "orders") -> void:
 
 func _on_offer(o: Dictionary) -> void:
 	_phone_button.text = "แอปไรเดอร์ (%d)" % Orders.offers().size()
-	if phone.is_open():
+	if phone.is_open() or GameState.riding:
 		return
 	_banner.text = (
 		"งานใหม่! [%s] %d บาท · %s — แตะเพื่อดู"

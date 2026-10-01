@@ -39,8 +39,15 @@ func go_to(room_path: String, spawn_id := "default", fade := true) -> void:
 	GameState.input_locked = true
 	if fade:
 		await _fade_to(1.0)
+	if not is_instance_valid(_host):
+		# the game scene went away mid-fade (back to the title, tests)
+		_fade.modulate.a = 0.0
+		GameState.input_locked = false
+		_busy = false
+		return
 	if _host.load_room(room_path, spawn_id):
-		GameState.save_game(0)
+		if not GameState.riding:
+			GameState.save_game(0)
 		room_changed.emit(room_path)
 	if fade:
 		await _fade_to(0.0)

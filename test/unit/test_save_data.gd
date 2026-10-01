@@ -50,12 +50,13 @@ func test_old_and_corrupt_saves_are_ignored():
 
 
 func test_settings_persist():
+	var path := "user://test_settings.cfg"
 	var old := Settings.clock_speed
 	Settings.clock_speed = "เร็ว"
-	Settings.save_settings()
+	Settings.save_settings(path)
 	Settings.clock_speed = "ปกติ"
-	Settings.load_settings()
+	Settings.load_settings(path)
 	assert_eq(Settings.clock_speed, "เร็ว")
 	assert_almost_eq(Settings.seconds_per_minute(), 0.6, 0.001)
 	Settings.clock_speed = old
-	Settings.save_settings()
+	DirAccess.remove_absolute(path)

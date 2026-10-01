@@ -81,6 +81,7 @@ scenes/characters/       character_view.tscn (sprite 8 ทิศ; ใช้จ�
 scenes/props/            prop_block, npc, interactable, patrol_bot, steam_vent
 scripts/autoload/        GameState (เงิน หนี้ น้ำมัน ดาว เวลา orders save slots), Dialog, SceneRouter, Settings, City, Orders
 scripts/core/            Iso, SaveData, DialogData, ArtLibrary, PickTest, CityGen, Weather, OrderGen — pure logic, unit-tested
+scripts/ride/            ride_scene (ช่วงขี่), ride_road (วาดถนน); scenes/ride/ride.tscn
 scripts/ui/              hud, phone, city_map_view, day_clock, rain_overlay, save_slots, settings_panel, main_menu, ui_kit, dialog_box
 tools/art/               gen_svg.py (svg เก่า), png/ (paint.py room.py props_th.py ...), 3d/ (ตัวละคร)
 assets/dialog/dialog.json  บทพูด NPC/ของในฉาก (talk_*); format อยู่หัวไฟล์ scripts/core/dialog_data.gd
@@ -117,6 +118,17 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   ถนน (MST + เพื่อนบ้านใกล้ 2 จุด, main/soi, km, นาที, `flood` 0-2) + `route()` Dijkstra (น้ำลึกปิด, น้ำตื้องลุยช้า ×1.6).
   save เก็บแค่ seed. autoload `City`: get_city/node/here/forecast/rain_now/water_now/route_to/**travel(dest)** (เวลา+น้ำมัน+ซุปหก+
   น้ำมันหมด=เข็น แล้ว `SceneRouter.go_to(LOCATION_SCENE)`)
+- **ช่วงขี่เล่นได้ (2026-10-01, เจ้าของ: "ความสนุกลดลง เหมือนคลิกๆ ตาม map")**: `City.travel()` → `start_ride()` สร้าง
+  `RideTrack.generate(seed, segments จาก route, minutes, rain)` (pure, `scripts/core/ride_track.gd`) → `scenes/ride/ride.tscn`
+  (`RideScene` + `RideRoad`): ถนน iso วิ่งไปทางขวาล่าง 3 เลน ขอบทางแดงขาว ตึกแถว/ร้านสะดวกซื้อ/เสาไฟเลื่อนผ่าน, แตะเหนือรถ = เลนซ้าย
+  ใต้รถ = เลนขวา (W/S A/D บน PC). สิ่งกีดขวาง `RideTrack.KINDS`: แท็กซี่ชมพู/รถเมล์ (ขับไปข้างหน้า), รถเข็น, มอไซค์จอด = ชน
+  (หยุด 1.1 วิ +3 นาที), หมาซอย (เดินข้ามเลน), หลุม, ฝาท่อ, น้ำขัง (ช้าลง), ด่านตรวจ (+5 นาที, ต้องหาเลนว่าง), รถติด (ทุกเลน ช้า).
+  ทางแยก: ป้ายเลนซ้าย = ซอยลัด (สั้น ×0.72 แต่หลุม/หมา/น้ำ), เลนขวา = ถนนใหญ่ (ไกล + รถติด) — ตัดสินตอนผ่านป้าย (`SIGN_LEAD`).
+  มาตร "ความนิ่งของของในกล่อง" (ชน/หลุม/ส่ายเลนรัวๆ ลด; ฝนลดหนักขึ้น) จบแล้ว < 50 = อาหารหก. นาฬิกาเกมเดินตามการขี่ (ขี่เรียบ = เวลาตามแผนที่;
+  หยุด/ช้า = เสียเวลาเพิ่ม). จบ → `City.finish_ride()` (น้ำมันตามกม. จริงของทาง, delay, หก) → โหลดสถานที่.
+  ระหว่างขี่ `GameState.riding` = true: Main ไม่เดินนาฬิกาเอง, ไม่ autosave, ซ่อนปุ่มแอป/รายการงาน, ปิดแอป.
+  ตั้งค่า "ข้ามช่วงขี่" (`Settings.skip_ride`) = ไปถึงทันทีแบบเดิม; **test ทุกตัวผ่าน `TestHelpers.start_at` ตั้ง skip_ride=true**
+  (test_ride เปิดเอง). art รถ/สิ่งกีดขวาง: taxi, city_bus, soi_dog, police_check, shophouse ใน props_bkk.py
 - **ฝน/น้ำท่วม**: `Weather` (pure) ฝน 0-2 ช่วง/วันจาก seed+day; น้ำบนถนน = ฝนสะสม 120 นาที (หนัก ≥30 นาที = ลึก, ฝนรวม ≥40 = ตื้น)
   จำกัดด้วย `flood` ของถนน; ฝน = ขี่ช้า ×1.25/×1.5, ค่ารอบ +10, ซุปหก 15% (ลุยน้ำ 50%). แผนที่วาดถนนน้ำตื้น = ประฟ้า, ลึก = กากบาท
 - **ออเดอร์**: `OrderGen` (pure) food/parcel/doc ต่าง behavior (อาหาร: ready_at รอร้าน, ร้อน→อุ่น→เย็น, หก; พัสดุ: size 1-2 ช่อง, COD
@@ -189,6 +201,9 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
 - `git pull` บน PC ล้ม "untracked working tree files would be overwritten: *.import" เมื่อ cloud commit `.import`
   ที่ Godot บน PC สร้างไว้ก่อนแล้ว (เจ้าของเจอ 2026-10-01; เกมที่รันต่อเลยเป็นของเก่า) → `tools/pull.ps1` ลบ untracked
   `*.import` ก่อน pull (Godot สร้างใหม่เอง); `run.ps1` pull ให้เองทุกครั้ง (`-NoPull` ถ้าไม่ต้องการ), `update.ps1` ใช้ตัวเดียวกัน
+- SceneRouter.go_to ที่ค้าง await fade อยู่ตอน Main ถูก free (กลับหน้าแรก / test จบกลางทาง) เคยทำ `_busy` ค้างตลอดไป
+  → ตรวจ `is_instance_valid(_host)` หลัง fade แล้วรีเซ็ต. test ที่เขียน settings ต้องใช้ path ชั่วคราว (`save_settings(path)`)
+  ไม่งั้นค่า skip_ride ของ test ไปติดใน `user://settings.cfg` จริง
 - `adb` ไม่อ่าน `ADB_SERIAL` เอง (มันอ่าน `ANDROID_SERIAL`) — script ส่ง `-s $env:ADB_SERIAL` ให้
 - Export template มี 1.1 GB; dev_setup แตกเฉพาะไฟล์ android_* เก็บไว้
 
@@ -203,6 +218,7 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
   Android cmdline-tools (`platform-tools`, `build-tools;34.0.0`) + ตั้ง `export/android/android_sdk_path`
 
 ## สถานะ / ยังไม่ได้ทำ
+- **ช่วงขี่เล่นได้ เสร็จ (2026-10-01)** — รอเจ้าของลองว่ากลับมาสนุกไหม ก่อนทำ P1 ต่อ
 - **P0 เสร็จ (2026-10-01)**: เมนู/เซฟ 3 ช่อง+ออโต้/ตั้งค่า, เมืองสุ่ม+แผนที่+ขี่, ฝน/น้ำท่วม, แอป (งานเข้า/รับ/ข้าม/ยกเลิก/นำทาง),
   อาหาร/พัสดุ/เอกสาร, ดาว+รีวิว, เงิน/หนี้/ค่าเช่า/น้ำมัน/ปั๊ม, สลิปรายวัน, ตอนจบ 4 แบบ
 - ต่อไป (DESIGN 10.8): **P1** ปักหมุดผิด, COD ไม่รับ, ยกเลิกหลังซื้อ, รปภ.คอนโด, เจ้าหนี้ตามหา (PatrolBot), รีวิว 1 ดาว+อุทธรณ์;
