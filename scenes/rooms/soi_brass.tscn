@@ -27,6 +27,19 @@ color = Color(0.82, 0.64, 0.24, 1)
 [node name="Interactable" parent="World/SpiritHouse" instance=ExtResource("7_int")]
 prompt = "ไหว้"
 dialog_id = "spirit_house"
+npc_id = "spirit_house"
+
+[node name="JobBoard" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(192, 160)
+footprint_cells = Vector2(0.5, 0.3)
+height = 110.0
+color = Color(0.85, 0.7, 0.3, 1)
+art_name = "sign"
+
+[node name="Interactable" parent="World/JobBoard" instance=ExtResource("7_int")]
+prompt = "บอร์ดงาน"
+npc_id = "job_board"
+opens_job_board = true
 
 [node name="WaterTank" parent="World" instance=ExtResource("2_prop")]
 position = Vector2(384, 384)
@@ -76,6 +89,7 @@ character_name = "lung_pradit"
 
 [node name="Interactable" parent="World/LungPradit"]
 dialog_id = "lung_pradit"
+npc_id = "lung_pradit"
 
 [node name="SteamTukTuk" parent="World" instance=ExtResource("2_prop")]
 position = Vector2(-32, 560)

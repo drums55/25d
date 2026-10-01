@@ -1,0 +1,94 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/job_board.gd" id="1_board"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_board"]
+content_margin_left = 40.0
+content_margin_top = 30.0
+content_margin_right = 40.0
+content_margin_bottom = 30.0
+bg_color = Color(0.08, 0.07, 0.09, 0.96)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.85, 0.68, 0.35, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[node name="JobBoard" type="PanelContainer"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -760.0
+offset_top = -500.0
+offset_right = 760.0
+offset_bottom = 500.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_board")
+script = ExtResource("1_board")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.95, 0.78, 0.4, 1)
+theme_override_font_sizes/font_size = 44
+text = "บอร์ดงานวินซอยทองเหลือง"
+
+[node name="Close" type="Button" parent="VBox/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "ปิด"
+
+[node name="Cargo" type="Label" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+
+[node name="Scroll" type="ScrollContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Lists" type="VBoxContainer" parent="VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="OffersTitle" type="Label" parent="VBox/Scroll/Lists"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.78, 0.4, 1)
+theme_override_font_sizes/font_size = 32
+text = "งานที่มีวันนี้"
+
+[node name="Offers" type="VBoxContainer" parent="VBox/Scroll/Lists"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ActiveTitle" type="Label" parent="VBox/Scroll/Lists"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.78, 0.4, 1)
+theme_override_font_sizes/font_size = 32
+text = "งานที่รับไว้"
+
+[node name="Active" type="VBoxContainer" parent="VBox/Scroll/Lists"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Sleep" type="Button" parent="VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "นอน (จบวัน)"

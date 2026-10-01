@@ -14,10 +14,18 @@ var _tween: Tween
 
 func _ready() -> void:
 	hide()
-	Dialog.started.connect(func(_id): show())
-	Dialog.finished.connect(func(_id): hide())
+	Dialog.started.connect(_on_started)
+	Dialog.finished.connect(_on_finished)
 	Dialog.line_shown.connect(_on_line)
 	Dialog.skip_typing_requested.connect(_finish_typing)
+
+
+func _on_started(_id: String) -> void:
+	show()
+
+
+func _on_finished(_id: String) -> void:
+	hide()
 
 
 func _on_line(speaker: String, text: String) -> void:

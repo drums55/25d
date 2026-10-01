@@ -29,9 +29,23 @@ func is_active() -> bool:
 func start(id: String) -> bool:
 	if is_active():
 		return false
-	_lines = DialogData.resolve(_data, id, GameState.flags, GameState.inventory)
+	_lines = DialogData.resolve(_data, id, GameState.flags, GameState.inventory, GameState.money)
 	if _lines.is_empty():
 		push_warning("Dialog: unknown or empty dialog '%s'" % id)
+		return false
+	_id = id
+	_index = 0
+	started.emit(id)
+	_show_current()
+	return true
+
+
+## Plays lines that are not in dialog.json (job pickups/dropoffs).
+func start_lines(lines: Array, id := "adhoc") -> bool:
+	if is_active():
+		return false
+	_lines = DialogData.normalize(lines)
+	if _lines.is_empty():
 		return false
 	_id = id
 	_index = 0

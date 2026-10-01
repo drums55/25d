@@ -9,7 +9,8 @@ class_name DialogData
 ## A plain array is an unconditional dialog. An object entry plays `lines` when
 ## all of its conditions hold, otherwise falls through to the dialog id named
 ## in `else`. Conditions: `if_flag`, `if_not_flag`, `if_item` (in inventory),
-## `if_not_item`. Line actions (applied when the line is shown): `set_flag`,
+## `if_not_item`, `if_money_at_least` (int).
+## Line actions (applied when the line is shown): `set_flag`,
 ## `give_item`, `take_item`, `money` (int, +/-).
 
 const MAX_REDIRECTS := 16
@@ -28,7 +29,7 @@ static func load_file(path: String) -> Dictionary:
 
 ## Resolves a dialog id to its lines given flags and inventory. Returns [] if unknown.
 static func resolve(
-	data: Dictionary, id: String, flags: Dictionary, inventory: Array = []
+	data: Dictionary, id: String, flags: Dictionary, inventory: Array = [], money := 0
 ) -> Array:
 	var current := id
 	for _i in MAX_REDIRECTS:
@@ -37,14 +38,18 @@ static func resolve(
 			return _normalize(entry)
 		if not entry is Dictionary:
 			return []
-		if conditions_hold(entry, flags, inventory):
+		if conditions_hold(entry, flags, inventory, money):
 			return _normalize(entry.get("lines", []))
 		current = str(entry.get("else", ""))
 	push_error("DialogData: redirect loop at '%s'" % id)
 	return []
 
 
-static func conditions_hold(entry: Dictionary, flags: Dictionary, inventory: Array) -> bool:
+static func conditions_hold(
+	entry: Dictionary, flags: Dictionary, inventory: Array, money := 0
+) -> bool:
+	if entry.has("if_money_at_least") and money < int(entry["if_money_at_least"]):
+		return false
 	var flag := str(entry.get("if_flag", ""))
 	if not flag.is_empty() and not flags.get(flag, false):
 		return false
@@ -58,6 +63,10 @@ static func conditions_hold(entry: Dictionary, flags: Dictionary, inventory: Arr
 	if not not_item.is_empty() and inventory.has(not_item):
 		return false
 	return true
+
+
+static func normalize(lines) -> Array:
+	return _normalize(lines)
 
 
 static func _normalize(lines) -> Array:

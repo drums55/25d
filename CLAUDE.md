@@ -23,11 +23,7 @@
 - **ตัวเอก = ไรเดอร์** (ไรเดอร์ส่งของ/วินฯ ใส่หมวกกันน็อก+แว่นกันลม ถือประแจท่อเป็นอาวุธ)
 - **เรื่องหลัก = แบบ B (เจ้าของเลือก 2026-10-01)**: ไรเดอร์ติดหนี้ค่าเช่ามอเตอร์ไซค์ไอน้ำ 300 บาท (`GameState.RENT_DUE`)
   ต้องรับงานส่งของจากคนในย่านทีละงาน (คุย → ไปเอาของ → ส่ง → ได้เงิน) แต่ละงานพาไปเจอความลับของย่าน (เครื่องจักรเริ่มรวน)
-  งานที่ 1: ลุงประดิษฐ์ (`job1_accepted`) → เจ๊หมวยให้ `brass_gear` (`job1_pickup`) → หุ่นเฝ้าตลาดรวน (`MarketGuard`,
-  `market_guard_down`) → ส่งลุง +80 (`job1_done`)
-  งานที่ 2: เจ๊หมวยให้ `parts_box` (`job2_accepted`) → ส่งเฮียเป้งที่อู่ +100 (`job2_done`) → เฮียสั่งงาน 3 (`job3_accepted`)
-  งานที่ 3: หมุน `pressure_valve` จากหม้อไอน้ำตลาด (Interactable "ดู" ของ Boiler, `job3_pickup`) → เฮีย +120 (`job3_done`)
-  → คุยเฮียอีกครั้ง จ่าย 300 (`money: -300`) → `rent_paid` (จบบทที่ 1; เบาะแส: วาล์วมีรอยแกะ = มีคนตั้งใจทำเครื่องรวน)
+  **M1 (2026-10-01): งานทั้งหมดย้ายเข้าบอร์ดงานแล้ว — ไม่มีลำดับบังคับ** ผู้เล่นเลือกเองว่ารับงานไหน
   ห้องที่ 3 `steam_garage` (อู่ไอน้ำเฮียเป้ง, 10×10, ผนังสังกะสี) เข้าจากประตูผนังซ้ายของซอย (u=3.2). ศัตรู `GarageBot` (hp 4)
   **เฮียเป้งยังใช้ sprite ของ lung_pradit ย้อมฟ้า** (`modulate` บน Rig) — ต้อง render ตัวจริงใน tools/art/3d ทีหลัง
 - **Art ตอนนี้ = vector SVG ที่วาดด้วยโค้ด** `tools/art/gen_svg.py` (รันแล้วได้ `assets/art/**.svg` ทุกชิ้น) —
@@ -75,7 +71,7 @@
 ## แผนใหญ่
 - **`docs/DESIGN.md` = แผนใหญ่ของเกม** (เสาหลัก, core loop รายวัน, เขต, ระบบเรียงลำดับ, 3 บท, milestones M0–M4).
   เจ้าของติ 2026-10-01 ว่าเกม linear และทำมั่วไปเรื่อยๆ → ก่อนเพิ่มฟีเจอร์ต้องชี้ได้ว่าหนุนเสาหลักไหนและอยู่ milestone ไหน
-  ร่าง 1 ยังรอคำตอบข้อ 9 (ความยาว/โทน/ความแรงของการเลือก/ปริมาณต่อสู้) ก่อนเริ่ม M1
+  เจ้าของตอบข้อ 9 แล้ว: **สั้น / ตลก / การเลือกกลางๆ / เน้นปริศนา (ต่อสู้ส่วนน้อย) / ทุกห้องต้องเก๊ตว่าเป็น BKK** → เริ่ม M1
 
 ## โครงสร้าง
 ```
@@ -85,8 +81,8 @@ scenes/main.tscn         root: RoomHolder + Player (persistent) + HUD
 scenes/rooms/*.tscn      soi_brass, steam_market, steam_garage — IsoRoom: World (y-sort) + Spawns (Marker2D ชื่อ = spawn id)
 scenes/characters/       character_view.tscn (sprite 8 ทิศ; ใช้จริง), cutout_rig.tscn (placeholder fallback)
 scenes/props/            prop_block, door, npc, interactable, training_dummy
-scenes/ui/               hud (ปุ่ม ATK + dialog box), dialog_box
-scripts/autoload/        GameState (flags, save/load), Dialog (runner), SceneRouter (fade + room swap)
+scenes/ui/               hud (สถานะ/นาฬิกา/notice + dialog box + job board), dialog_box, job_board
+scripts/autoload/        GameState (flags, เงิน, ของ, HP, นาฬิกา, save), Dialog (runner), SceneRouter (fade + room swap), Jobs (งานส่งของ)
 scripts/core/            Iso (math), SaveData, DialogData, ArtLibrary — pure logic, unit-tested
 tools/art/gen_svg.py     generator svg เดิม (prop ที่ยังไม่มี png); tools/art/png/ = prop/ฉาก PNG ลงสี (numpy+PIL+scipy)
 assets/dialog/dialog.json  dialog ทั้งหมด (format อยู่หัวไฟล์ scripts/core/dialog_data.gd)
@@ -116,6 +112,15 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   ไม่ทับ collision ประตู ไม่งั้นเด้งกลับ. test_scenes ตรวจว่า target/spawn มีจริง
 - **Save**: JSON ที่ `user://save_0.json` (room, spawn, flags). autosave ทุกครั้งที่เปลี่ยนห้อง.
   save ที่ชี้ห้องที่ถูกลบ → กลับห้องเริ่มต้น
+- **งานส่งของ (M1)**: data ใน `assets/jobs/jobs.json` (id, title, from, desc, item, pickup{npc,where}, dropoff{npc,where},
+  reward, late_reward, deadline_slots, requires[flags], sets[flags], pickup_lines/dropoff_lines/late_lines) + autoload `Jobs`
+  (`available/accept/abandon/on_interact/sleep`). รับงานที่ **บอร์ดงาน** (prop `JobBoard` ในซอย → `Interactable.opens_job_board`
+  → `Hud.open_job_board` → UI `scenes/ui/job_board.tscn`, input lock ตอนเปิด). ช่องเก็บของ `GameState.cargo_slots` (เริ่ม 2).
+  pickup/dropoff = แตะ NPC ที่ `Interactable.npc_id` ตรง (job มาก่อน dialog ปกติ; dropoff ก่อน pickup). ส่งสาย = `late_reward`
+- **นาฬิกาวัน**: `GameState.tick` 0..12 (6 ช่วง × 2: เช้า สาย เที่ยง บ่าย เย็น ค่ำ), เปลี่ยนห้อง +1, ส่งของ +2, เกิน 12 = กลางคืน.
+  "นอน" ที่บอร์ด = `Jobs.sleep()`: งานที่ยังไม่ส่ง fail (ของหาย, กลับมาเปิดให้รับใหม่วันถัดไป), วัน+1, HP เต็ม.
+  แสงตามช่วงเวลา = tween `RoomHolder.modulate` ใน `main.gd` (**อย่าใช้ CanvasModulate** — ทำ Godot crash signal 11 ตอนรัน GUT)
+  เงินค่าเช่า: คุยเฮียเป้งเมื่อ `if_money_at_least: 300` → จ่าย + `rent_paid`. save v3 เก็บ day/tick/cargo/active/done/failed jobs
 - **Dialog**: JSON-driven; เงื่อนไขต่อ entry: `if_flag`/`if_not_flag`/`if_item`/`if_not_item` (+`else` chain);
   action ต่อบรรทัด: `set_flag`/`give_item`/`take_item`/`money` (ทำตอนบรรทัดโชว์ → HUD ขึ้น notice). แตะที่ไหนก็ได้ = next
   (ถ้ากำลังพิมพ์ = แสดงทั้งบรรทัด). Quest = flags + inventory ใน dialog.json ล้วนๆ ไม่มี quest system แยก
@@ -184,6 +189,5 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
 ## สถานะ / ยังไม่ได้ทำ
 - ธีมตกลงแล้ว (BKK steampunk) แต่ยังไม่มีเรื่องหลัก/ตัวเอก/เป้าหมายของเกม
 - save เก่าที่ชี้ room_01/room_02 (ถูก rename) จะเริ่มใหม่ที่ซอยทองเหลืองเอง
-- test "path bends around the pillar" (test_point_click) เคย fail 1 ครั้งตอนรันทั้งชุดหลังเพิ่ม test_quest แล้วผ่านรอบถัดไป
-  (navmesh sync timing?) — ถ้าเจออีกให้เพิ่ม wait_physics_frames ใน before_each
+- test "path bends around the pillar" flake = navmesh map ยังไม่ sync หลังเปลี่ยนห้อง → test รอจน `map_get_path` ได้ path (≤30 เฟรม)
 - ยังไม่มี: บทที่ 2 (ใครแกะวาล์ว), เสียง, เมนู/new game, sprite จริงของเฮียเป้ง (ลบ save = `adb shell run-as com.drums55.game25d rm files/save_0.json`)

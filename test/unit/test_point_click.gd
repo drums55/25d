@@ -33,7 +33,15 @@ func test_navmesh_built_and_routes_around_pillar():
 	var pillar := _world("WaterTank")
 	var a := pillar.global_position + Vector2(0, -120)
 	var b := pillar.global_position + Vector2(0, 120)
-	var path := NavigationServer2D.map_get_path(region.get_navigation_map(), a, b, true)
+	# The map syncs on a later physics frame; earlier tests swapped rooms, so
+	# wait until a path exists instead of assuming it is ready.
+	var map := region.get_navigation_map()
+	var path := NavigationServer2D.map_get_path(map, a, b, true)
+	for i in 30:
+		if path.size() > 0:
+			break
+		await wait_physics_frames(1)
+		path = NavigationServer2D.map_get_path(map, a, b, true)
 	assert_gt(path.size(), 2, "path bends around the pillar")
 	var foot := Iso.footprint(pillar.footprint_cells)
 	for p in path:

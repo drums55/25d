@@ -47,7 +47,6 @@ func test_dialog_runner_sets_flags_and_finishes():
 	assert_false(Dialog.is_active())
 	assert_signal_emitted(Dialog, "finished")
 	assert_true(GameState.has_flag("met_pradit"))
-	assert_true(GameState.has_flag("job1_accepted"))
 	GameState.new_game()
 
 
@@ -59,38 +58,32 @@ func test_conditions_and_actions():
 			"if_not_flag": "b",
 			"if_item": "gear",
 			"if_not_item": "cash",
+			"if_money_at_least": 50,
 			"lines": [{"text": "ok", "give_item": "x", "take_item": "gear", "money": 80}],
 			"else": "no"
 		},
 		"no": ["no"],
 	}
-	assert_eq(DialogData.resolve(data, "q", {"a": true}, ["gear"])[0]["text"], "ok")
-	assert_eq(DialogData.resolve(data, "q", {"a": true}, [])[0]["text"], "no", "needs item")
+	assert_eq(DialogData.resolve(data, "q", {"a": true}, ["gear"], 50)[0]["text"], "ok")
 	assert_eq(
-		DialogData.resolve(data, "q", {"a": true, "b": true}, ["gear"])[0]["text"],
-		"no",
-		"blocked flag"
+		DialogData.resolve(data, "q", {"a": true}, ["gear"], 49)[0]["text"], "no", "needs money"
 	)
-	assert_eq(
-		DialogData.resolve(data, "q", {"a": true}, ["gear", "cash"])[0]["text"],
-		"no",
-		"blocked item"
-	)
-	var line: Dictionary = DialogData.resolve(data, "q", {"a": true}, ["gear"])[0]
+	assert_eq(DialogData.resolve(data, "q", {"a": true}, [], 50)[0]["text"], "no", "needs item")
+	assert_eq(DialogData.resolve(data, "q", {"a": true, "b": true}, ["gear"], 50)[0]["text"], "no")
+	assert_eq(DialogData.resolve(data, "q", {"a": true}, ["gear", "cash"], 50)[0]["text"], "no")
+	var line: Dictionary = DialogData.resolve(data, "q", {"a": true}, ["gear"], 50)[0]
 	assert_eq(line["give_item"], "x")
 	assert_eq(line["take_item"], "gear")
 	assert_eq(line["money"], 80)
 
 
-func test_runner_applies_item_and_money_actions():
+func test_start_lines_plays_adhoc_lines_with_actions():
 	GameState.new_game()
-	GameState.set_flag("job1_accepted")
-	GameState.give_item("brass_gear")
-	assert_true(Dialog.start("lung_pradit"))
-	for i in 20:
+	assert_true(Dialog.start_lines([{"speaker": "x", "text": "hi", "money": 5}, "bye"], "t"))
+	assert_true(Dialog.is_active())
+	assert_eq(GameState.money, 5)
+	for i in 5:
 		Dialog.typing = false
 		Dialog.advance()
-	assert_false(GameState.has_item("brass_gear"), "gear handed over")
-	assert_eq(GameState.money, 80)
-	assert_true(GameState.has_flag("job1_done"))
+	assert_false(Dialog.is_active())
 	GameState.new_game()

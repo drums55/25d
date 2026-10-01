@@ -2,7 +2,7 @@ class_name SaveData
 extends RefCounted
 ## Serializable game progress. Pure data so it can be unit-tested headless.
 
-const VERSION := 2
+const VERSION := 3
 
 var room_path := ""
 var spawn_id := "default"
@@ -10,6 +10,12 @@ var flags := {}
 var money := 0
 var inventory: Array = []
 var hp := -1
+var day := 1
+var tick := 0
+var cargo_slots := 0
+var active_jobs: Array = []
+var done_jobs: Array = []
+var failed_jobs: Array = []
 
 
 func to_dict() -> Dictionary:
@@ -21,6 +27,12 @@ func to_dict() -> Dictionary:
 		"money": money,
 		"inventory": inventory.duplicate(),
 		"hp": hp,
+		"day": day,
+		"tick": tick,
+		"cargo_slots": cargo_slots,
+		"active_jobs": active_jobs.duplicate(true),
+		"done_jobs": done_jobs.duplicate(),
+		"failed_jobs": failed_jobs.duplicate(),
 	}
 
 
@@ -37,6 +49,18 @@ static func from_dict(d: Dictionary) -> SaveData:
 		for item in inv:
 			s.inventory.append(str(item))
 	s.hp = int(d.get("hp", -1))
+	s.day = int(d.get("day", 1))
+	s.tick = int(d.get("tick", 0))
+	s.cargo_slots = int(d.get("cargo_slots", 0))
+	for key in ["active_jobs", "done_jobs", "failed_jobs"]:
+		var arr = d.get(key, [])
+		if arr is Array:
+			s.set(key, arr.duplicate(true))
+	for entry in s.active_jobs:
+		if entry is Dictionary:
+			entry["id"] = str(entry.get("id", ""))
+			entry["picked"] = bool(entry.get("picked", false))
+			entry["due_tick"] = int(entry.get("due_tick", 0))
 	return s
 
 

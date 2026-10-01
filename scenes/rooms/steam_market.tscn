@@ -31,6 +31,7 @@ amount = 14
 [node name="Interactable" parent="World/Boiler" instance=ExtResource("3_int")]
 prompt = "ดู"
 dialog_id = "boiler"
+npc_id = "market_boiler"
 
 [node name="GearStall" parent="World" instance=ExtResource("2_prop")]
 position = Vector2(-160, 336)
@@ -46,6 +47,7 @@ character_name = "je_muay"
 
 [node name="Interactable" parent="World/JeMuay"]
 dialog_id = "je_muay"
+npc_id = "je_muay"
 
 [node name="Crate" parent="World" instance=ExtResource("2_prop")]
 position = Vector2(320, 416)

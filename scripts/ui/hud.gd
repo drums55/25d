@@ -16,6 +16,8 @@ var _notice_busy := false
 @onready var _money: Label = %Money
 @onready var _items: Label = %Items
 @onready var _notice: Label = %Notice
+@onready var _clock: Label = %Clock
+@onready var _board: JobBoard = %JobBoard
 
 
 func _ready() -> void:
@@ -23,10 +25,21 @@ func _ready() -> void:
 	GameState.money_changed.connect(_on_money)
 	GameState.inventory_changed.connect(_on_inventory)
 	GameState.notice.connect(_on_notice)
+	GameState.time_changed.connect(_on_time)
+	_on_time(GameState.day, GameState.tick)
+	add_to_group("hud")
 	_on_hp(GameState.hp, GameState.MAX_HP)
 	_on_money(GameState.money)
 	_on_inventory(GameState.inventory)
 	_notice.modulate.a = 0.0
+
+
+func _on_time(day: int, _tick: int) -> void:
+	_clock.text = "วันที่ %d · %s" % [day, GameState.slot_name()]
+
+
+func open_job_board() -> void:
+	_board.open()
 
 
 func _on_hp(hp: int, max_hp: int) -> void:

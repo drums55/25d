@@ -40,6 +40,8 @@ func go_to(room_path: String, spawn_id := "default", fade := true) -> void:
 	if fade:
 		await _fade_to(1.0)
 	if _host.load_room(room_path, spawn_id):
+		if GameState.room_path != room_path:
+			GameState.advance_time(GameState.ROOM_CHANGE_TICKS)
 		GameState.room_path = room_path
 		GameState.spawn_id = spawn_id
 		GameState.save_game()
