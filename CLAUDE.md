@@ -45,6 +45,12 @@
     ทิศเลือกแถวตรงๆ ไม่ mirror. ตัวที่ไม่มีโฟลเดอร์ `sprites/` → fallback instantiate CutoutRig (placeholder polygon)
     Player/NPC ใช้ `character_view.tscn` แล้ว; cut-out .svg ของ rider/lung_pradit/je_muay ลบแล้ว, `gen_svg.py` ไม่สร้างตัวละครอีก
 - **Prop PNG แบบลงสีด้วยโค้ด** (2026-10-01): `tools/art/png/paint.py` (numpy+PIL+scipy: เงา/rim light/เส้นขอบ/texture พู่กัน, supersample 3x) + สคริปต์ต่อชิ้น เช่น `tools/art/png/noodle_cart.py <out.png>`. ไม่มี AI image gen — PNG พวกนี้แทน .svg ทีละชิ้น; `gen_svg.py` ข้ามชิ้นที่มี .png แล้ว
+- **ฉาก (พื้น+ผนัง) = PNG ลงสีด้วยโค้ด** (2026-10-01): `tools/art/png/room.py soi_brass|steam_market` →
+  `assets/art/rooms/<room>.png` (IsoRoom.apply_art วางเต็ม `get_backdrop_rect()` แล้วปิด placeholder).
+  `RoomCanvas` = Canvas ของ paint.py ที่ origin อยู่มุมบนห้อง + op ทุกตัว (paint/glaze/stroke/pipe/disc) ทำเฉพาะ bbox
+  ของ mask (canvas 3072x2016 ถ้าทำทั้งผืนต่อ op จะช้า >10 นาที; แบบ crop ~40 วิ/ห้อง). ss=1 (เกมยืดภาพลง rect อยู่แล้ว).
+  ซอย = ผนังตึกแถวมิ้นต์ (shutter เหล็ก ป้าย หน้าต่างลูกกรง แอร์+ท่อ โคม สายไฟ) + พื้นคอนกรีตรางน้ำ;
+  ตลาด = ผนังอิฐ+โคม+โปสเตอร์ + พื้นกระเบื้องดินเผา. ช่องประตูในผนังวาดตามตำแหน่ง Door node (`door_u` = gx/gy ของประตู)
 - Brief สำหรับ Cowork (desktop) gen ภาพแล้ววางลง `G:\dev\25d\assets\art\...` โดยตรง: `assets/art/COWORK_BRIEF.md`
   (กติกาขนาด/จุดฐาน/ชื่อไฟล์ทั้งหมดอยู่ที่นั่น ถ้าเปลี่ยนกติกาใน ArtLibrary ต้องแก้ brief ด้วย)
 - ฟอนต์ project = Kanit Medium (OFL) ที่ `assets/fonts/` — ฟอนต์ default ของ Godot ไม่มีอักษรไทย
@@ -67,7 +73,7 @@ scenes/props/            prop_block, door, npc, interactable, training_dummy
 scenes/ui/               hud (ปุ่ม ATK + dialog box), dialog_box
 scripts/autoload/        GameState (flags, save/load), Dialog (runner), SceneRouter (fade + room swap)
 scripts/core/            Iso (math), SaveData, DialogData, ArtLibrary — pure logic, unit-tested
-tools/art/gen_svg.py     generator ของ art ทั้งหมด (python3, ไม่ต้องลง lib)
+tools/art/gen_svg.py     generator svg เดิม (prop ที่ยังไม่มี png); tools/art/png/ = prop/ฉาก PNG ลงสี (numpy+PIL+scipy)
 assets/dialog/dialog.json  dialog ทั้งหมด (format อยู่หัวไฟล์ scripts/core/dialog_data.gd)
 test/unit/               GUT tests (test_scenes.gd = smoke test ทุก scene + สัญญาของห้อง)
 tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.ps1/.sh, godot_path.ps1, run_tests.sh, fetch_gut.*
