@@ -329,6 +329,48 @@ class Canvas:
             ty0 = min(q[1] for q in top)
             self.paint(self.mask_poly(top), self.grad(tc, 1.16, 1.0, ty0, ty0 + 120 * s), outline, rim)
 
+    def frustum(self, h0, h1, z0, z1, c, top_c=None, rim=0.8, outline=2.2, cx=0.0, cy=0.0):
+        """Square frustum centred on (cx, cy): half-size h0 at z0 -> h1 at z1
+        (h1 = 0 gives a pyramid). Lit like box()."""
+        p = self.p
+        b = [(cx - h0, cy - h0), (cx + h0, cy - h0), (cx + h0, cy + h0), (cx - h0, cy + h0)]
+        t = [(cx - h1, cy - h1), (cx + h1, cy - h1), (cx + h1, cy + h1), (cx - h1, cy + h1)]
+        ys = [p(*q, z0)[1] for q in b] + [p(*q, z1)[1] for q in t]
+        y0, y1 = min(ys), max(ys)
+        # +y face (front) and +x face (side): slanted, so lighter than walls
+        front = [p(*b[3], z0), p(*b[2], z0), p(*t[2], z1), p(*t[3], z1)]
+        side = [p(*b[2], z0), p(*b[1], z0), p(*t[1], z1), p(*t[2], z1)]
+        back_l = [p(*b[0], z0), p(*b[3], z0), p(*t[3], z1), p(*t[0], z1)]
+        back_r = [p(*b[1], z0), p(*b[0], z0), p(*t[0], z1), p(*t[1], z1)]
+        slope = (h0 - h1) > 0.02
+        if slope:  # the far faces are visible from above when the faces slope in
+            self.paint(self.mask_poly(back_r), self.grad(c, 1.08, 0.95, y0, y1), outline, rim)
+            self.paint(self.mask_poly(back_l), self.grad(c, 1.15, 1.0, y0, y1), outline, rim)
+        self.paint(self.mask_poly(front), self.grad(c, 0.98, 0.78, y0, y1), outline, rim * 0.5)
+        self.paint(self.mask_poly(side), self.grad(c, 0.66, 0.52, y0, y1), outline, 0)
+        if h1 > 0.005:
+            top = [p(*q, z1) for q in t]
+            tc = c if top_c is None else top_c
+            self.paint(self.mask_poly(top), self.grad(tc, 1.15, 1.0, min(q[1] for q in top), max(q[1] for q in top) + 1),
+                       outline, rim)
+
+    def gear(self, cx, cy, r, col, teeth=9, flat=0.5, hole=0.32, outline=1.6):
+        """Gear seen lying flat (flat = y squash; 1 = facing the camera)."""
+        pts = []
+        n = teeth * 4
+        for i in range(n):
+            a = 2 * math.pi * i / n
+            rr = r if (i % 4) in (1, 2) else r * 0.78
+            pts.append((cx + math.cos(a) * rr, cy + math.sin(a) * rr * flat))
+        m = np.clip(self.mask_poly(pts) - self.mask_ellipse(cx, cy, r * hole, r * hole * flat), 0, 1)
+        nx = np.clip((self.xx - cx) / r, -1, 1)
+        col_f = self.grad(col, 1.2, 0.8, cy - r * flat, cy + r * flat, cx - r, cx + r, 0.3)
+        self.paint(m, col_f, outline, 0.7, tex=0.05)
+        # thickness lip for flat-lying gears
+        if flat < 0.8:
+            lip = np.clip(ndimage.shift(m, (3.5 * self.ss, 0), order=0) - m, 0, 1)
+            self.paint(lip, self.flat(np.asarray(col) * 0.5), 0.6, 0)
+
     # ---------------- finish ----------------
     def finish(self, path, sil=2.6):
         s = self.ss
