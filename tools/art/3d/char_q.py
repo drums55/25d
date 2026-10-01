@@ -119,6 +119,11 @@ def make_overlay(body, keys_over, under_key, offset=0.014):
     disp.strength = offset
     disp.mid_level = 0.0
     ob.modifiers.move(ob.modifiers.find("lift"), 0)
+    # cloth hides the muscles: relax the surface before lifting it
+    sm = ob.modifiers.new("relax", "SMOOTH")
+    sm.factor = 0.9
+    sm.iterations = 12
+    ob.modifiers.move(ob.modifiers.find("relax"), 0)
     # body: overlay faces take the under colour
     if under_key not in names:
         hexcol, rim, spec = PAL[under_key]
@@ -173,6 +178,59 @@ def garment(B, body, name, key, bone, z0, z1, arc=150, pad=0.025, flare=0.0, ink
     obj = B.link(name, me)
     sol = obj.modifiers.new("thick", "SOLIDIFY"); sol.thickness = 0.008; sol.offset = 0
     return B.finish_obj(obj, key, bone, ink)
+
+
+def full_face_helmet(B, c, r):
+    """Full-face shell with a face window, chin bar, visor flipped up, brass pivots."""
+    import bmesh as _bm
+
+    def shell(name, rr, keep, key, ink=0.008, thick=0.012):
+        me = bpy.data.meshes.new(name)
+        bm = _bm.new()
+        _bm.ops.create_uvsphere(bm, u_segments=32, v_segments=18, radius=rr)
+        dead = []
+        for f in bm.faces:
+            d = f.calc_center_median().normalized()
+            if not keep(d):
+                dead.append(f)
+        _bm.ops.delete(bm, geom=dead, context="FACES")
+        bm.to_mesh(me); bm.free()
+        o = B.link(name, me)
+        o.location, o.scale = c, (1.0, 1.1, 1.08)
+        if thick:
+            so = o.modifiers.new("thick", "SOLIDIFY"); so.thickness = thick; so.offset = -1
+        return B.finish_obj(o, key, "Head", ink)
+
+    # shell: everything except the face window and the neck hole
+    shell("Helmet", r, lambda d: not (d.y < -0.42 and -0.42 < d.z < 0.34) and d.z > -0.8, "helmet")
+    # visor flipped up over the forehead
+    shell("Visor", r * 1.07, lambda d: d.y < -0.25 and 0.3 < d.z < 0.72 and abs(d.x) < 0.8, "visor", thick=0.006)
+    # orange racing stripe over the crown
+    shell("Stripe", r * 1.01, lambda d: abs(d.x) < 0.16 and d.z > 0.1, "jacket", ink=0.004, thick=0.003)
+    for sx in (1, -1):
+        B.cyl("Pivot", c + Vector((sx * r * 1.02, -0.02, 0.05)), 0.024, 0.012, "brass", "Head", rot=(0, math.radians(90), 0), ink=0.004)
+
+
+def delivery_box(B, arm):
+    """Big insulated food box worn as a backpack: teal box, orange lid band,
+    reflective strip, brass corners, a little steam chimney + gauge (keeps food hot)."""
+    chest = bone_world(arm, "spine_03")
+    hx, fy, by = body_section(BODY, chest.z - 0.05)
+    c = Vector((0, by + 0.17, chest.z - 0.06))
+    W, D, H = 0.46, 0.3, 0.46
+    B.box("Box", c, (W, D, H), "box", "spine_03", bevel=0.025, ink=0.009)
+    B.box("Lid", c + Vector((0, 0, H / 2 - 0.045)), (W + 0.012, D + 0.012, 0.09), "box_lid", "spine_03", bevel=0.02, ink=0.006)
+    B.box("BoxStrip", c + Vector((0, 0, -0.06)), (W + 0.008, D + 0.008, 0.035), "reflect", "spine_03", bevel=0.006, ink=0.0)
+    for sx in (1, -1):
+        for sz in (1, -1):
+            B.box("Corner", c + Vector((sx * (W / 2 - 0.01), D / 2 - 0.01, sz * (H / 2 - 0.01))), (0.05, 0.05, 0.05), "brass", "spine_03", bevel=0.01, ink=0.004)
+        # shoulder straps
+        B.box("Strap", Vector((sx * 0.155, fy + 0.0, chest.z + 0.07)), (0.045, 0.018, 0.36), "belt", "spine_03", rot=(math.radians(-8), 0, 0), bevel=0.006, ink=0.005)
+    ch = c + Vector((W / 2 - 0.08, 0.04, H / 2))
+    B.cyl("Chimney", ch + Vector((0, 0, 0.06)), 0.022, 0.12, "brass", "spine_03", ink=0.005)
+    B.cyl("ChimCap", ch + Vector((0, 0, 0.125)), 0.034, 0.02, "steel", "spine_03", ink=0.004)
+    B.cyl("BoxGauge", c + Vector((W / 2 + 0.008, 0.02, 0.06)), 0.045, 0.02, "brass", "spine_03", rot=(0, math.radians(90), 0))
+    B.cyl("BoxGaugeFace", c + Vector((W / 2 + 0.02, 0.02, 0.06)), 0.034, 0.006, "eye_white", "spine_03", rot=(0, math.radians(90), 0), ink=0.0)
 
 
 def finish_body(body, overlays):
@@ -429,15 +487,20 @@ def build(name):
             if bone.startswith(("hand", "index", "middle", "ring", "pinky", "thumb")):
                 return "glove"
             if bone.startswith(("upperarm", "lowerarm")):
-                return "shirt"
+                if p.z < 0.93:
+                    return "cuff"
+                return "reflect" if (1.10 < p.z < 1.14 or 1.19 < p.z < 1.23) else "jacket"
             if bone.startswith(("thigh", "calf", "foot", "ball")) or bone == "pelvis" or p.z < 0.98:
                 return "pants"
-            if 1.12 < p.z < 1.16 or 1.21 < p.z < 1.25:
+            # unzipped: the T-shirt shows through a front opening that widens downward
+            if p.y < -0.03 and abs(p.x) < 0.05 + max(0.0, 1.4 - p.z) * 0.09:
+                return "tee"
+            if 1.10 < p.z < 1.14 or 1.19 < p.z < 1.23:
                 return "reflect"
-            return "vest"
+            return "jacket"
         paint_regions(body, region)
-        finish_body(body, [(("vest", "reflect"), "shirt")])
-        parts = import_gltf(OUTF + "Male_Ranger_Feet_Boots.gltf") + import_gltf(OUTF + "Male_Ranger_Acc_Pauldron.gltf")
+        finish_body(body, [(("jacket", "reflect", "cuff"), "tee")])
+        parts = import_gltf(OUTF + "Male_Ranger_Feet_Boots.gltf")
         for o in rebind(parts, arm):
             if True:
                 toonify(o, "#B08A5A" if "Pauldron" in o.name else "#FFFFFF")
@@ -480,19 +543,16 @@ def accessories(name, B, arm):
     neck = bone_world(arm, "neck_01")
     hc = head + Vector((0, 0.0, 0.11))
     if name == "rider":
-        B.sphere("Helmet", hc + Vector((0, 0.02, 0.03)), 0.135, "helmet", "Head", scale=(1.0, 1.1, 0.85), cut=0.05)
-        B.torus("Brim", hc + Vector((0, 0.02, 0.037)), 0.133, 0.01, "brass", "Head", scale=(1.0, 1.1, 1.0))
-        B.torus("GStrap", hc + Vector((0, 0.02, 0.07)), 0.125, 0.008, "strap", "Head", rot=(math.radians(-14), 0, 0), scale=(1.0, 1.08, 1.0))
+        full_face_helmet(B, hc + Vector((0, 0.012, 0.0)), 0.152)
+        # fold-down collar: band round the back of the neck + two lapels opening at the front
+        B.torus("Collar", neck + Vector((0, 0.012, -0.012)), 0.082, 0.02, "jacket", "spine_03", scale=(1.1, 1.0, 0.7), ink=0.007)
+        hx, fy, by = body_section(BODY, neck.z - 0.08)
         for sx in (1, -1):
-            g = hc + Vector((sx * 0.048, -0.1, 0.1))
-            B.torus("Goggle", g, 0.03, 0.011, "brass", "Head", rot=(math.radians(58), 0, 0))
-            B.sphere("Lens", g + Vector((0, 0.004, -0.002)), 0.029, "lens", "Head", scale=(1, 0.45, 1), rot=(math.radians(-32), 0, 0), ink=0.0)
-        B.torus("Scarf", neck + Vector((0, 0.0, 0.03)), 0.07, 0.028, "scarf", "neck_01", ink=0.007)
-        B.sphere("Knot", neck + Vector((0.04, -0.075, 0.0)), 0.035, "scarf", "neck_01", ink=0.006)
-        B.cyl("ScarfTail", neck + Vector((0.07, -0.085, -0.12)), 0.04, 0.22, "scarf", "spine_03", r2=0.006,
-              rot=(math.radians(-12), math.radians(-18), 0), scale=(1.0, 0.3, 1.0), ink=0.006)
+            B.box("Lapel", Vector((sx * 0.07, fy - 0.022, neck.z - 0.07)), (0.075, 0.016, 0.13), "jacket", "spine_03",
+                  rot=(math.radians(-14), sx * math.radians(-28), 0), bevel=0.008, ink=0.006)
         B.torus("Belt", bone_world(arm, "pelvis") + Vector((0, 0, 0.07)), 0.16, 0.02, "belt", "pelvis", scale=(1.0, 0.72, 1.0), ink=0.006)
         B.cyl("Gauge", bone_world(arm, "pelvis") + Vector((0.12, -0.09, 0.06)), 0.032, 0.02, "brass", "pelvis", rot=(math.radians(90), 0, math.radians(30)))
+        delivery_box(B, arm)
         # wrench built in the T-pose hand frame: handle along the hand (-X at rest), jaw toward the front (-Y)
         hR = bone_world(arm, "hand_r")
         ry = (0, math.radians(90), 0)
@@ -520,7 +580,9 @@ def accessories(name, B, arm):
     attach_rigid(B.parts, arm)
 
 
-PALETTES["rider"].update({"shirt": ("#24423F", 0.45, 0), "pants": ("#1F1D24", 0.45, 0), "glove": ("#3A2A22", 0.3, 0.2),
+PALETTES["rider"].update({"tee": ("#3A3F46", 0.35, 0), "jacket": ("#E8762D", 0.4, 0), "cuff": ("#2B2629", 0.3, 0), "visor": ("#2B3A46", 0.6, 1.0),
+                          "box": ("#2F6F6A", 0.4, 0), "box_lid": ("#E8762D", 0.4, 0),
+                          "shirt": ("#24423F", 0.45, 0), "pants": ("#1F1D24", 0.45, 0), "glove": ("#3A2A22", 0.3, 0.2),
                           "scarf": ("#B8322A", 0.4, 0), "helmet": ("#2F5F5A", 0.45, 0.6), "lens": ("#F0A13A", 0.6, 1.0),
                           "vest": ("#E8762D", 0.4, 0), "reflect": ("#E3E8EA", 0.5, 0.4)})
 PALETTES["lung_pradit"].update({"apron": ("#3C5A8A", 0.3, 0), "pants": ("#4B4A3A", 0.35, 0)})
