@@ -183,7 +183,7 @@ def water_tank(out):
     vx, vy = p(0.2, -0.18, 356)
     c.pipe([(vx, vy), (vx, vy - 26 * s), (vx + 10 * s, vy - 30 * s)], 7, COPPER)
     # gauge on the front
-    c.gauge(*p(0.0, R, 262), 13, angle=-30)
+    c.gauge(*c.cyl_pt(0, 0, R, -0.35, 262), 13, angle=-30)
     # red valve + outlet pipe down the near side
     ox, oy = p(R * 0.75, R * 0.66, 180)
     c.pipe([(ox, oy), (ox + 24 * s, oy + 8 * s), (ox + 24 * s, oy + 150 * s)], 9, COPPER, spec=1.0)

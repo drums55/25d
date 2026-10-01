@@ -271,6 +271,12 @@ class Canvas:
         ring = np.clip(m - ndimage.gaussian_filter(er.astype(np.float32), 0.6 * self.ss), 0, 1)
         self.glaze(ring, np.array(OUT, np.float32) / 255.0, 1.0)
 
+    def cyl_pt(self, cx, cy, r, u, z):
+        """Screen point on the visible (near) surface of a vertical cylinder at
+        horizontal fraction u in [-1, 1] (0 = straight toward the camera)."""
+        x, y = self.p(cx, cy, z)
+        return (x + u * r * 128 * self.ss, y + math.sqrt(max(0.0, 1 - u * u)) * r * 64 * self.ss)
+
     def wheel(self, gx, gy, zc, r_cells, r_z, axis="x", spokes=True):
         """Wheel standing on its rim. axis="x": wheel plane is x-z (rolls along
         x); axis="y": plane y-z (rolls along y)."""
