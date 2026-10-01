@@ -55,7 +55,8 @@ def tex_of(mat):
 
 
 def toon_tex(name, img, tint="#FFFFFF", rim=0.35, spec=0.0, skin=None):
-    m = toon_material(name, tint, rim=rim, spec=spec)
+    m = toon_material(name, tint, rim=rim, spec=spec, term=0.24 if skin else 0.40,
+                      shadow=(0.66, 0.46, 0.42) if skin else None)
     if img is not None:
         N, L = m.node_tree.nodes, m.node_tree.links
         t = N.new("ShaderNodeTexImage")
@@ -183,6 +184,15 @@ def finish_body(body, overlays):
     add_ink(body, 0.010)
 
 
+def trim_above(o, zmax):
+    """Cut a boot down to a low shoe: drop faces above zmax (world, rest pose)."""
+    import bmesh as _bm
+    mw = o.matrix_world
+    bm = _bm.new(); bm.from_mesh(o.data)
+    _bm.ops.delete(bm, geom=[f for f in bm.faces if (mw @ f.calc_center_median()).z > zmax], context="FACES")
+    bm.to_mesh(o.data); bm.free()
+
+
 def dominant_bone(o, v):
     best, bw = None, 0.0
     for g in v.groups:
@@ -209,6 +219,14 @@ def paint_regions(o, region_fn, keep_tex_regions=("skin",)):
         face_key.append(k)
         if k not in keys:
             keys.append(k)
+    if "hide" in keys:
+        import bmesh as _bm
+        bm = _bm.new(); bm.from_mesh(o.data)
+        bm.faces.ensure_lookup_table()
+        _bm.ops.delete(bm, geom=[bm.faces[i] for i, k in enumerate(face_key) if k == "hide"], context="FACES")
+        bm.to_mesh(o.data); bm.free()
+        face_key = [k for k in face_key if k != "hide"]
+        keys.remove("hide")
     o.data.materials.clear()
     for k in keys:
         if k in keep_tex_regions:
@@ -428,24 +446,30 @@ def build(name):
         def region(bone, p):
             if bone in ("Head", "neck_01") or bone.startswith(("hand", "index", "middle", "ring", "pinky", "thumb", "lowerarm")):
                 return "skin"
-            if bone.startswith(("foot", "ball")):
-                return "skin"
+            if bone.startswith("ball") or p.z < 0.06:
+                return "hide"
             if bone.startswith(("thigh", "calf")) or bone == "pelvis" or p.z < 0.98:
                 return "pants"
             return "shirt"
         paint_regions(body, region)
         finish_body(body, [])
+        for o in rebind(import_gltf(OUTF + "Male_Peasant_Feet.gltf"), arm):
+            trim_above(o, 0.11)
+            toonify(o, "#7A5A3A")
     else:
         def region(bone, p):
             if bone in ("Head", "neck_01") or bone.startswith(("hand", "index", "middle", "ring", "pinky", "thumb", "lowerarm")):
                 return "skin"
-            if bone.startswith(("foot", "ball")):
-                return "shoe"
+            if bone.startswith("ball") or p.z < 0.06:
+                return "hide"
             if bone.startswith(("thigh", "calf")) or bone == "pelvis" or p.z < 0.95:
                 return "pants"
             return "blouse"
         paint_regions(body, region)
         finish_body(body, [])
+        for o in rebind(import_gltf(OUTF + "Female_Peasant_Feet.gltf"), arm):
+            trim_above(o, 0.12)
+            toonify(o, "#3A2E36")
         opts = dict(akimbo=True)
     return sc, arm, B, opts
 
@@ -488,15 +512,9 @@ def accessories(name, B, arm):
         for sx in (1, -1):
             B.cyl("ApronStrap", bone_world(arm, "neck_01") + Vector((sx * 0.06, -0.06, -0.08)), 0.008, 0.16, "apron", "spine_03",
                   rot=(math.radians(-20), math.radians(sx * 20), 0), ink=0.004)
-        for s in ("l", "r"):
-            f = bone_world(arm, "foot_" + s)
-            B.box("Sandal", Vector((f.x, f.y - 0.05, 0.01)), (0.11, 0.27, 0.02), "sandal", "foot_" + s, bevel=0.006)
     else:
         B.cyl("Pin", top + Vector((0, 0.0, 0.0)), 0.006, 0.22, "brass", "Head", rot=(0, math.radians(70), 0))
         garment(B, BODY, "Apron", "apron", "pelvis", 0.6, 1.0, arc=140, pad=0.03, flare=0.05)
-        for s_ in ("l", "r"):
-            f = bone_world(arm, "foot_" + s_)
-            B.box("Shoe", Vector((f.x, f.y - 0.06, 0.035)), (0.1, 0.26, 0.07), "shoe", "foot_" + s_, bevel=0.03)
         for sx in (1, -1):
             B.torus("Hoop", head + Vector((sx * 0.075, 0.0, 0.06)), 0.022, 0.004, "brass", "Head", rot=(0, math.radians(90), 0), ink=0.0)
     attach_rigid(B.parts, arm)

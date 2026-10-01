@@ -70,7 +70,7 @@ def reset():
     return sc
 
 
-def toon_material(name, hexcol, rim=0.35, tex=0.06, spec=0.0, term=0.40):
+def toon_material(name, hexcol, rim=0.35, tex=0.06, spec=0.0, term=0.40, shadow=None):
     m = bpy.data.materials.new(name)
     m.use_nodes = True
     nt = m.node_tree
@@ -88,7 +88,9 @@ def toon_material(name, hexcol, rim=0.35, tex=0.06, spec=0.0, term=0.40):
     e = ramp.color_ramp.elements
     e[0].position, e[0].color = 0.0, (0.17, 0.12, 0.22, 1)      # near-black shadow shapes
     e[1].position, e[1].color = 1.0, (1.08, 1.03, 0.96, 1)
-    k1 = e.new(term); k1.color = (0.22, 0.16, 0.28, 1)
+    if shadow is not None:
+        e[0].color = shadow + (1,)
+    k1 = e.new(term); k1.color = ((shadow[0] * 1.15, shadow[1] * 1.15, shadow[2] * 1.15) if shadow else (0.22, 0.16, 0.28)) + (1,)
     k2 = e.new(term + 0.015); k2.color = (0.06, 0.05, 0.08, 1)           # ink line on the terminator
     k3 = e.new(term + 0.045); k3.color = (0.06, 0.05, 0.08, 1)
     k4 = e.new(term + 0.06); k4.color = (0.96, 0.92, 0.88, 1)
