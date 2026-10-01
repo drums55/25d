@@ -34,7 +34,7 @@ scripts/autoload/        GameState (flags, save/load), Dialog (runner), SceneRou
 scripts/core/            Iso (math), SaveData, DialogData — pure logic, unit-tested
 assets/dialog/dialog.json  dialog ทั้งหมด (format อยู่หัวไฟล์ scripts/core/dialog_data.gd)
 test/unit/               GUT tests (test_scenes.gd = smoke test ทุก scene + สัญญาของห้อง)
-tools/                   dev_setup.ps1, update.ps1/.sh, run_tests.sh, fetch_gut.*
+tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.ps1/.sh, godot_path.ps1, run_tests.sh, fetch_gut.*
 ```
 
 ## Architecture / decisions
@@ -71,6 +71,11 @@ tools/                   dev_setup.ps1, update.ps1/.sh, run_tests.sh, fetch_gut.
 - editor settings ไฟล์ชื่อ `editor_settings-4.4.tres` (ต่อ minor version). เขียนแบบ UTF-8 ไม่มี BOM
 - Godot 4.4 สร้างไฟล์ `*.gd.uid` คู่ทุก script → commit ด้วย (อย่า gitignore)
 - PowerShell scripts ต้อง ASCII ล้วน + ใช้ได้กับ Windows PowerShell 5.1 (ไม่มี `??`, ternary, `&&`)
+- ห้ามพึ่ง `$env:GODOT` ใน terminal ของเจ้าของ (เคยเจอ: `& $env:GODOT` → "expression after '&' ... not valid"
+  เพราะตัวแปรว่าง — terminal เก่า/VS Code ไม่เห็น user env ใหม่). ทุก script หา Godot ผ่าน
+  `tools/godot_path.ps1` (Resolve-Godot): `tools/.godot_path` (dev_setup เขียนทันทีหลังโหลด, gitignored) →
+  env → user env (registry) → `<parent ของ repo>\godot\4.4.1` → `%USERPROFILE%\godot\4.4.1`
+- เจ้าของใช้ repo ที่ `G:\dev\25d`, Godot ที่ `G:\dev\godot\4.4.1` (ไดรฟ์ G: ที่ว่างเยอะ)
 - `adb` ไม่อ่าน `ADB_SERIAL` เอง (มันอ่าน `ANDROID_SERIAL`) — script ส่ง `-s $env:ADB_SERIAL` ให้
 - Export template มี 1.1 GB; dev_setup แตกเฉพาะไฟล์ android_* เก็บไว้
 

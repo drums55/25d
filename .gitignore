@@ -17,3 +17,6 @@ export_credentials.cfg
 Thumbs.db
 .vscode/
 __pycache__/
+
+# Local Godot exe path written by tools/dev_setup.ps1
+/tools/.godot_path

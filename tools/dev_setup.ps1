@@ -9,7 +9,7 @@
   3. Finds the Android SDK + JDK that Flutter already uses and writes them
      into %APPDATA%\Godot\editor_settings-4.4.tres
   4. Fetches GUT (tests) and runs a headless import (also makes Godot generate its debug keystore)
-  5. Sets the user env var GODOT to the console exe (used by tools\update.ps1)
+  5. Saves the Godot path to tools\.godot_path + user env var GODOT
 
   Safe to re-run: finished steps are skipped.
 
@@ -60,6 +60,12 @@ if (Test-Path $GodotExe) {
     Remove-Item $zip
 }
 if (-not (Test-Path $GodotExe)) { throw "Godot console exe not found at $GodotExe" }
+# Record the path right away so run.ps1/update.ps1 work even if a later step fails
+# or this terminal never sees the new user env var.
+Set-Content -Path (Join-Path $PSScriptRoot '.godot_path') -Value $GodotExe -Encoding ASCII
+[Environment]::SetEnvironmentVariable('GODOT', $GodotExe, 'User')
+$env:GODOT = $GodotExe
+Write-Host "GODOT=$GodotExe (saved to tools\.godot_path)"
 
 # --- 2. Android export templates ------------------------------------------
 Step "Android export templates -> $TemplatesDir"
@@ -152,14 +158,9 @@ $ks = Join-Path $GodotData 'keystores\debug.keystore'
 if (Test-Path $ks) { Write-Host "debug keystore: $ks" }
 else { Write-Warning "Godot did not create $ks - check java_sdk_path. update.ps1 will fail to sign." }
 
-# --- 6. GODOT env var -------------------------------------------------------
-Step "User env var GODOT"
-[Environment]::SetEnvironmentVariable('GODOT', $GodotExe, 'User')
-$env:GODOT = $GodotExe
-Write-Host "GODOT=$GodotExe"
-
 Write-Host "`nSetup done. Next: connect the tablet and run tools\update.ps1" -ForegroundColor Green
 Write-Host "  adb pair <ip>:<pair-port>      (first time only, code from Wireless debugging)"
 Write-Host "  adb connect <ip>:<port>"
 Write-Host "  `$env:ADB_SERIAL = '<ip>:<port>'"
 Write-Host "  powershell -ExecutionPolicy Bypass -File tools\update.ps1"
+Write-Host "Play on this PC: powershell -ExecutionPolicy Bypass -File tools\run.ps1"

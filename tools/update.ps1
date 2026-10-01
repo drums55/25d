@@ -34,10 +34,8 @@ function Invoke-Native([scriptblock]$Block) {
 
 function Step($msg) { Write-Host "`n==> $msg" -ForegroundColor Cyan }
 
-$Godot = $env:GODOT
-if (-not $Godot) { $Godot = [Environment]::GetEnvironmentVariable('GODOT', 'User') }
-if (-not $Godot) { $Godot = "$HOME\godot\4.4.1\Godot_v4.4.1-stable_win64_console.exe" }
-if (-not (Test-Path $Godot)) { throw "Godot not found ($Godot). Run tools\dev_setup.ps1 first." }
+. (Join-Path $PSScriptRoot 'godot_path.ps1')
+$Godot = Resolve-Godot
 
 Push-Location $RepoRoot
 try {
