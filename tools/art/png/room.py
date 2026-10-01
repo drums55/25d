@@ -2,9 +2,9 @@
 
 Usage:  python3 tools/art/png/room.py soi_brass|steam_market [out.png]
 
-The image covers exactly IsoRoom.get_backdrop_rect(): x from -grid_w*64 to
+The image covers exactly IsoRoom.get_backdrop_rect(): x from -grid_h*64 to
 +grid_w*64, y from -wall_height to (grid_w+grid_h)*32 (game px), authored at
-2x. Image px: X = (room_x + grid_w*64)*2, Y = (room_y + wall_h)*2. The game
+2x. Image px: X = (room_x + grid_h*64)*2, Y = (room_y + wall_h)*2. The game
 stretches the texture onto that rect, so the ratio is what matters.
 
 Room space here: p(gx, gy, z) with gx down-right, gy down-left, z up in
@@ -28,13 +28,13 @@ ROOT = os.path.join(os.path.dirname(__file__), "..", "..", "..", "assets", "art"
 class RoomCanvas(Canvas):
     def __init__(self, gw, gh, wall_h, ss=2, seed=11):
         self.gw, self.gh, self.wall_h = gw, gh, wall_h
-        w = gw * 128 * 2
+        w = (gw + gh) * 64 * 2
         h = (wall_h + (gw + gh) * 32) * 2
         super().__init__(w, h, ss=ss, seed=seed)
 
     def p(self, gx, gy, z=0.0):
         s = self.ss
-        return ((self.gw * 128 + (gx - gy) * 128) * s, (self.wall_h * 2 + (gx + gy) * 64 - z) * s)
+        return ((self.gh * 128 + (gx - gy) * 128) * s, (self.wall_h * 2 + (gx + gy) * 64 - z) * s)
 
     # wall helpers: side "R" = back-right wall (along gx, gy=0), "L" = back-left (along gy, gx=0)
     def wp(self, side, u, z):
@@ -177,9 +177,8 @@ def shophouse_wall(c, side, length, wall_h, plaster, door_u=None, seed=1):
         # roll-up shutter (steel) or alley opening where the game draws the door
         su0, su1 = u0 + 0.35, u0 + 1.75
         if is_door:
-            op0, op1 = door_u - 0.5, door_u + 0.5
-            c.paint(c.mask_poly(c.wall_quad(side, op0, op1, 0, 300)), c.flat(SOOT * 0.6), 2.0)
-            c.paint(c.mask_poly(c.wall_quad(side, op0 - 0.1, op1 + 0.1, 300, 330)), c.flat(BRASS_D), 1.6, 0.5)
+            op0, op1 = door_u - DOOR_HALF, door_u + DOOR_HALF
+            doorway(c, side, door_u)
             su0, su1 = u0 + 0.3, min(op0 - 0.15, u0 + 1.3) if op0 - 0.15 > u0 + 0.6 else (op1 + 0.15, u1 - 0.3)
             if isinstance(su1, tuple):
                 su0, su1 = su1
@@ -227,6 +226,25 @@ def shophouse_wall(c, side, length, wall_h, plaster, door_u=None, seed=1):
     for k in range(3):
         pts = [c.wp(side, uu, H - 8 - k * 9 - 14 * math.sin(math.pi * (uu / length)) ) for uu in np.linspace(0, length, 24)]
         c.stroke(pts, 1.8, SOOT, 0.9)
+
+
+DOOR_HALF = 56 / 128.0   # Door node draws +-56 game px along the wall
+DOOR_H = 340             # 170 game px
+
+
+def doorway(c, side, u):
+    """Dark passage the size of the Door node, with a brass frame + lintel."""
+    s = c.ss
+    op0, op1 = u - DOOR_HALF, u + DOOR_HALF
+    q = c.wall_quad(side, op0, op1, 0, DOOR_H)
+    yt = min(p[1] for p in q)
+    c.paint(c.mask_poly(q), c.grad(hexc("#120F14"), 1.0, 1.6, yt, yt + DOOR_H * s), 0)
+    # faint warm light spilling from inside, low
+    c.glaze(c.mask_poly(c.wall_quad(side, op0, op1, 0, 120)), WARM, 0.12)
+    c.paint(c.mask_poly(c.wall_quad(side, op0 - 0.12, op1 + 0.12, DOOR_H, DOOR_H + 30)), c.flat(BRASS_D), 1.6, 0.5)
+    for uu in (op0 - 0.06, op1 + 0.06):
+        c.stroke([c.wp(side, uu, 0), c.wp(side, uu, DOOR_H)], 6, BRASS_D)
+    c.rivets([c.wp(side, op0 - 0.06, z) for z in range(30, DOOR_H, 60)] + [c.wp(side, op1 + 0.06, z) for z in range(30, DOOR_H, 60)])
 
 
 def _prism_wall(self, side, u0, u1, z0, z1, col):
@@ -307,15 +325,14 @@ def brick_wall(c, side, length, wall_h, brick, mortar, door_u=None, seed=2):
         u = -off
         while u < length:
             u0, u1 = max(u, 0), min(u + bw, length)
-            if u1 - u0 > 0.05 and not (door_u is not None and u1 > door_u - 0.55 and u0 < door_u + 0.55 and z < 300):
+            if u1 - u0 > 0.05 and not (door_u is not None and u1 > door_u - DOOR_HALF - 0.05 and u0 < door_u + DOOR_HALF + 0.05 and z < DOOR_H):
                 m = c.mask_poly(c.wall_quad(side, u0 + 0.015, u1 - 0.015, z + 2, z + bh - 2))
                 tone = brick * (0.85 + 0.3 * rng.random()) * k_face
                 c.paint(m, c.grad(tone, 1.06, 0.9, yt, yb), 1.2, 0.25 if rng.random() < 0.3 else 0, tex=0.1)
             u += bw + 0.03
         row += 1
     if door_u is not None:
-        c.paint(c.mask_poly(c.wall_quad(side, door_u - 0.5, door_u + 0.5, 0, 300)), c.flat(SOOT * 0.6), 2.0)
-        c.paint(c.mask_poly(c.wall_quad(side, door_u - 0.62, door_u + 0.62, 300, 334)), c.flat(WOOD * 0.8), 1.8, 0.4)
+        doorway(c, side, door_u)
     # grime low, soot high around lanterns; pipes + lanterns
     c.glaze(c.mask_poly(c.wall_quad(side, 0, length, 0, 60)), SOOT, 0.3)
     c.pipe([c.wp(side, 0, 36), c.wp(side, length, 36)], 9, COPPER, spec=0.7)

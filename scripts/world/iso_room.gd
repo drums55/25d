@@ -70,6 +70,9 @@ func apply_art() -> bool:
 	add_child(sprite)
 	move_child(sprite, 0)
 	draw_placeholder = false
+	for child in get_world().get_children():
+		if "show_panel" in child:
+			child.show_panel = false
 	return true
 
 

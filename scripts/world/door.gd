@@ -15,6 +15,12 @@ enum WallAxis { BACK_RIGHT, BACK_LEFT }
 @export var door_height := 170.0
 ## Tap area relative to the origin; tapping the door walks the player into it.
 @export var pick_rect := Rect2(-70, -190, 140, 220)
+## IsoRoom turns this off when a painted backdrop (which includes the doorway
+## at the wall plane) is present; the node then only keeps its trigger area.
+var show_panel := true:
+	set(v):
+		show_panel = v
+		queue_redraw()
 
 
 func _ready() -> void:
@@ -32,6 +38,8 @@ func _on_body_entered(body: Node) -> void:
 
 
 func _draw() -> void:
+	if not show_panel:
+		return
 	var along := Iso.grid_to_world(
 		Vector2(1, 0) if wall_axis == WallAxis.BACK_RIGHT else Vector2(0, 1)
 	)
