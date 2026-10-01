@@ -10,7 +10,9 @@ extends Node2D
 
 const VIEW_AHEAD := 24.0
 const VIEW_BEHIND := 8.0
-const LANE_MOVE := 7.0  # lanes per second
+const LANE_MOVE := 3.5  # lanes per second (smooth glide, not a snap)
+## Seconds to reach cruising speed at the start (a breath before the traffic).
+const RAMP := 2.0
 const ROAD_HALF := 1.5
 const DECOR_GAP := 2.2
 const SIGN_LEAD := 10.0
@@ -241,6 +243,7 @@ func step(delta: float) -> void:
 	lane = move_toward(lane, float(target_lane), LANE_MOVE * delta)
 	var speed: float = track["speed"]
 	_slow_reason = ""
+	speed *= clampf(t / RAMP, 0.15, 1.0)
 	if _stopped > 0.0:
 		_stopped -= delta
 		speed = 0.0
@@ -328,8 +331,8 @@ func _say(text: String) -> void:
 	_toast.text = text
 	_toast.modulate.a = 1.0
 	var tween := create_tween()
-	tween.tween_interval(1.2)
-	tween.tween_property(_toast, "modulate:a", 0.0, 0.4)
+	tween.tween_interval(1.8)
+	tween.tween_property(_toast, "modulate:a", 0.0, 0.5)
 
 
 func _finish() -> void:
@@ -352,7 +355,7 @@ func _at(x: float, gy: float) -> Vector2:
 
 func _layout() -> void:
 	_rider.position = _at(travelled, lane)
-	_rider.position.y += sin(t * 18.0) * 1.2 if _stopped <= 0.0 else 0.0
+	_rider.position.y += sin(t * 8.0) * 1.0 if _stopped <= 0.0 else 0.0
 	var obs: Array = track["obstacles"]
 	for i in obs.size():
 		var o: Dictionary = obs[i]

@@ -125,7 +125,10 @@ func start_ride(dest: int, r: Dictionary) -> void:
 	pending_ride = {
 		"dest": dest,
 		"route": r,
-		"track": RideTrack.generate(seed, ride_segments(r), r["minutes"], rain_now()),
+		"track":
+		RideTrack.generate(
+			seed, ride_segments(r), r["minutes"], rain_now(), Settings.ride_speed_factor()
+		),
 	}
 	GameState.riding = true
 	SceneRouter.go_to(RIDE_SCENE, "")

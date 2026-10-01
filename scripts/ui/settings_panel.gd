@@ -16,6 +16,8 @@ func refresh() -> void:
 	add_child(UiKit.label("ตั้งค่า", 34, UiKit.ACCENT))
 	add_child(UiKit.label("ความเร็วนาฬิกาในเกม", 26, UiKit.MUTED))
 	add_child(_choices(Settings.CLOCK_SPEEDS.keys(), Settings.clock_speed, _set_clock))
+	add_child(UiKit.label("ความเร็วช่วงขี่", 26, UiKit.MUTED))
+	add_child(_choices(Settings.RIDE_SPEEDS.keys(), Settings.ride_speed, _set_ride))
 	add_child(UiKit.label("ความเร็วตัวหนังสือ", 26, UiKit.MUTED))
 	add_child(_choices(Settings.TEXT_SPEEDS.keys(), Settings.text_speed, _set_text))
 	add_child(UiKit.label("เสียง %d%%" % roundi(Settings.volume * 100), 26, UiKit.MUTED))
@@ -78,3 +80,9 @@ func _set_hints(on: bool) -> void:
 func _set_skip(on: bool) -> void:
 	Settings.skip_ride = on
 	Settings.save_settings()
+
+
+func _set_ride(v: String) -> void:
+	Settings.ride_speed = v
+	Settings.save_settings()
+	refresh()

@@ -100,7 +100,7 @@ func test_travel_starts_a_ride_and_arrives():
 func test_crash_stops_and_shakes_the_food():
 	var ride := await _start_ride()
 	ride.track["obstacles"] = [{"kind": "car", "x": 3.0, "lane": 0, "branch": ""}]
-	for i in 40:
+	for i in 80:
 		ride.step(0.05)
 	assert_has(ride.hits, "crash")
 	assert_lt(ride.steadiness, 70.0)
@@ -112,7 +112,7 @@ func test_changing_lane_dodges():
 	var ride := await _start_ride()
 	ride.track["obstacles"] = [{"kind": "pothole", "x": 4.0, "lane": 0, "branch": ""}]
 	ride.steer(1)
-	for i in 40:
+	for i in 80:
 		ride.step(0.05)
 	assert_does_not_have(ride.hits, "bump", "dodged into the right lane")
 	assert_eq(ride.target_lane, 1)
@@ -124,7 +124,7 @@ func test_fork_picks_branch_by_lane():
 	ride.track["fork"] = {"x": 15.0, "A": {"label": "a"}, "B": {"label": "b"}}
 	ride.track["length"] = {"": 80.0, "A": 40.0, "B": 80.0}
 	ride.steer(-1)
-	for i in 20:
+	for i in 80:
 		ride.step(0.05)
 	assert_eq(ride.branch, "A", "left lane at the sign = soi shortcut")
 	assert_eq(ride.end_x(), 40.0)

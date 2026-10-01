@@ -12,12 +12,14 @@ extends RefCounted
 ## branch they belong to ("" = before the fork).
 
 const LANES := [-1, 0, 1]
-const SPEED := [7.0, 5.8, 4.8]  # cells/s by rain level
+## Cells/s by rain level (owner 2026-10-01: "ตอนขับทุกอย่างเร็วจนไม่ enjoy" —
+## halved from 7.0; Settings.ride_speed scales it).
+const SPEED := [3.8, 3.3, 2.8]
 const RIDER_LEN := 0.9
 ## Obstacle kinds: length (cells), forward speed, what a hit does.
 const KINDS := {
-	"car": {"len": 1.6, "speed": 2.6, "hit": "crash", "art": "taxi"},
-	"bus": {"len": 3.2, "speed": 2.0, "hit": "crash", "art": "city_bus"},
+	"car": {"len": 1.6, "speed": 1.3, "hit": "crash", "art": "taxi"},
+	"bus": {"len": 3.2, "speed": 0.9, "hit": "crash", "art": "city_bus"},
 	"vendor": {"len": 1.6, "speed": 0.0, "hit": "crash", "art": "noodle_cart"},
 	"scooter": {"len": 1.2, "speed": 0.0, "hit": "crash", "art": "parked_scooter"},
 	"dog": {"len": 0.5, "speed": 0.0, "hit": "dog", "art": "soi_dog", "scale": 1.6},
@@ -36,11 +38,13 @@ const BRANCH_FACTOR := {"A": 0.72, "B": 1.0}
 
 ## `segments`: [{"kind": "main"|"soi", "km": float, "water": 0..2}] along the
 ## map route; `minutes`: the map's estimate; `rain`: 0..2.
-static func generate(seed: int, segments: Array, minutes: float, rain: int) -> Dictionary:
+static func generate(
+	seed: int, segments: Array, minutes: float, rain: int, speed_factor := 1.0
+) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed
-	var duration := clampf(10.0 + minutes * 0.6, 14.0, 40.0)
-	var speed: float = SPEED[clampi(rain, 0, 2)]
+	var duration := clampf(10.0 + minutes * 0.6, 16.0, 40.0)
+	var speed: float = SPEED[clampi(rain, 0, 2)] * speed_factor
 	var length := duration * speed
 	var track := {
 		"speed": speed,
@@ -60,7 +64,7 @@ static func generate(seed: int, segments: Array, minutes: float, rain: int) -> D
 		marks.append([acc / total_km * length, s])
 		acc += float(s["km"])
 	var fork_x := -1.0
-	if minutes >= 8.0 and length > 50.0:
+	if minutes >= 8.0 and length > 45.0:
 		fork_x = snappedf(length * rng.randf_range(0.35, 0.5), 0.1)
 		track["fork"] = {
 			"x": fork_x,
@@ -74,7 +78,7 @@ static func generate(seed: int, segments: Array, minutes: float, rain: int) -> D
 		end_b = length
 	track["length"] = {"": length, "A": end_a, "B": end_b}
 	var obs: Array = track["obstacles"]
-	var start := 12.0
+	var start := 10.0
 	var stop_x := (fork_x - 4.0) if fork_x > 0.0 else length - 5.0
 	_fill(rng, obs, start, stop_x, marks, "", rain)
 	if fork_x > 0.0:
@@ -138,7 +142,7 @@ static func _fill(
 		for i in count:
 			var kind := _pick_kind(rng, soi, water, rain)
 			obs.append({"kind": kind, "x": snappedf(x, 0.1), "lane": lanes[i], "branch": branch})
-		x += rng.randf_range(3.2, 5.5) if soi else rng.randf_range(3.8, 6.5)
+		x += rng.randf_range(4.5, 7.0) if soi else rng.randf_range(5.0, 8.0)
 
 
 static func _pick_kind(rng: RandomNumberGenerator, soi: bool, water: int, rain: int) -> String:
@@ -178,7 +182,7 @@ static func obstacle_pos(o: Dictionary, t: float) -> Vector2:
 	var x: float = o["x"] + float(k["speed"]) * t
 	var lane := float(o["lane"])
 	if o["kind"] == "dog":
-		lane = clampf(lane + sin(t * 1.3 + float(o["x"])) * 1.2, -1.2, 1.2)
+		lane = clampf(lane + sin(t * 0.7 + float(o["x"])) * 1.2, -1.2, 1.2)
 	return Vector2(x, lane)
 
 
