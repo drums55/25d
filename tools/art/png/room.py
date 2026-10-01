@@ -31,6 +31,7 @@ class RoomCanvas(Canvas):
         w = (gw + gh) * 64 * 2
         h = (wall_h + (gw + gh) * 32) * 2
         super().__init__(w, h, ss=ss, seed=seed)
+        self._door_pools = []
 
     def p(self, gx, gy, z=0.0):
         s = self.ss
@@ -137,6 +138,12 @@ class RoomCanvas(Canvas):
         self.paint(m, full, outline, rim, tex=tex)
         return m
 
+    _door_pools = None
+
+    def apply_door_pools(self):
+        for pool in (self._door_pools or []):
+            self.glaze(pool * (self.a > 0), hexc("#E8A85A"), 0.35)
+
     def noise(self, sigma, seed=3):
         rng = np.random.default_rng(seed)
         n = rng.standard_normal((self.H, self.W)).astype(np.float32)
@@ -233,18 +240,68 @@ DOOR_H = 340             # 170 game px
 
 
 def doorway(c, side, u):
-    """Dark passage the size of the Door node, with a brass frame + lintel."""
+    """An exit: arched brass portal with a lit passage receding behind it,
+    lanterns on both jambs and warm light spilling onto the floor. Sized to
+    the Door node (+-56 game px, 170 high)."""
     s = c.ss
     op0, op1 = u - DOOR_HALF, u + DOOR_HALF
+    arch_z = DOOR_H + 40
+    # passage interior: dark jambs, lit far end (warm) low in the middle
     q = c.wall_quad(side, op0, op1, 0, DOOR_H)
-    yt = min(p[1] for p in q)
-    c.paint(c.mask_poly(q), c.grad(hexc("#120F14"), 1.0, 1.6, yt, yt + DOOR_H * s), 0)
-    # faint warm light spilling from inside, low
-    c.glaze(c.mask_poly(c.wall_quad(side, op0, op1, 0, 120)), WARM, 0.12)
-    c.paint(c.mask_poly(c.wall_quad(side, op0 - 0.12, op1 + 0.12, DOOR_H, DOOR_H + 30)), c.flat(BRASS_D), 1.6, 0.5)
-    for uu in (op0 - 0.06, op1 + 0.06):
-        c.stroke([c.wp(side, uu, 0), c.wp(side, uu, DOOR_H)], 6, BRASS_D)
-    c.rivets([c.wp(side, op0 - 0.06, z) for z in range(30, DOOR_H, 60)] + [c.wp(side, op1 + 0.06, z) for z in range(30, DOOR_H, 60)])
+    yt, yb = min(p[1] for p in q), max(p[1] for p in q)
+    xl, xr = min(p[0] for p in q), max(p[0] for p in q)
+    inner = c.mask_poly(q)
+    # arch cap: half ellipse on top of the rectangle, in wall space
+    cap = []
+    for k in range(13):
+        t = math.pi * k / 12
+        cap.append(c.wp(side, u - DOOR_HALF * math.cos(t), DOOR_H + 40 * math.sin(t)))
+    inner = np.maximum(inner, c.mask_poly(cap))
+    field = c.grad(hexc("#15111A"), 1.0, 1.0, yt, yb)
+    # glow: brightest at the bottom centre of the passage
+    gy_, gx_ = np.mgrid[0:c.H, 0:c.W].astype(np.float32)
+    cxp = (xl + xr) / 2
+    d = np.sqrt(((gx_ - cxp) / ((xr - xl) * 0.55)) ** 2 + ((gy_ - yb) / ((yb - yt) * 0.9)) ** 2)
+    glow = np.clip(1 - d, 0, 1) ** 1.6
+    field = field + (hexc("#E8A85A")[None, None, :] - field) * (glow * 0.85)[..., None]
+    c.paint(inner, np.clip(field, 0, 1), 0)
+    # receding floor + side walls of the passage (perspective lines)
+    far0, far1 = c.wp(side, u - DOOR_HALF * 0.35, 70), c.wp(side, u + DOOR_HALF * 0.35, 70)
+    c.stroke([c.wp(side, op0, 0), far0], 2.0, hexc("#5A4030"), 0.8)
+    c.stroke([c.wp(side, op1, 0), far1], 2.0, hexc("#5A4030"), 0.8)
+    c.stroke([far0, far1], 2.0, hexc("#7A5A3A"), 0.8)
+    c.stroke([far0, c.wp(side, u - DOOR_HALF * 0.35, 200)], 1.6, hexc("#3A2A22"), 0.8)
+    c.stroke([far1, c.wp(side, u + DOOR_HALF * 0.35, 200)], 1.6, hexc("#3A2A22"), 0.8)
+    # brass archway frame with keystone gear
+    frame = []
+    for k in range(13):
+        t = math.pi * k / 12
+        frame.append(c.wp(side, u - (DOOR_HALF + 0.09) * math.cos(t), DOOR_H + 52 * math.sin(t)))
+    frame += [c.wp(side, op1 + 0.09, 0), c.wp(side, op1 + 0.09, DOOR_H), c.wp(side, op0 + 0.0, DOOR_H)]
+    ring = np.clip(c.mask_poly(frame[:13] + [c.wp(side, op1 + 0.09, DOOR_H), c.wp(side, op0 - 0.09, DOOR_H)]) - inner, 0, 1)
+    jambs = np.maximum(c.mask_poly(c.wall_quad(side, op0 - 0.09, op0, 0, DOOR_H)),
+                       c.mask_poly(c.wall_quad(side, op1, op1 + 0.09, 0, DOOR_H)))
+    fm = np.maximum(ring, jambs)
+    c.paint(fm, c.grad(BRASS, 1.15, 0.85, yt - 60 * s, yb), 2.0, 0.7, tex=0.05)
+    c.rivets([c.wp(side, op0 - 0.045, z) for z in range(24, DOOR_H, 48)] + [c.wp(side, op1 + 0.045, z) for z in range(24, DOOR_H, 48)])
+    kx, ky = c.wp(side, u, arch_z + 8)
+    c.gear(kx, ky, 16 * s, COPPER, teeth=8)
+    # lanterns on both jambs
+    for uu in (op0 - 0.2, op1 + 0.2):
+        lx, ly = c.wp(side, uu, 250)
+        c.stroke([c.wp(side, uu, 290), (lx, ly)], 4, SOOT)
+        c.disc(lx, ly + 8 * s, 10 * s, 13 * s, BRASS_L, 1.6, 0.4, spec=1.0)
+        c.glaze(ndimage.gaussian_filter(c.mask_ellipse(lx, ly + 8 * s, 55 * s, 55 * s), 12 * s), WARM, 0.22)
+    # doorstep + light pool spilling onto the floor
+    if side == "L":
+        step = [c.p(0, op0, 0), c.p(0, op1, 0), c.p(0.22, op1, 0), c.p(0.22, op0, 0)]
+        pool_c = c.p(0.9, u, 0)
+    else:
+        step = [c.p(op0, 0, 0), c.p(op1, 0, 0), c.p(op1, 0.22, 0), c.p(op0, 0.22, 0)]
+        pool_c = c.p(u, 0.9, 0)
+    c.paint(c.mask_poly(step), c.flat(STEEL * 0.6), 1.6, 0.4)
+    pool = ndimage.gaussian_filter(c.mask_ellipse(pool_c[0], pool_c[1], 150 * s, 75 * s), 28 * s)
+    c._door_pools.append(pool)
 
 
 def _prism_wall(self, side, u0, u1, z0, z1, col):
@@ -395,6 +452,7 @@ def soi_brass(out):
     shophouse_wall(c, "L", gh, wh, mint, seed=2)
     wall_edge(c, gw, gh, wh)
     concrete_floor(c, gw, gh, hexc("#7C736B"))
+    c.apply_door_pools()
     c.finish(out, sil=0)
 
 
@@ -406,6 +464,7 @@ def steam_market(out):
     brick_wall(c, "L", gh, wh, brick, mortar, door_u=3.65, seed=4)
     wall_edge(c, gw, gh, wh)
     tile_floor(c, gw, gh, hexc("#8A5A3C"), hexc("#6B4530"))
+    c.apply_door_pools()
     c.finish(out, sil=0)
 
 
