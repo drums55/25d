@@ -20,6 +20,12 @@ if ($Editor) {
     $godot = $godot -replace '_console\.exe$', '.exe'
     $GodotArgs = @('-e') + $GodotArgs
 }
-Write-Host "$godot --path $root $GodotArgs"
 $ErrorActionPreference = 'Continue'   # Godot prints warnings to stderr
+# Always import first: after a git pull, new class_name scripts are unknown to
+# Godot until its class cache is rebuilt ("Could not find type ..." errors).
+$consoleExe = $godot -replace '(?<!_console)\.exe$', '_console.exe'
+Write-Host "Importing..."
+& $consoleExe --headless --path $root --import 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) { Write-Warning "import exit code $LASTEXITCODE - run '$consoleExe --headless --path . --import' to see why" }
+Write-Host "$godot --path $root $GodotArgs"
 & $godot --path $root @GodotArgs
