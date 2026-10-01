@@ -1,4 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="180" height="380" viewBox="0 0 180 380">
+<ellipse cx="90.0" cy="384.0" rx="55.2" ry="27.6" fill="#000000" opacity="0.15200000000000002"/>
+<ellipse cx="90.0" cy="382.0" rx="48.0" ry="24.0" fill="#000000" opacity="0.38"/>
 <ellipse cx="90.0" cy="380.0" rx="34.0" ry="17.0" fill="#4A4248" stroke="#1E1A1F" stroke-width="3"/>
 <rect x="80.0" y="200.0" width="20.0" height="180.0" rx="0" fill="#5D666F" stroke="#1E1A1F" stroke-width="3"/>
 <defs><linearGradient id="at" x1="0" x2="1"><stop offset="0" stop-color="#8F6B2A"/><stop offset="0.5" stop-color="#E8C878"/><stop offset="1" stop-color="#8F6B2A"/></linearGradient></defs>

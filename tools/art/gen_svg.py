@@ -51,6 +51,11 @@ class Svg:
         self.add('<polygon points="%s" fill="%s" stroke="%s" stroke-width="%s" '
                  'stroke-linejoin="round"%s/>' % (d, fill, stroke, sw, op))
 
+    def line_op(self, pts, stroke, sw, opacity):
+        d = " ".join("%.1f,%.1f" % p for p in pts)
+        self.add('<polyline points="%s" fill="none" stroke="%s" stroke-width="%s" stroke-linecap="round" '
+                 'opacity="%s"/>' % (d, stroke, sw, opacity))
+
     def ellipse(self, cx, cy, rx, ry, fill, stroke=OUT, sw=SW):
         self.add('<ellipse cx="%.1f" cy="%.1f" rx="%.1f" ry="%.1f" fill="%s" stroke="%s" '
                  'stroke-width="%s"/>' % (cx, cy, rx, ry, fill, stroke, sw))
@@ -70,6 +75,18 @@ class Svg:
     def path(self, d, fill, stroke=OUT, sw=SW):
         self.add('<path d="%s" fill="%s" stroke="%s" stroke-width="%s" stroke-linejoin="round"/>'
                  % (d, fill, stroke, sw))
+
+    def glow(self, cx, cy, rx, ry, opacity=0.35):
+        """Soft white highlight blob (light from top-left)."""
+        self.add('<ellipse cx="%.1f" cy="%.1f" rx="%.1f" ry="%.1f" fill="#FFFFFF" opacity="%s"/>'
+                 % (cx, cy, rx, ry, opacity))
+
+    def shade_lr(self, x0, y0, w, h, light=0.22, dark=0.22):
+        """Vertical rim light on the left and shadow on the right of a part."""
+        self.add('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="4" fill="#FFFFFF" opacity="%s"/>'
+                 % (x0, y0, w * 0.18, h, light))
+        self.add('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="4" fill="#000000" opacity="%s"/>'
+                 % (x0 + w * 0.78, y0, w * 0.22, h, dark))
 
     def rivets(self, pts, r=3):
         for x, y in pts:
@@ -102,14 +119,32 @@ class Iso:
     def p(self, gx, gy, z=0.0):
         return (self.ox + (gx - gy) * 64 * S, self.oy + (gx + gy) * 32 * S - z * S)
 
+    def shadow(self, svg, fx, fy, opacity=0.38):
+        """Soft contact shadow on the floor under a footprint (draw first)."""
+        cx, cy = self.p(0, 0, 0)
+        rx = (fx + fy) * 0.5 * 64 * S * 0.75
+        ry = (fx + fy) * 0.5 * 32 * S * 0.75
+        svg.add('<ellipse cx="%.1f" cy="%.1f" rx="%.1f" ry="%.1f" fill="#000000" opacity="%s"/>'
+                % (cx, cy + 4, rx * 1.15, ry * 1.15, opacity * 0.4))
+        svg.add('<ellipse cx="%.1f" cy="%.1f" rx="%.1f" ry="%.1f" fill="#000000" opacity="%s"/>'
+                % (cx, cy + 2, rx, ry, opacity))
+
     def box(self, svg, x0, y0, x1, y1, z0, z1, col, outline=True):
-        """Axis-aligned iso box between cell coords, z in 1x pixels."""
+        """Axis-aligned iso box between cell coords, z in 1x pixels.
+        Light from top-left: top face lit, left face mid, right face dark,
+        plus a bright rim on the top-left edges and ambient darkening low."""
         o = OUT if outline else "none"
         p = self.p
-        # left face (x0 edge: from (x0,y0) to (x0,y1))
         svg.poly([p(x0, y1, z0), p(x1, y1, z0), p(x1, y1, z1), p(x0, y1, z1)], shade(col, 0.72), o)
-        svg.poly([p(x1, y1, z0), p(x1, y0, z0), p(x1, y0, z1), p(x1, y1, z1)], shade(col, 0.52), o)
-        svg.poly([p(x0, y0, z1), p(x1, y0, z1), p(x1, y1, z1), p(x0, y1, z1)], col, o)
+        svg.poly([p(x1, y1, z0), p(x1, y0, z0), p(x1, y0, z1), p(x1, y1, z1)], shade(col, 0.48), o)
+        svg.poly([p(x0, y0, z1), p(x1, y0, z1), p(x1, y1, z1), p(x0, y1, z1)], shade(col, 1.12), o)
+        zm = z0 + (z1 - z0) * 0.45
+        # ambient occlusion on the lower half of the side faces
+        svg.poly([p(x0, y1, z0), p(x1, y1, z0), p(x1, y1, zm), p(x0, y1, zm)], "#000000", "none", 0, 0.18)
+        svg.poly([p(x1, y1, z0), p(x1, y0, z0), p(x1, y0, zm), p(x1, y1, zm)], "#000000", "none", 0, 0.18)
+        # rim light along the lit edges
+        svg.line_op([p(x0, y1, z1), p(x0, y0, z1), p(x1, y0, z1)], "#FFFFFF", 3, 0.55)
+        svg.line_op([p(x0, y1, z1), p(x0, y1, z0)], "#FFFFFF", 2, 0.3)
 
     def cylinder(self, svg, cx, cy, r, z0, z1, col, outline=True):
         """Vertical cylinder centred on cell (cx, cy); r in cells."""
@@ -124,7 +159,11 @@ class Iso:
         svg.path("M%.1f,%.1f L%.1f,%.1f A%.1f,%.1f 0 0,0 %.1f,%.1f L%.1f,%.1f A%.1f,%.1f 0 0,0 %.1f,%.1f Z"
                  % (tx - rx, ty, bx - rx, by, rx, ry, bx + rx, by, tx + rx, ty, rx, ry, tx - rx, ty),
                  "url(#%s)" % gid, o)
-        svg.ellipse(tx, ty, rx, ry, col, o)
+        svg.ellipse(tx, ty, rx, ry, shade(col, 1.15), o)
+        svg.line_op([(tx - rx * 0.62, ty + 6), (bx - rx * 0.62, by - 10)], "#FFFFFF", rx * 0.16, 0.45)
+        svg.add('<path d="M%.1f,%.1f A%.1f,%.1f 0 0,0 %.1f,%.1f L%.1f,%.1f A%.1f,%.1f 0 0,1 %.1f,%.1f Z" '
+                'fill="#000000" opacity="0.22"/>' % (bx - rx, by, rx, ry, bx + rx, by, bx + rx, by - (by - ty) * 0.3,
+                                                      rx, ry, bx - rx, by - (by - ty) * 0.3))
 
 
 # ----------------------------------------------------------------------------
@@ -134,6 +173,7 @@ class Iso:
 def noodle_cart():
     W, H = 420, 330
     svg, iso = Svg(W, H), Iso(W, H)
+    iso.shadow(svg, 1.6, 0.9)
     fx, fy = 1.6, 0.9
     # wheels
     for gx in (-0.55, 0.45):
@@ -179,6 +219,7 @@ def noodle_cart():
 def steam_tuktuk():
     W, H = 470, 330
     svg, iso = Svg(W, H), Iso(W, H)
+    iso.shadow(svg, 1.8, 1.0)
     fx, fy = 1.8, 1.0
     for gx, gy in ((-0.6, 0.45), (0.65, 0.45), (0.65, -0.45)):
         wx, wy = iso.p(gx, gy, 12)
@@ -211,6 +252,7 @@ def steam_tuktuk():
 def spirit_house():
     W, H = 220, 360
     svg, iso = Svg(W, H), Iso(W, H)
+    iso.shadow(svg, 0.7, 0.7)
     # pedestal
     iso.cylinder(svg, 0, 0, 0.14, 0, 70, STEEL_D)
     iso.box(svg, -0.3, -0.3, 0.3, 0.3, 70, 80, BRASS_D)
@@ -250,6 +292,7 @@ def gear(svg, cx, cy, r, col, teeth=8):
 def power_pole():
     W, H = 160, 720
     svg, iso = Svg(W, H), Iso(W, H)
+    iso.shadow(svg, 0.35, 0.35)
     cx, cy = iso.p(0, 0, 0)
     svg.ellipse(cx, cy, 18, 9, SOOT_L, OUT)
     svg.rect(cx - 9, cy - 660, 18, 660, "#6F6763", OUT)
@@ -276,6 +319,7 @@ def power_pole():
 def water_tank():
     W, H = 300, 440
     svg, iso = Svg(W, H), Iso(W, H)
+    iso.shadow(svg, 1.0, 1.0)
     # legs
     for gx, gy in ((-0.35, -0.35), (0.35, -0.35), (0.35, 0.35), (-0.35, 0.35)):
         x, y = iso.p(gx, gy, 0)
@@ -300,6 +344,7 @@ def water_tank():
 def stool(name, col):
     W, H = 110, 130
     svg, iso = Svg(W, H), Iso(W, H)
+    iso.shadow(svg, 0.4, 0.4)
     for gx, gy in ((-0.15, -0.15), (0.15, -0.15), (0.15, 0.15), (-0.15, 0.15)):
         x, y = iso.p(gx, gy, 0)
         svg.line([(x, y), (x, y - 34 * S)], shade(col, 0.6), 6)
@@ -312,6 +357,7 @@ def stool(name, col):
 def steam_bike():
     W, H = 380, 260
     svg, iso = Svg(W, H), Iso(W, H)
+    iso.shadow(svg, 1.4, 0.7)
     for gx in (-0.5, 0.5):
         wx, wy = iso.p(gx, 0.0, 14)
         svg.ellipse(wx, wy, 30, 34, SOOT, OUT)
@@ -344,6 +390,7 @@ def steam_bike():
 def boiler():
     W, H = 300, 520
     svg, iso = Svg(W, H), Iso(W, H)
+    iso.shadow(svg, 1.0, 1.0)
     iso.box(svg, -0.5, -0.5, 0.5, 0.5, 0, 14, SOOT_L)
     iso.cylinder(svg, 0, 0, 0.42, 14, 180, COPPER)
     for z in (60, 120):
@@ -372,6 +419,7 @@ def boiler():
 def gear_stall():
     W, H = 400, 280
     svg, iso = Svg(W, H), Iso(W, H)
+    iso.shadow(svg, 1.5, 1.0)
     fx, fy = 1.5, 1.0
     iso.box(svg, -fx / 2, -fy / 2, fx / 2, fy / 2, 0, 56, WOOD)
     iso.box(svg, -fx / 2, -fy / 2, fx / 2, fy / 2, 56, 62, WOOD_L)
@@ -397,6 +445,7 @@ def gear_stall():
 def crate():
     W, H = 240, 200
     svg, iso = Svg(W, H), Iso(W, H)
+    iso.shadow(svg, 0.9, 0.9)
     iso.box(svg, -0.45, -0.45, 0.45, 0.45, 0, 60, WOOD)
     for z in (12, 48):
         x1, y1 = iso.p(-0.45, 0.45, z)
@@ -410,6 +459,7 @@ def crate():
 def sign():
     W, H = 180, 300
     svg, iso = Svg(W, H), Iso(W, H)
+    iso.shadow(svg, 0.5, 0.3)
     x, y = iso.p(0, 0, 0)
     svg.line([(x, y), (x, y - 230)], WOOD_D, 10)
     svg.rect(x - 70, y - 250, 140, 70, BRASS, OUT, 6)
@@ -425,6 +475,7 @@ def brass_automaton():
     """Training dummy: brass torso on a post, origin at the post foot."""
     W, H = 180, 380
     svg, iso = Svg(W, H), Iso(W, H)
+    iso.shadow(svg, 0.5, 0.5)
     x, y = iso.p(0, 0, 0)
     svg.ellipse(x, y, 34, 17, SOOT_L, OUT)
     svg.rect(x - 10, y - 180, 20, 180, STEEL_D, OUT)
@@ -456,11 +507,17 @@ def brass_automaton():
 # ----------------------------------------------------------------------------
 
 def character(folder, skin=SKIN, shirt=TEAL, vest="#D8752D", hat="helmet", wrench=True,
-              trousers=SOOT, hair=SOOT):
+              trousers=SOOT, hair=SOOT, female=False):
     d = "characters/%s/" % folder
     # head 100x120, pivot bottom centre (neck)
     s = Svg(100, 120)
+    if female:                                     # long hair behind the head
+        s.path("M22,50 Q10,110 24,118 L80,118 Q94,110 80,50 Z", hair, OUT)
     s.ellipse(50, 70, 32, 36, skin, OUT)          # face
+    s.add('<ellipse cx="50" cy="70" rx="32" ry="36" fill="url(#faceShade)"/>')
+    s.add('<defs><linearGradient id="faceShade" x1="0" x2="1"><stop offset="0" stop-color="#FFFFFF" '
+          'stop-opacity="0.25"/><stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0"/>'
+          '<stop offset="1" stop-color="#000000" stop-opacity="0.22"/></linearGradient></defs>')
     if hat == "helmet":
         s.path("M18,62 A32,34 0 0,1 82,62 L82,52 A34,30 0 0,0 18,52 Z", TEAL, OUT)
         s.path("M16,56 A34,38 0 0,1 84,56 Z", TEAL_D, OUT)
@@ -471,31 +528,53 @@ def character(folder, skin=SKIN, shirt=TEAL, vest="#D8752D", hat="helmet", wrenc
             s.circle(cx, 44, 6, TEAL_L, "none", 0)
         s.line([(47, 44), (53, 44)], BRASS_D, 4)
     elif hat == "cap":                             # flat cap + grey moustache (old vendor)
-        s.path("M16,58 A34,36 0 0,1 84,58 Z", hair, OUT)
-        s.path("M14,58 L92,58 L96,66 L14,64 Z", shade(hair, 1.3), OUT)
+        s.path("M18,66 Q20,80 26,86", "none", hair, 5)      # grey sideburn
+        s.path("M16,58 A34,36 0 0,1 84,58 Z", WOOD, OUT)     # flat cap
+        s.path("M14,58 L92,58 L98,68 L14,64 Z", WOOD_D, OUT)
+        s.glow(40, 36, 14, 6, 0.25)
         s.path("M58,88 q10,-6 20,0 q-10,8 -20,0 Z", "#D9D4C7", OUT, 2)
         s.ellipse(50, 44, 8, 3, "none", "none", 0)
-    elif hat == "bun":                             # hair bun + brass hairpin (market lady)
-        s.path("M16,60 A34,38 0 0,1 84,60 Z", hair, OUT)
-        s.circle(40, 26, 14, hair, OUT)
-        s.line([(28, 18), (56, 30)], BRASS, 4)
-        s.path("M70,54 q8,10 6,24", "none", hair, 6)
-    s.circle(62, 74, 3.5, OUT, OUT, 1)              # eye (3/4 right)
-    s.line([(66, 88), (74, 86)], OUT, 2.5)          # mouth
+    elif hat == "bun":                             # bangs + high bun + brass hairpin (market lady)
+        s.path("M16,62 A34,40 0 0,1 84,62 L84,56 Q70,66 56,54 Q44,70 16,60 Z", hair, OUT)
+        s.circle(44, 22, 15, hair, OUT)
+        s.glow(40, 18, 6, 4, 0.3)
+        s.line([(26, 12), (60, 28)], BRASS, 4)
+        s.circle(26, 12, 4, RED, OUT, 1.5)
+        s.circle(82, 78, 5, "none", BRASS, 2.5)      # hoop earring
+    if female:
+        s.ellipse(62, 74, 4, 5, OUT, OUT, 1)        # bigger eye + lashes
+        s.line([(58, 67), (54, 63)], OUT, 2)
+        s.line([(64, 66), (64, 61)], OUT, 2)
+        s.path("M64,89 q6,-3 11,0 q-5,5 -11,0 Z", RED, RED_D, 1.5)   # lips
+        s.glow(70, 80, 6, 3, 0.25)                  # blush/cheek highlight
+    else:
+        s.circle(62, 74, 3.5, OUT, OUT, 1)          # eye (3/4 right)
+        s.line([(66, 88), (74, 86)], OUT, 2.5)      # mouth
     s.path("M74,68 l5,6 -5,4", "none", shade(skin, 0.8), 2)   # nose
     s.rect(44, 102, 14, 16, shade(skin, 0.8), OUT, 4)         # neck
     s.write(d + "head")
 
     # torso 110x130, pivot bottom centre (hips)
     s = Svg(110, 130)
-    s.path("M22,18 L88,18 L96,110 L14,110 Z", shirt, OUT)       # shirt
-    if vest:
-        s.path("M30,18 L80,18 L84,110 L26,110 Z", vest, OUT)    # vest / apron
-        s.path("M34,18 L48,18 L46,110 L36,110 Z", shade(vest, 0.85), "none", 0)
-    s.rect(30, 56, 50, 10, BRASS_D, OUT, 2)          # belt
-    s.rect(48, 54, 14, 14, BRASS, OUT, 2)
-    s.rivets([(40, 30), (70, 30), (40, 92), (70, 92)])
-    s.line([(24, 20), (18, 60)], SOOT, 6)            # bag strap
+    if female:                                       # blouse with waist + apron skirt
+        s.path("M24,18 L86,18 L80,62 L92,112 L18,112 L30,62 Z", shirt, OUT)
+        s.path("M30,18 L80,18 L74,60 L36,60 Z", shade(shirt, 1.1), "none", 0)
+        s.path("M34,64 L76,64 L86,112 L24,112 Z", vest, OUT)   # apron
+        s.path("M48,64 L62,64 L62,22 L48,22 Z", vest, OUT)     # apron bib
+        s.line([(40, 86), (70, 86)], shade(vest, 0.8), 2)
+        s.rect(30, 60, 50, 8, BRASS_D, OUT, 2)       # belt
+        s.rect(49, 58, 12, 12, BRASS, OUT, 2)
+        s.shade_lr(22, 18, 68, 94, 0.2, 0.2)
+    else:
+        s.path("M22,18 L88,18 L96,110 L14,110 Z", shirt, OUT)       # shirt
+        if vest:
+            s.path("M30,18 L80,18 L84,110 L26,110 Z", vest, OUT)    # vest / apron
+            s.path("M34,18 L48,18 L46,110 L36,110 Z", shade(vest, 0.85), "none", 0)
+        s.rect(30, 56, 50, 10, BRASS_D, OUT, 2)      # belt
+        s.rect(48, 54, 14, 14, BRASS, OUT, 2)
+        s.rivets([(40, 30), (70, 30), (40, 92), (70, 92)])
+        s.line([(24, 20), (18, 60)], SOOT, 6)        # bag strap
+        s.shade_lr(22, 18, 70, 92, 0.2, 0.2)
     if wrench:
         s.rect(86, 40, 18, 44, SOOT, OUT, 4)         # small brass gauge pack on the back-side
         s.gauge(95, 62, 7)
@@ -513,7 +592,9 @@ def character(folder, skin=SKIN, shirt=TEAL, vest="#D8752D", hat="helmet", wrenc
             s.rect(ox + 12, 104, 16, 16, SOOT, OUT, 2)
         s.path("M%d,4 L%d,4 L%d,70 L%d,70 Z" % (ox + 8, ox + 32, ox + 30, ox + 10), col, OUT)
         s.rect(ox + 8, 66, 24, 14, BRASS_D, OUT, 3)  # cuff
-        s.ellipse(ox + 20, 92, 13, 15, SKIN, OUT)    # hand
+        s.ellipse(ox + 20, 92, 13, 15, skin, OUT)    # hand
+        s.shade_lr(ox + 8, 4, 24, 66, 0.22, 0.25)
+        s.glow(ox + 15, 86, 4, 5, 0.3)
         s.write(d + name)
 
     # legs 44x136, pivot top centre (hip)
@@ -523,6 +604,8 @@ def character(folder, skin=SKIN, shirt=TEAL, vest="#D8752D", hat="helmet", wrenc
         s.rect(6, 94, 32, 16, WOOD_D, OUT, 3)        # boot cuff
         s.path("M8,108 L36,108 L42,130 L4,130 Z", WOOD_D, OUT)  # boot
         s.rect(10, 126, 32, 6, SOOT, OUT, 1)
+        s.shade_lr(8, 2, 28, 94, 0.2, 0.25)
+        s.glow(14, 112, 4, 3, 0.3)
         s.write(d + name)
 
 
@@ -542,6 +625,6 @@ if __name__ == "__main__":
     character("rider")
     character("lung_pradit", skin="#D8A878", shirt=CREAM, vest="#3C5A8A", hat="cap", wrench=False,
               trousers="#4A3B30", hair="#BDB7AA")
-    character("je_muay", skin="#F0C8A0", shirt="#D96C8C", vest="#F2E6D0", hat="bun", wrench=False,
-              trousers="#3A3550", hair="#1C1418")
+    character("je_muay", skin="#F2CBA6", shirt="#D96C8C", vest="#F2E6D0", hat="bun", wrench=False,
+              trousers="#5A3A6A", hair="#1C1418", female=True)
     brass_automaton()

@@ -1,12 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="110" height="130" viewBox="0 0 110 130">
-<path d="M22,18 L88,18 L96,110 L14,110 Z" fill="#D96C8C" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
-<path d="M30,18 L80,18 L84,110 L26,110 Z" fill="#F2E6D0" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
-<path d="M34,18 L48,18 L46,110 L36,110 Z" fill="#CDC3B0" stroke="none" stroke-width="0" stroke-linejoin="round"/>
-<rect x="30.0" y="56.0" width="50.0" height="10.0" rx="0" fill="#8F6B2A" stroke="#1E1A1F" stroke-width="2"/>
-<rect x="48.0" y="54.0" width="14.0" height="14.0" rx="0" fill="#C9A04A" stroke="#1E1A1F" stroke-width="2"/>
-<ellipse cx="40.0" cy="30.0" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
-<ellipse cx="70.0" cy="30.0" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
-<ellipse cx="40.0" cy="92.0" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
-<ellipse cx="70.0" cy="92.0" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
-<polyline points="24.0,20.0 18.0,60.0" fill="none" stroke="#2B2629" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M24,18 L86,18 L80,62 L92,112 L18,112 L30,62 Z" fill="#D96C8C" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<path d="M30,18 L80,18 L74,60 L36,60 Z" fill="#EE769A" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<path d="M34,64 L76,64 L86,112 L24,112 Z" fill="#F2E6D0" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<path d="M48,64 L62,64 L62,22 L48,22 Z" fill="#F2E6D0" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="40.0,86.0 70.0,86.0" fill="none" stroke="#C1B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="30.0" y="60.0" width="50.0" height="8.0" rx="0" fill="#8F6B2A" stroke="#1E1A1F" stroke-width="2"/>
+<rect x="49.0" y="58.0" width="12.0" height="12.0" rx="0" fill="#C9A04A" stroke="#1E1A1F" stroke-width="2"/>
+<rect x="22.0" y="18.0" width="12.2" height="94.0" rx="4" fill="#FFFFFF" opacity="0.2"/>
+<rect x="75.0" y="18.0" width="15.0" height="94.0" rx="4" fill="#000000" opacity="0.2"/>
 </svg>

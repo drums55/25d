@@ -1,4 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="160" height="720" viewBox="0 0 160 720">
+<ellipse cx="80.0" cy="724.0" rx="38.6" ry="19.3" fill="#000000" opacity="0.15200000000000002"/>
+<ellipse cx="80.0" cy="722.0" rx="33.6" ry="16.8" fill="#000000" opacity="0.38"/>
 <ellipse cx="80.0" cy="720.0" rx="18.0" ry="9.0" fill="#4A4248" stroke="#1E1A1F" stroke-width="3"/>
 <rect x="71.0" y="60.0" width="18.0" height="660.0" rx="0" fill="#6F6763" stroke="#1E1A1F" stroke-width="3"/>
 <rect x="71.0" y="60.0" width="6.0" height="660.0" rx="0" fill="#8A817C" stroke="none" stroke-width="0"/>

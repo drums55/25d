@@ -38,7 +38,7 @@ height = 70.0
 color = Color(0.78, 0.62, 0.3, 1)
 
 [node name="JeMuay" parent="World" instance=ExtResource("5_npc")]
-position = Vector2(-89.6, 299.2)
+position = Vector2(-48, 232)
 
 [node name="Rig" parent="World/JeMuay"]
 character_name = "je_muay"

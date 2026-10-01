@@ -9,4 +9,6 @@
 <ellipse cx="40.0" cy="92.0" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
 <ellipse cx="70.0" cy="92.0" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
 <polyline points="24.0,20.0 18.0,60.0" fill="none" stroke="#2B2629" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="22.0" y="18.0" width="12.6" height="92.0" rx="4" fill="#FFFFFF" opacity="0.2"/>
+<rect x="76.6" y="18.0" width="15.4" height="92.0" rx="4" fill="#000000" opacity="0.2"/>
 </svg>

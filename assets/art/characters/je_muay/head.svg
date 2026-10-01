@@ -1,11 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="100" height="120" viewBox="0 0 100 120">
-<ellipse cx="50.0" cy="70.0" rx="32.0" ry="36.0" fill="#F0C8A0" stroke="#1E1A1F" stroke-width="3"/>
-<path d="M16,60 A34,38 0 0,1 84,60 Z" fill="#1C1418" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
-<ellipse cx="40.0" cy="26.0" rx="14.0" ry="14.0" fill="#1C1418" stroke="#1E1A1F" stroke-width="3"/>
-<polyline points="28.0,18.0 56.0,30.0" fill="none" stroke="#C9A04A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M70,54 q8,10 6,24" fill="none" stroke="#1C1418" stroke-width="6" stroke-linejoin="round"/>
-<ellipse cx="62.0" cy="74.0" rx="3.5" ry="3.5" fill="#1E1A1F" stroke="#1E1A1F" stroke-width="1"/>
-<polyline points="66.0,88.0 74.0,86.0" fill="none" stroke="#1E1A1F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M74,68 l5,6 -5,4" fill="none" stroke="#C0A080" stroke-width="2" stroke-linejoin="round"/>
-<rect x="44.0" y="102.0" width="14.0" height="16.0" rx="0" fill="#C0A080" stroke="#1E1A1F" stroke-width="4"/>
+<path d="M22,50 Q10,110 24,118 L80,118 Q94,110 80,50 Z" fill="#1C1418" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<ellipse cx="50.0" cy="70.0" rx="32.0" ry="36.0" fill="#F2CBA6" stroke="#1E1A1F" stroke-width="3"/>
+<ellipse cx="50" cy="70" rx="32" ry="36" fill="url(#faceShade)"/>
+<defs><linearGradient id="faceShade" x1="0" x2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.25"/><stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0"/><stop offset="1" stop-color="#000000" stop-opacity="0.22"/></linearGradient></defs>
+<path d="M16,62 A34,40 0 0,1 84,62 L84,56 Q70,66 56,54 Q44,70 16,60 Z" fill="#1C1418" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<ellipse cx="44.0" cy="22.0" rx="15.0" ry="15.0" fill="#1C1418" stroke="#1E1A1F" stroke-width="3"/>
+<ellipse cx="40.0" cy="18.0" rx="6.0" ry="4.0" fill="#FFFFFF" opacity="0.3"/>
+<polyline points="26.0,12.0 60.0,28.0" fill="none" stroke="#C9A04A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="26.0" cy="12.0" rx="4.0" ry="4.0" fill="#C0392B" stroke="#1E1A1F" stroke-width="1.5"/>
+<ellipse cx="82.0" cy="78.0" rx="5.0" ry="5.0" fill="none" stroke="#C9A04A" stroke-width="2.5"/>
+<ellipse cx="62.0" cy="74.0" rx="4.0" ry="5.0" fill="#1E1A1F" stroke="#1E1A1F" stroke-width="1"/>
+<polyline points="58.0,67.0 54.0,63.0" fill="none" stroke="#1E1A1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="64.0,66.0 64.0,61.0" fill="none" stroke="#1E1A1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M64,89 q6,-3 11,0 q-5,5 -11,0 Z" fill="#C0392B" stroke="#7E2219" stroke-width="1.5" stroke-linejoin="round"/>
+<ellipse cx="70.0" cy="80.0" rx="6.0" ry="3.0" fill="#FFFFFF" opacity="0.25"/>
+<path d="M74,68 l5,6 -5,4" fill="none" stroke="#C1A284" stroke-width="2" stroke-linejoin="round"/>
+<rect x="44.0" y="102.0" width="14.0" height="16.0" rx="0" fill="#C1A284" stroke="#1E1A1F" stroke-width="4"/>
 </svg>

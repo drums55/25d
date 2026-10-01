@@ -7,4 +7,7 @@
 <path d="M18,4 L42,4 L40,70 L20,70 Z" fill="#3F7A74" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
 <rect x="18.0" y="66.0" width="24.0" height="14.0" rx="0" fill="#8F6B2A" stroke="#1E1A1F" stroke-width="3"/>
 <ellipse cx="30.0" cy="92.0" rx="13.0" ry="15.0" fill="#E8B68A" stroke="#1E1A1F" stroke-width="3"/>
+<rect x="18.0" y="4.0" width="4.3" height="66.0" rx="4" fill="#FFFFFF" opacity="0.22"/>
+<rect x="36.7" y="4.0" width="5.3" height="66.0" rx="4" fill="#000000" opacity="0.25"/>
+<ellipse cx="25.0" cy="86.0" rx="4.0" ry="5.0" fill="#FFFFFF" opacity="0.3"/>
 </svg>
