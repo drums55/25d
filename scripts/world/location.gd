@@ -69,7 +69,7 @@ func _build(t: Dictionary, id: int) -> void:
 		n += 1
 	var bike := PROP_SCENE.instantiate()
 	bike.name = "MyBike"
-	bike.art_name = "steam_bike"
+	bike.art_name = "rider_bike"
 	bike.footprint_cells = BIKE_FOOT
 	bike.position = Iso.grid_to_world(bike_cell(t))
 	var bit := INT_SCENE.instantiate() as Interactable

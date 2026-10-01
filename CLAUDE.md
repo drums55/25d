@@ -47,7 +47,10 @@
 - **Prop PNG แบบลงสีด้วยโค้ด** (2026-10-01): `tools/art/png/paint.py` (numpy+PIL+scipy: เงา/rim light/เส้นขอบ/texture พู่กัน, supersample 3x) + สคริปต์ต่อชิ้น เช่น `tools/art/png/noodle_cart.py <out.png>`. ไม่มี AI image gen — PNG พวกนี้แทน .svg ทีละชิ้น; `gen_svg.py` ข้ามชิ้นที่มี .png แล้ว
 - **ฉาก/prop ลงสีด้วยโค้ด** (2026-10-01): `tools/art/png/room.py` (backdrop ทั้งห้อง, RoomCanvas crop ต่อ op), `props_th.py`
   (prop ไทย + `Canvas.text()` ป้ายไทยบนหน้า iso: หน้า +x ต้องให้ p0 อยู่ฝั่ง +gy). backdrop ห้องเดิม 4 ห้องลบไปพร้อมย่านเก่า;
-  P0 ใช้พื้น/ผนัง placeholder สีตามประเภทสถานที่ + prop png เดิมเป็นของแทน (ยังมีกลิ่นไอน้ำ) → **ต้องวาดชุดกรุงเทพฯ ปัจจุบันใหม่**
+  P0 ใช้พื้น/ผนัง placeholder สีตามประเภทสถานที่. **prop กทม. ปัจจุบัน** (2026-10-01) = `tools/art/png/props_bkk.py`
+  (rider_bike กล่องเขียว "ส่งไว", parked_scooter, food_counter ตู้ข้าวมันไก่, steel_table + red_stool, market_stall ร่มส้ม,
+  fruit_crates, house_gate, plant_pots, guard_desk, lift_door "ไรเดอร์ห้ามใช้", parcel_shelf, reception_desk, water_dispenser,
+  sofa, fuel_pump(_green), tire_stack, trash_bin, tool_bench, minimart) ใช้ใน `LocationTemplates` แล้ว; ยังเหลือพื้น/ผนังต่อประเภท
 - Brief สำหรับ Cowork (desktop) gen ภาพแล้ววางลง `G:\dev\25d\assets\art\...` โดยตรง: `assets/art/COWORK_BRIEF.md`
   (กติกาขนาด/จุดฐาน/ชื่อไฟล์ทั้งหมดอยู่ที่นั่น ถ้าเปลี่ยนกติกาใน ArtLibrary ต้องแก้ brief ด้วย)
 - ฟอนต์ project = Kanit Medium (OFL) ที่ `assets/fonts/` — ฟอนต์ default ของ Godot ไม่มีอักษรไทย

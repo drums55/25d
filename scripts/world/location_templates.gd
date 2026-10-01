@@ -21,6 +21,7 @@ const T := {
 		"props":
 		[
 			{
+				"art": "food_counter",
 				"pos": Vector2(4.5, 1.6),
 				"foot": Vector2(2.6, 0.7),
 				"h": 90.0,
@@ -31,6 +32,7 @@ const T := {
 		"extras":
 		[
 			{
+				"art": "steel_table",
 				"pos": Vector2(2.2, 4.4),
 				"foot": Vector2(1.0, 1.0),
 				"h": 55.0,
@@ -38,14 +40,15 @@ const T := {
 				"dialog": "talk_table"
 			},
 			{
+				"art": "steel_table",
 				"pos": Vector2(5.0, 4.6),
 				"foot": Vector2(1.0, 1.0),
 				"h": 55.0,
 				"color": Color(0.55, 0.35, 0.25),
 				"dialog": "talk_table"
 			},
-			{"art": "stool_a", "pos": Vector2(3.0, 5.9), "foot": Vector2(0.4, 0.4), "h": 30.0},
-			{"art": "stool_b", "pos": Vector2(0.8, 5.4), "foot": Vector2(0.4, 0.4), "h": 30.0},
+			{"art": "red_stool", "pos": Vector2(3.0, 5.9), "foot": Vector2(0.4, 0.4), "h": 30.0},
+			{"art": "red_stool", "pos": Vector2(0.8, 5.4), "foot": Vector2(0.4, 0.4), "h": 30.0},
 			{
 				"art": "shop_cat",
 				"pos": Vector2(0.7, 1.6),
@@ -53,7 +56,7 @@ const T := {
 				"h": 60.0,
 				"dialog": "talk_cat"
 			},
-			{"art": "crate", "pos": Vector2(0.9, 3.0), "foot": Vector2(0.8, 0.8), "h": 60.0},
+			{"art": "trash_bin", "pos": Vector2(0.9, 3.0), "foot": Vector2(0.8, 0.8), "h": 60.0},
 		],
 		"extra_count": 4,
 		"merchant":
@@ -73,7 +76,7 @@ const T := {
 		"wall": Color(0.36, 0.42, 0.5),
 		"props":
 		[
-			{"art": "gear_stall", "pos": Vector2(5.0, 1.8), "foot": Vector2(1.5, 1.0), "h": 70.0},
+			{"art": "market_stall", "pos": Vector2(5.0, 1.8), "foot": Vector2(1.5, 1.0), "h": 70.0},
 		],
 		"extras":
 		[
@@ -85,7 +88,7 @@ const T := {
 				"dialog": "talk_moo_ping"
 			},
 			{"art": "noodle_cart", "pos": Vector2(2.2, 4.0), "foot": Vector2(1.6, 0.9), "h": 90.0},
-			{"art": "crate", "pos": Vector2(8.0, 5.5), "foot": Vector2(0.9, 0.9), "h": 60.0},
+			{"art": "fruit_crates", "pos": Vector2(8.0, 5.5), "foot": Vector2(0.9, 0.9), "h": 60.0},
 			{
 				"art": "shop_cat",
 				"pos": Vector2(1.5, 7.5),
@@ -94,6 +97,7 @@ const T := {
 				"dialog": "talk_cat"
 			},
 			{
+				"art": "market_stall",
 				"pos": Vector2(5.5, 6.0),
 				"foot": Vector2(1.6, 0.9),
 				"h": 70.0,
@@ -143,7 +147,7 @@ const T := {
 		"extras":
 		[
 			{
-				"art": "tire_planter",
+				"art": "plant_pots",
 				"pos": Vector2(5.0, 0.9),
 				"foot": Vector2(0.6, 0.6),
 				"h": 60.0,
@@ -164,6 +168,7 @@ const T := {
 				"dialog": "talk_cat"
 			},
 			{
+				"art": "house_gate",
 				"pos": Vector2(8.0, 6.5),
 				"foot": Vector2(1.2, 0.6),
 				"h": 50.0,
@@ -182,6 +187,7 @@ const T := {
 		"props":
 		[
 			{
+				"art": "guard_desk",
 				"pos": Vector2(2.2, 2.2),
 				"foot": Vector2(1.6, 0.7),
 				"h": 80.0,
@@ -189,6 +195,7 @@ const T := {
 				"dialog": "talk_guard_desk"
 			},
 			{
+				"art": "lift_door",
 				"pos": Vector2(6.0, 0.3),
 				"foot": Vector2(1.4, 0.6),
 				"h": 170.0,
@@ -199,15 +206,16 @@ const T := {
 		"extras":
 		[
 			{
+				"art": "sofa",
 				"pos": Vector2(7.6, 3.6),
 				"foot": Vector2(1.6, 0.8),
 				"h": 45.0,
 				"color": Color(0.35, 0.4, 0.55),
 				"dialog": "talk_sofa"
 			},
-			{"art": "tire_planter", "pos": Vector2(1.0, 5.5), "foot": Vector2(0.6, 0.6), "h": 60.0},
+			{"art": "plant_pots", "pos": Vector2(1.0, 5.5), "foot": Vector2(0.6, 0.6), "h": 60.0},
 			{
-				"art": "crate",
+				"art": "parcel_shelf",
 				"pos": Vector2(9.1, 6.0),
 				"foot": Vector2(0.8, 0.8),
 				"h": 60.0,
@@ -234,6 +242,7 @@ const T := {
 		"props":
 		[
 			{
+				"art": "reception_desk",
 				"pos": Vector2(5.0, 1.8),
 				"foot": Vector2(2.4, 0.7),
 				"h": 85.0,
@@ -243,14 +252,15 @@ const T := {
 		"extras":
 		[
 			{
-				"art": "water_tank",
+				"art": "water_dispenser",
 				"pos": Vector2(9.0, 0.9),
 				"foot": Vector2(1.0, 1.0),
 				"h": 190.0,
 				"dialog": "talk_water"
 			},
-			{"art": "tire_planter", "pos": Vector2(0.8, 0.8), "foot": Vector2(0.6, 0.6), "h": 60.0},
+			{"art": "plant_pots", "pos": Vector2(0.8, 0.8), "foot": Vector2(0.6, 0.6), "h": 60.0},
 			{
+				"art": "sofa",
 				"pos": Vector2(2.0, 5.0),
 				"foot": Vector2(1.6, 0.8),
 				"h": 45.0,
@@ -278,6 +288,7 @@ const T := {
 		"props":
 		[
 			{
+				"art": "fuel_pump",
 				"pos": Vector2(4.0, 3.5),
 				"foot": Vector2(0.6, 0.6),
 				"h": 120.0,
@@ -285,6 +296,7 @@ const T := {
 				"dialog": "talk_pump"
 			},
 			{
+				"art": "fuel_pump_green",
 				"pos": Vector2(6.5, 3.5),
 				"foot": Vector2(0.6, 0.6),
 				"h": 120.0,
@@ -302,7 +314,7 @@ const T := {
 				"h": 150.0,
 				"dialog": "talk_rider_rest"
 			},
-			{"art": "crate", "pos": Vector2(0.9, 5.8), "foot": Vector2(0.8, 0.8), "h": 60.0},
+			{"art": "trash_bin", "pos": Vector2(0.9, 5.8), "foot": Vector2(0.8, 0.8), "h": 60.0},
 		],
 		"extra_count": 2,
 		"merchant":
@@ -323,9 +335,9 @@ const T := {
 		"wall": Color(0.45, 0.47, 0.5),
 		"props":
 		[
-			{"art": "gear_stall", "pos": Vector2(7.0, 2.0), "foot": Vector2(1.5, 1.0), "h": 70.0},
+			{"art": "tool_bench", "pos": Vector2(7.0, 2.0), "foot": Vector2(1.5, 1.0), "h": 70.0},
 			{
-				"art": "steam_bike",
+				"art": "parked_scooter",
 				"pos": Vector2(3.5, 2.0),
 				"foot": Vector2(1.4, 0.7),
 				"h": 70.0,
@@ -334,7 +346,7 @@ const T := {
 		],
 		"extras":
 		[
-			{"art": "tire_planter", "pos": Vector2(0.8, 4.5), "foot": Vector2(0.6, 0.6), "h": 60.0},
+			{"art": "tire_stack", "pos": Vector2(0.8, 4.5), "foot": Vector2(0.6, 0.6), "h": 60.0},
 			{"art": "crate", "pos": Vector2(1.0, 7.0), "foot": Vector2(0.9, 0.9), "h": 60.0},
 			{"art": "water_tank", "pos": Vector2(8.8, 4.5), "foot": Vector2(1.0, 1.0), "h": 190.0},
 		],
