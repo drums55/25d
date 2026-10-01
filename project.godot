@@ -6,10 +6,10 @@ config_version=5
 
 [application]
 
-config/name="25D Adventure"
+config/name="Rider 5 Stars"
 config/description="2D isometric (Hades-style) adventure for Android tablets."
 config/version="0.1.0"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/ui/main_menu.tscn"
 config/features=PackedStringArray("4.4", "Mobile")
 config/icon="res://icon.svg"
 
@@ -18,7 +18,9 @@ config/icon="res://icon.svg"
 GameState="*res://scripts/autoload/game_state.gd"
 Dialog="*res://scripts/autoload/dialog.gd"
 SceneRouter="*res://scripts/autoload/scene_router.gd"
-Jobs="*res://scripts/autoload/jobs.gd"
+Settings="*res://scripts/autoload/settings.gd"
+City="*res://scripts/autoload/city.gd"
+Orders="*res://scripts/autoload/orders.gd"
 
 [display]
 

@@ -1,82 +1,61 @@
 extends GutTest
+## Save v5: slots, state round trip, old saves ignored.
 
 const PATH := "user://test_save.json"
 
 
 func after_each():
-	if FileAccess.file_exists(PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(PATH))
-
-
-func test_dict_round_trip():
-	var s := SaveData.new()
-	s.room_path = "res://scenes/rooms/steam_market.tscn"
-	s.spawn_id = "from_soi"
-	s.flags = {"met_pradit": true}
-	s.money = 120
-	s.inventory = ["brass_gear"]
-	s.hp = 3
-	var back := SaveData.from_dict(s.to_dict())
-	assert_eq(back.room_path, s.room_path)
-	assert_eq(back.spawn_id, s.spawn_id)
-	assert_eq(back.flags, s.flags)
-	assert_eq(back.money, 120)
-	assert_eq(back.inventory, ["brass_gear"])
-	assert_eq(back.hp, 3)
-
-
-func test_old_save_without_v2_fields_loads_with_defaults():
-	var s := SaveData.from_dict({"room_path": "x", "flags": {}})
-	assert_eq(s.money, 0)
-	assert_eq(s.inventory, [])
-	assert_eq(s.hp, -1, "-1 = unknown -> GameState uses MAX_HP")
-	GameState.apply_save_data(s)
-	assert_eq(GameState.hp, GameState.MAX_HP)
+	GameState.delete_save(0, PATH)
+	for slot in range(0, GameState.SAVE_SLOTS + 1):
+		GameState.delete_save(slot)
 	GameState.new_game()
 
 
-func test_from_dict_defaults_on_missing_or_bad_fields():
-	var s := SaveData.from_dict({"flags": "not a dict"})
-	assert_eq(s.room_path, "")
-	assert_eq(s.spawn_id, "default")
-	assert_eq(s.flags, {})
+func test_state_round_trips_through_a_slot():
+	TestHelpers.start_at("market")
+	GameState.money = 777
+	GameState.debt = 1500
+	GameState.fuel = 1.5
+	GameState.add_rating(1)
+	Orders.rng.seed = 1
+	Orders.tick(GameState.minute + 30)
+	var order_count := GameState.orders.size()
+	var where := GameState.location
+	assert_true(GameState.save_game(2))
+	GameState.new_game()
+	assert_true(GameState.load_game(2))
+	assert_eq(GameState.money, 777)
+	assert_eq(GameState.debt, 1500)
+	assert_almost_eq(GameState.fuel, 1.5, 0.001)
+	assert_eq(GameState.location, where)
+	assert_eq(GameState.city_seed, TestHelpers.SEED)
+	assert_eq(GameState.orders.size(), order_count)
+	assert_eq(GameState.ratings[-1], 1.0)
+	var saves := GameState.list_saves()
+	assert_true(saves.has(2))
+	assert_eq(int(saves[2]["money"]), 777)
+	assert_eq(GameState.latest_slot(), 2)
 
 
-func test_file_round_trip():
-	var s := SaveData.new()
-	s.room_path = "res://x.tscn"
-	s.flags = {"a": true}
-	assert_eq(s.write(PATH), OK)
-	var back := SaveData.read(PATH)
-	assert_not_null(back)
-	assert_eq(back.room_path, "res://x.tscn")
-	assert_eq(back.flags, {"a": true})
-
-
-func test_read_missing_or_corrupt_returns_null():
-	assert_null(SaveData.read("user://does_not_exist.json"))
+func test_old_and_corrupt_saves_are_ignored():
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
+	f.store_string(JSON.stringify({"version": 3, "room_path": "res://x.tscn"}))
+	f.close()
+	assert_null(SaveData.read(PATH), "pre-v5 save is the old game")
+	f = FileAccess.open(PATH, FileAccess.WRITE)
 	f.store_string("{not json")
 	f.close()
 	assert_null(SaveData.read(PATH))
+	assert_null(SaveData.read("user://nope.json"))
 
 
-func test_game_state_save_load_and_bad_room_fallback():
-	GameState.new_game()
-	GameState.set_flag("met_pradit")
-	GameState.room_path = "res://scenes/rooms/steam_market.tscn"
-	GameState.spawn_id = "from_soi"
-	assert_true(GameState.save_game(PATH))
-	GameState.new_game()
-	assert_false(GameState.has_flag("met_pradit"))
-	assert_true(GameState.load_game(PATH))
-	assert_true(GameState.has_flag("met_pradit"))
-	assert_eq(GameState.room_path, "res://scenes/rooms/steam_market.tscn")
-	assert_eq(GameState.spawn_id, "from_soi")
-	# A save pointing at a deleted room falls back to the start room.
-	var s := SaveData.new()
-	s.room_path = "res://scenes/rooms/gone.tscn"
-	s.write(PATH)
-	GameState.load_game(PATH)
-	assert_eq(GameState.room_path, GameState.START_ROOM)
-	GameState.new_game()
+func test_settings_persist():
+	var old := Settings.clock_speed
+	Settings.clock_speed = "เร็ว"
+	Settings.save_settings()
+	Settings.clock_speed = "ปกติ"
+	Settings.load_settings()
+	assert_eq(Settings.clock_speed, "เร็ว")
+	assert_almost_eq(Settings.seconds_per_minute(), 0.6, 0.001)
+	Settings.clock_speed = old
+	Settings.save_settings()

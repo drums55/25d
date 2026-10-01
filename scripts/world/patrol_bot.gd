@@ -1,14 +1,15 @@
 class_name PatrolBot
 extends CharacterBody2D
-## Steam-company patrol automaton: a puzzle obstacle, not a fight (owner
-## 2026-10-01: "killing it gives nothing"; the game is puzzle-first).
+## Patrol obstacle with a vision cone (was the steam-company automaton; P1
+## turns it into debt collectors, guards and soi dogs). A puzzle, not a fight
+## (owner 2026-10-01: "killing it gives nothing"; the game is puzzle-first).
 ##
 ## Walks its `patrol` waypoints with a visible vision cone on the floor. A rider
-## it sees while carrying cargo is chased; caught = "cargo inspection": fragile
-## cargo breaks, a time tick is lost, the rider is pushed away. Ways around it:
+## it sees while carrying cargo is chased; caught = "cargo inspection": food
+## spills, 10 minutes are lost, the rider is pushed away. Ways around it:
 ## - sneak past while it looks away; props block its line of sight,
 ## - tap it from behind (outside the cone) to pull its fuse: off for the day
-##   (first time ever: a scrap fuse to sell + the folk like it),
+##   (first time ever: a scrap fuse to sell),
 ## - turn a steam valve (dialog line action `"event": "steam_valve"`): every
 ##   steam-powered bot in the room freezes for STUN_TIME seconds.
 
@@ -140,7 +141,7 @@ func _physics_process(delta: float) -> void:
 	_calm = maxf(_calm - delta, 0.0)
 	var player := get_tree().get_first_node_in_group("player") as Node2D
 	var sees := player != null and _calm == 0.0 and can_see(player.global_position)
-	if sees and Jobs.carrying_cargo():
+	if sees and Orders.carrying_cargo():
 		if state != State.CHASE:
 			_lost = 0.0
 			_set_state(State.CHASE)
@@ -204,9 +205,9 @@ func _catch(player: Node2D) -> void:
 	_set_state(State.WAIT)
 	if player.has_method("caught_by"):
 		player.caught_by(self)
-	Jobs.on_player_caught()
-	GameState.advance_time(1)
-	GameState.notice.emit("หุ่นบริษัทเรียกตรวจของ! เสียเวลาไปหนึ่งจังหวะ")
+	Orders.on_player_caught()
+	GameState.advance_minutes(10)
+	GameState.notice.emit("โดนเรียกตรวจ! เสียเวลาไป 10 นาที")
 	caught_player.emit()
 
 
@@ -219,7 +220,7 @@ func tamper(player: Node2D) -> void:
 	if state != State.STUNNED and in_cone(player.global_position):
 		facing = _ground(player.global_position - global_position).normalized()
 		GameState.notice.emit("หุ่นหันมาเห็นพอดี ... ต้องย่องเข้าทางด้านหลัง")
-		if Jobs.carrying_cargo():
+		if Orders.carrying_cargo():
 			_set_state(State.CHASE)
 		else:
 			_timer = STARE_TIME
@@ -244,15 +245,13 @@ func _switch_off(by_player: bool) -> void:
 		if not GameState.has_flag(fused):
 			GameState.set_flag(fused)
 			GameState.add_money(20)
-			GameState.add_rep("folk", 1)
-			GameState.add_rep("company", -1)
 			(
 				Dialog
 				. start_lines(
 					[
 						"คุณย่องไปด้านหลัง เปิดฝาหลังหุ่น แล้วดึงฟิวส์ทองเหลืองออกมา ... หุ่นฟุบหลับคาที่",
 						{"speaker": "ไรเดอร์", "text": "ฟิวส์ทองเหลืองแท้ ขายเจ๊หมวยได้ยี่สิบ"},
-						"(บริษัทจะเปลี่ยนฟิวส์ใหม่ให้มันพรุ่งนี้เช้า ... ชาวบ้านแถวนี้ชอบใจกันใหญ่)",
+						"(พรุ่งนี้เช้าก็มีคนเปลี่ยนฟิวส์ใหม่ให้มันอยู่ดี)",
 					],
 					"bot_fuse"
 				)

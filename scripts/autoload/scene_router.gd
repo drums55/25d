@@ -1,6 +1,6 @@
 extends CanvasLayer
-## Room transitions with a fade. Main registers itself as the room host; doors
-## and save loading call go_to(). Each completed transition autosaves.
+## Room transitions with a fade. Main registers itself as the room host; riding
+## (City.travel) and save loading call go_to(). Each arrival autosaves (slot 0).
 
 signal room_changed(room_path: String)
 
@@ -40,11 +40,7 @@ func go_to(room_path: String, spawn_id := "default", fade := true) -> void:
 	if fade:
 		await _fade_to(1.0)
 	if _host.load_room(room_path, spawn_id):
-		if GameState.room_path != room_path:
-			GameState.advance_time(GameState.ROOM_CHANGE_TICKS)
-		GameState.room_path = room_path
-		GameState.spawn_id = spawn_id
-		GameState.save_game()
+		GameState.save_game(0)
 		room_changed.emit(room_path)
 	if fade:
 		await _fade_to(0.0)
@@ -52,8 +48,8 @@ func go_to(room_path: String, spawn_id := "default", fade := true) -> void:
 	_busy = false
 
 
-## Full-screen fade to black with a message, hold, then fade back. Used for
-## knock-outs; callers lock input themselves.
+## Full-screen fade to black with a message, hold, then fade back (sleeping,
+## new day); callers lock input themselves.
 func blackout(message: String, hold := 1.0) -> void:
 	if _label == null:
 		_label = Label.new()

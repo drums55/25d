@@ -3,8 +3,6 @@ extends PanelContainer
 ## the player advances dialog with any tap (Player.click_at) or E/J, and a
 ## tap while typing shows the full line.
 
-@export var chars_per_second := 45.0
-
 var _tween: Tween
 
 @onready var _speaker: Label = %Speaker
@@ -38,7 +36,9 @@ func _on_line(speaker: String, text: String) -> void:
 		_tween.kill()
 	Dialog.typing = true
 	_tween = create_tween()
-	_tween.tween_property(_text, "visible_ratio", 1.0, maxf(text.length() / chars_per_second, 0.05))
+	_tween.tween_property(
+		_text, "visible_ratio", 1.0, maxf(text.length() / Settings.chars_per_second(), 0.05)
+	)
 	_tween.finished.connect(_finish_typing)
 
 

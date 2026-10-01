@@ -7,10 +7,11 @@ signal interacted(by: Node)
 
 @export var prompt := "Talk"
 @export var dialog_id := ""
-## Identity for the job system (pickup/dropoff target), e.g. "lung_pradit".
+## Identity for the order system: "merchant" (pickups) or "customer_<id>".
 @export var npc_id := ""
-## Opens the job board UI instead of a dialog.
-@export var opens_job_board := false
+## Built-in action instead of / before the dialog: "open_map" (the parked
+## bike), "refuel" (gas station attendant).
+@export var action := ""
 @export var enabled := true
 ## Tap area relative to this node's origin (feet), covers the visual above it.
 @export var pick_rect := Rect2(-70, -250, 140, 280)
@@ -28,10 +29,20 @@ func interact(by: Node) -> void:
 	if not enabled:
 		return
 	interacted.emit(by)
-	if Jobs.on_interact(npc_id):
+	if Orders.on_interact(npc_id):
 		return
-	if opens_job_board:
-		get_tree().call_group("hud", "open_job_board")
-		return
+	match action:
+		"open_map":
+			get_tree().call_group("hud", "open_phone", "map")
+			return
+		"refuel":
+			var cost := GameState.refuel()
+			var line := (
+				"เติมเต็มถัง %d บาท ... ราคาน้ำมันขึ้นอีกแล้ว" % cost
+				if cost > 0
+				else "ถังเต็มอยู่แล้ว (หรือเงินไม่พอ)"
+			)
+			Dialog.start_lines([{"speaker": "เด็กปั๊ม", "text": line}], "refuel")
+			return
 	if not dialog_id.is_empty():
 		Dialog.start(dialog_id)

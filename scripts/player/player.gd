@@ -73,7 +73,7 @@ static func _visual_root(n: Node) -> Node:
 
 ## Point & click entry point (world coordinates).
 func click_at(world_pos: Vector2) -> void:
-	if GameState.input_locked:
+	if GameState.input_locked or GameState.ui_open:
 		return
 	if Dialog.is_active():
 		Dialog.advance()
@@ -100,6 +100,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	var touch := event as InputEventScreenTouch
 	if touch:
 		if touch.pressed:
+			var hud := get_tree().get_first_node_in_group("hud")
+			if hud and hud.blocks_point(touch.position):
+				return
 			_move_finger = touch.index
 			click_at(_to_world(touch.position))
 			if order != Order.MOVE:
@@ -119,7 +122,7 @@ func _physics_process(delta: float) -> void:
 		rig.modulate.a = 0.45 if fmod(_blink, 0.16) < 0.08 else 1.0
 		if _blink == 0.0:
 			rig.modulate.a = 1.0
-	var busy := GameState.input_locked or Dialog.is_active()
+	var busy := GameState.input_locked or GameState.ui_open or Dialog.is_active()
 	var keys := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var dir := Vector2.ZERO
 	if busy:

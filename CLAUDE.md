@@ -16,16 +16,11 @@
 - Art **2D isometric แบบ Hades**: Node2D + Y-sort, ไม่มี 3D, ไม่ใช่ HD-2D
 - Graphics ทั้งหมด AI generate → ตัวละครเป็น **cut-out** (ชิ้นแยก + Skeleton2D) ไม่ใช่ sprite sheet;
   ฉาก/prop เป็นภาพนิ่ง ดู `assets/art/README.md`. ตอนนี้ใช้ placeholder polygon
-- **ธีม: ถนนกรุงเทพฯ (street Thai, BKK) × steampunk** (เจ้าของสั่ง 2026-10-01): ซอย ตึกแถว รถเข็นก๋วยเตี๋ยว
-  ตุ๊กตุ๊ก ศาลพระภูมิ เสาไฟ + ทองเหลือง/ทองแดง ท่อไอน้ำ เฟือง. ห้องแรก `soi_brass` (ซอยทองเหลือง),
-  ห้องสอง `steam_market` (ตลาดไอน้ำ). NPC: ลุงประดิษฐ์, เจ๊หมวย. ข้อความในเกมเป็นภาษาไทย.
-  style guide + prompt template สำหรับ AI art อยู่ที่ `assets/art/README.md`
-- **ตัวเอก = ไรเดอร์** (ไรเดอร์ส่งของ/วินฯ ใส่หมวกกันน็อก+แว่นกันลม ถือประแจท่อเป็นอาวุธ)
-- **เรื่องหลัก = แบบ B (เจ้าของเลือก 2026-10-01)**: ไรเดอร์ติดหนี้ค่าเช่ามอเตอร์ไซค์ไอน้ำ 300 บาท (`GameState.RENT_DUE`)
-  ต้องรับงานส่งของจากคนในย่านทีละงาน (คุย → ไปเอาของ → ส่ง → ได้เงิน) แต่ละงานพาไปเจอความลับของย่าน (เครื่องจักรเริ่มรวน)
-  **M1 (2026-10-01): งานทั้งหมดย้ายเข้าบอร์ดงานแล้ว — ไม่มีลำดับบังคับ** ผู้เล่นเลือกเองว่ารับงานไหน
-  ห้องที่ 3 `steam_garage` (อู่ไอน้ำเฮียเป้ง, 10×10, ผนังสังกะสี) เข้าจากประตูผนังซ้ายของซอย (u=3.2). ศัตรู `GarageBot` (hp 4)
-  **เฮียเป้งยังใช้ sprite ของ lung_pradit ย้อมฟ้า** (`modulate` บน Rig) — ต้อง render ตัวจริงใน tools/art/3d ทีหลัง
+- **เกม = "ไรเดอร์ห้าดาว" (ทิศใหม่ 2026-10-01, DESIGN.md ข้อ 10)**: ไรเดอร์ส่งของในกรุงเทพฯ **ปัจจุบัน** (ไม่ใช่ steampunk แล้ว —
+  เจ้าของ: "กทม. ปัจจุบันก็ได้") ที่**สุ่มเมืองใหม่ทุกเกม**, รับงานผ่าน**แอป** (ไม่มีบอร์ดงาน), ขี่ไปบน**แผนที่** (ไม่มีประตูระหว่างห้อง),
+  ติดหนี้นอกระบบดอกลอย + ค่าเช่ารถรายวัน, ตัวร้าย = แพลตฟอร์ม, โทน serious × absurd. เกมสั้น 7 วัน.
+  เวอร์ชันย่านตายตัว steampunk (ซอยทองเหลือง/ตลาด/อู่/ท่าเรือ, บอร์ดงาน, ชื่อเสียง 3 ฝ่าย, บริษัทไอน้ำ) **ลบแล้ว** — ดูได้ใน git ก่อน P0
+- **ตัวเอก = ไรเดอร์** (หมวกกันน็อก แจ็กเก็ตส้ม; sprite rider เดิม). NPC ใช้ sprite je_muay/lung_pradit ย้อมสีไปก่อน
 - **Art ตอนนี้ = vector SVG ที่วาดด้วยโค้ด** `tools/art/gen_svg.py` (รันแล้วได้ `assets/art/**.svg` ทุกชิ้น) —
   ใน cloud ไม่มี AI image gen; วิดีโอที่ Cowork ทำก็ใช้ภาพถ่าย+overlay ไม่ได้วาดเอง. แก้ art = แก้ generator
   แล้วรันใหม่ (อย่าแก้ .svg ตรงๆ จะโดนทับ). ถ้าได้ภาพ AI (png) มาทีหลัง วางชื่อเดียวกัน → .svg ชนะ ต้องลบ .svg ออก
@@ -50,23 +45,9 @@
     ทิศเลือกแถวตรงๆ ไม่ mirror. ตัวที่ไม่มีโฟลเดอร์ `sprites/` → fallback instantiate CutoutRig (placeholder polygon)
     Player/NPC ใช้ `character_view.tscn` แล้ว; cut-out .svg ของ rider/lung_pradit/je_muay ลบแล้ว, `gen_svg.py` ไม่สร้างตัวละครอีก
 - **Prop PNG แบบลงสีด้วยโค้ด** (2026-10-01): `tools/art/png/paint.py` (numpy+PIL+scipy: เงา/rim light/เส้นขอบ/texture พู่กัน, supersample 3x) + สคริปต์ต่อชิ้น เช่น `tools/art/png/noodle_cart.py <out.png>`. ไม่มี AI image gen — PNG พวกนี้แทน .svg ทีละชิ้น; `gen_svg.py` ข้ามชิ้นที่มี .png แล้ว
-- **ฉาก (พื้น+ผนัง) = PNG ลงสีด้วยโค้ด** (2026-10-01): `tools/art/png/room.py soi_brass|steam_market` →
-  `assets/art/rooms/<room>.png` (IsoRoom.apply_art วางเต็ม `get_backdrop_rect()` แล้วปิด placeholder).
-  `RoomCanvas` = Canvas ของ paint.py ที่ origin อยู่มุมบนห้อง + op ทุกตัว (paint/glaze/stroke/pipe/disc) ทำเฉพาะ bbox
-  ของ mask (canvas 3072x2016 ถ้าทำทั้งผืนต่อ op จะช้า >10 นาที; แบบ crop ~40 วิ/ห้อง). ss=1 (เกมยืดภาพลง rect อยู่แล้ว).
-  ซอย = ผนังตึกแถวมิ้นต์ (shutter เหล็ก ป้าย หน้าต่างลูกกรง แอร์+ท่อ โคม สายไฟ) + พื้นคอนกรีตรางน้ำ;
-  ตลาด = ผนังอิฐ+โคม+โปสเตอร์ + พื้นกระเบื้องดินเผา. ช่องประตูในผนังวาดตามตำแหน่ง Door node (`door_u` = gx/gy ของประตู)
-- **Prop ไทยชุด M2** (2026-10-01, เจ้าของ: "อยากเห็นของไทยๆ"): `tools/art/png/props_th.py` → win_stand (วินมอเตอร์ไซค์
-  เสื้อกั๊กส้มมีเบอร์ + ป้าย "วินซอยทองเหลือง" + บอร์ดงานบนเสา = prop ของ JobBoard ในซอย), payphone (ตู้โทรศัพท์สาธารณะ),
-  bus_stop (ป้ายรถเมล์ 8/73/503 "มาเมื่อมา"), moo_ping_cart (หมูปิ้ง 10.-), shop_cat (แมวส้มบนลังน้ำแดง), tire_planter
-  (ยางรถทาสีปลูกต้นไม้). ทุกชิ้นแตะได้ มีบทพูดตลกใน dialog.json. ป้ายภาษาไทยในภาพ = `Canvas.text(txt, p0, p1, h, col)`
-  (PIL+raqm+Kanit วางบนหน้า iso; หน้า +x ต้องให้ p0 อยู่ฝั่ง +gy ไม่งั้นตัวหนังสือกลับด้าน)
-- **ห้องที่ 4 `canal_pier` ท่าเรือคลองไอน้ำ** (M2, 2026-10-01): 12×8, เข้าจากประตูผนังขวาของตลาด (grid 7,0.35 → `door_u=7.0`
-  ใน `brick_wall` R) ↔ ประตูผนังซ้ายของท่า (u=3.0). ผนังไม้สัก (`teak_wall`) + ป้าย "ท่าเรือคลองไอน้ำ", พื้นไม้กระดาน gy<5
-  แล้วเป็นคลอง (`canal_floor`: ขอบปูนมีหลักผูกเรือ, ผักตบ, แสงโคมสะท้อนน้ำ). น้ำ = StaticBody2D `Canal` (polygon เลยขอบห้อง)
-  → navmesh ตัดทิ้งเอง เดินลงน้ำไม่ได้. Prop: longtail_boat (ลอยในน้ำ ชิดขอบ gy 5.7 ให้ InteractArea เอื้อมถึง), dragon_jar ×2,
-  pier_sign. NPC พี่แจ่ม (`npc_id: boatman`, ใช้ sprite lung_pradit ย้อมส้ม — ยังไม่มี sprite จริง).
-  งาน: `mackerel_for_lung` (ปลาทูแม่กลอง พี่แจ่ม→ลุง), `garland_for_boat` (พวงมาลัย เจ๊หมวย→พี่แจ่ม, set `garland_given`)
+- **ฉาก/prop ลงสีด้วยโค้ด** (2026-10-01): `tools/art/png/room.py` (backdrop ทั้งห้อง, RoomCanvas crop ต่อ op), `props_th.py`
+  (prop ไทย + `Canvas.text()` ป้ายไทยบนหน้า iso: หน้า +x ต้องให้ p0 อยู่ฝั่ง +gy). backdrop ห้องเดิม 4 ห้องลบไปพร้อมย่านเก่า;
+  P0 ใช้พื้น/ผนัง placeholder สีตามประเภทสถานที่ + prop png เดิมเป็นของแทน (ยังมีกลิ่นไอน้ำ) → **ต้องวาดชุดกรุงเทพฯ ปัจจุบันใหม่**
 - Brief สำหรับ Cowork (desktop) gen ภาพแล้ววางลง `G:\dev\25d\assets\art\...` โดยตรง: `assets/art/COWORK_BRIEF.md`
   (กติกาขนาด/จุดฐาน/ชื่อไฟล์ทั้งหมดอยู่ที่นั่น ถ้าเปลี่ยนกติกาใน ArtLibrary ต้องแก้ brief ด้วย)
 - ฟอนต์ project = Kanit Medium (OFL) ที่ `assets/fonts/` — ฟอนต์ default ของ Godot ไม่มีอักษรไทย
@@ -89,33 +70,33 @@
 
 ## โครงสร้าง
 ```
-project.godot            viewport 1920x1200, stretch canvas_items/expand, sensor landscape
+project.godot            viewport 1920x1200, stretch canvas_items/expand, main scene = scenes/ui/main_menu.tscn
 export_presets.cfg       preset "Android": arm64 only, non-gradle, package com.drums55.game25d
-scenes/main.tscn         root: RoomHolder + Player (persistent) + HUD
-scenes/rooms/*.tscn      soi_brass, steam_market, steam_garage, canal_pier — IsoRoom: World (y-sort) + Spawns (Marker2D ชื่อ = spawn id)
+scenes/ui/main_menu.tscn เมนูหลัก; scenes/main.tscn = เกม: RoomHolder + Player (persistent) + HUD
+scenes/rooms/location.tscn  สถานที่เดียวที่สร้างตามประเภท (LocationRoom + LocationTemplates)
 scenes/characters/       character_view.tscn (sprite 8 ทิศ; ใช้จริง), cutout_rig.tscn (placeholder fallback)
-scenes/props/            prop_block, door, npc, interactable, training_dummy
-scenes/ui/               hud (สถานะ/นาฬิกา/notice + dialog box + job board), dialog_box, job_board
-scripts/autoload/        GameState (flags, เงิน, ของ, HP, นาฬิกา, save), Dialog (runner), SceneRouter (fade + room swap), Jobs (งานส่งของ)
-scripts/core/            Iso (math), SaveData, DialogData, ArtLibrary — pure logic, unit-tested
-tools/art/gen_svg.py     generator svg เดิม (prop ที่ยังไม่มี png); tools/art/png/ = prop/ฉาก PNG ลงสี (numpy+PIL+scipy)
-assets/dialog/dialog.json  dialog ทั้งหมด (format อยู่หัวไฟล์ scripts/core/dialog_data.gd)
-test/unit/               GUT tests (test_scenes.gd = smoke test ทุก scene + สัญญาของห้อง)
+scenes/props/            prop_block, npc, interactable, patrol_bot, steam_vent
+scripts/autoload/        GameState (เงิน หนี้ น้ำมัน ดาว เวลา orders save slots), Dialog, SceneRouter, Settings, City, Orders
+scripts/core/            Iso, SaveData, DialogData, ArtLibrary, PickTest, CityGen, Weather, OrderGen — pure logic, unit-tested
+scripts/ui/              hud, phone, city_map_view, day_clock, rain_overlay, save_slots, settings_panel, main_menu, ui_kit, dialog_box
+tools/art/               gen_svg.py (svg เก่า), png/ (paint.py room.py props_th.py ...), 3d/ (ตัวละคร)
+assets/dialog/dialog.json  บทพูด NPC/ของในฉาก (talk_*); format อยู่หัวไฟล์ scripts/core/dialog_data.gd
+test/unit/               GUT tests (test_helpers.gd = TestHelpers.start_at(type) เมือง seed คงที่)
 tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.ps1/.sh, godot_path.ps1, run_tests.sh, fetch_gut.*
 ```
 
 ## Architecture / decisions
 - **Input**: tap ถูกจัดการเป็น `InputEventScreenTouch` อย่างเดียวใน `Player._unhandled_input`
   (`emulate_touch_from_mouse=true` → คลิกเมาส์บน PC = แตะ). ไม่ใช้ mouse event (มือถือส่ง mouse จำลองซ้ำ).
-  ปุ่ม ATK (`TouchActionButton`) จับ touch ใน `_input` แล้ว `set_input_as_handled` → ไม่ทำให้เดินไปที่ปุ่ม.
-  DialogBox `mouse_filter = IGNORE` ทั้งหมด. คีย์บอร์ด WASD/E/J ยังใช้ได้และยกเลิกคำสั่งคลิก
+  แตะโดน UI (แอป/ปุ่มแอป/แบนเนอร์/การ์ดสรุป) ไม่เดิน: Player ถาม `Hud.blocks_point(screen_pos)`; ตอนเปิด UI เต็มจอ
+  `GameState.ui_open` = true → โลกไม่รับแตะ. DialogBox `mouse_filter = IGNORE` ทั้งหมด. คีย์ WASD/E ใช้ได้บน PC
 - **Point & click**: `Player.click_at(world_pos)` → `Player.pick()` หา node ใน group `pickable`.
   **Hit test = พิกเซลจริงของภาพ** (`PickTest`, `scripts/core/pick_test.gd`, 2026-10-01 — เจ้าของ: "ของ/คนที่อยู่ใกล้กัน คลิกผิดบ่อย"
   เพราะเดิมใช้กรอบ 140×280 เท่ากันทุกชิ้นแล้วเลือกตัวหน้าสุด): แตะโดน Sprite2D/AnimatedSprite2D ของ node นั้นตรงที่ alpha ≥ 0.5
   (เงาพื้นที่อบในภาพจางกว่า ไม่นับ) เผื่อนิ้ว 14px; โดนหลายตัว = ตัวที่ y มากสุด (วาดทับอยู่บน). Interactable ใช้ภาพของ parent
   (prop/NPC). node ที่ไม่มี sprite (ประตู, prop placeholder) ใช้ `pick_rect` และชนะเฉพาะตอนไม่โดนภาพใคร (ใกล้ศูนย์กลาง rect สุด).
   mask อัลฟาสร้างครั้งแรกที่แตะต่อ texture (BitMap cache; AtlasTexture ใช้ sheet + region).
-  Interactable → order INTERACT (หยุดเมื่อ InteractArea ทับ), มี `take_hit` → ATTACK (หยุดที่ระยะ 80), อื่นๆ/พื้น → MOVE.
+  Interactable → order INTERACT (หยุดเมื่อ InteractArea ทับ), มี `tamper` (PatrolBot) → TAMPER (หยุดที่ระยะ 80), อื่นๆ/พื้น → MOVE.
   ของใหม่ที่อยากให้แตะได้: `add_to_group("pickable")` + มี sprite (หรือ `@export var pick_rect` ถ้าไม่มีภาพ)
 - **Pathfinding**: `IsoRoom._build_navigation()` อบ NavigationPolygon ตอน runtime = พื้นห้อง − footprint
   collision ของ StaticBody2D ลูกของ World (CollisionPolygon2D / CircleShape2D), agent_radius 28.
@@ -126,46 +107,37 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   Main ย้าย Player เข้า World ของห้องทุกครั้งที่เปลี่ยนห้อง (player persistent ไม่ instance ใหม่)
 - **ห้อง**: floor/back wall วาด procedural ใน `IsoRoom._draw` (placeholder) + boundary collision
   สร้างตอน runtime จาก `grid_size`. ด้านหน้าเปิด (ไม่มีกำแพงบังตัวละคร)
-- **Door**: Area2D แตะแล้ว `SceneRouter.go_to(target_room, target_spawn)`. Spawn ขาเข้าต้องอยู่หน้าประตู
-  ไม่ทับ collision ประตู ไม่งั้นเด้งกลับ. test_scenes ตรวจว่า target/spawn มีจริง
-- **Save**: JSON ที่ `user://save_0.json` (room, spawn, flags). autosave ทุกครั้งที่เปลี่ยนห้อง.
-  save ที่ชี้ห้องที่ถูกลบ → กลับห้องเริ่มต้น
-- **งานส่งของ (M1)**: data ใน `assets/jobs/jobs.json` (id, title, from, desc, item, pickup{npc,where}, dropoff{npc,where},
-  reward, late_reward, deadline_slots, requires[flags], sets[flags], pickup_lines/dropoff_lines/late_lines) + autoload `Jobs`
-  (`available/accept/abandon/on_interact/sleep`). รับงานที่ **บอร์ดงาน** (prop `JobBoard` ในซอย → `Interactable.opens_job_board`
-  → `Hud.open_job_board` → UI `scenes/ui/job_board.tscn`, input lock ตอนเปิด). ช่องเก็บของ `GameState.cargo_slots` (เริ่ม 2).
-  pickup/dropoff = แตะ NPC ที่ `Interactable.npc_id` ตรง (job มาก่อน dialog ปกติ; dropoff ก่อน pickup). ส่งสาย = `late_reward`
-- **งานแบบปริศนา (M2, 2026-10-01, เจ้าของ: "งานเหี้ยๆ ฮาๆ")**: key เสริมต่องานใน jobs.json (doc อยู่หัว `jobs.gd`):
-  `from_day` (เปิดตั้งแต่วันที่ n), `fragile` + `break_notice` (ถือของอยู่แล้วโดนหุ่นจับ = ของแตก งาน fail; `PatrolBot` เรียก
-  `Jobs.on_player_caught()`), `redirects` [{at,to,where,lines}] (คุยกับผู้รับแล้วโดนส่งต่อ — ผู้รับย้าย/ผิดคน, ต่อเป็น chain ได้,
-  entry เก็บ `target`/`target_where`/`redirected` ลง save), `needs` {item|flag, take, lines} (ผู้รับไม่รับจนกว่าจะมีของ/flag).
-  งาน: `eggs_for_lung` (ไข่ 30 ฟอง fragile ผ่านหุ่นตลาด), `parcel_somchai` (พัสดุถึง "สมชาย": ลุง→เจ๊หมวย→เฮียเป้ง = ชื่อเก่าเฮีย),
-  `cake_for_boiler` (วันที่ 2+: เค้กวันเกิดหม้อไอน้ำตลาด ต้องมีธูปจากศาลพระภูมิ — `spirit_house_cake` ให้ `incense` เมื่อถือเค้ก),
-  `croc_egg` (วันที่ 2+: ไข่จระเข้ fragile จากอู่ (มี GarageBot) → พี่แจ่มไม่รับ → โอ่งมังกร `npc_id: dragon_jar`).
-  ผู้รับเป็น prop ได้ (ใส่ `npc_id` บน Interactable). บอร์ดงานโชว์ "งานที่รับไว้" ก่อน "งานที่มีวันนี้" และติดป้าย [แตกง่าย]
-- **ชื่อเสียง 3 ฝ่าย + คุณนายวรรณ (M2, 2026-10-01)**: `GameState.rep` {folk ชาวบ้าน, garage อู่, company บริษัทไอน้ำ}
-  ช่วง -5..5 (`add_rep` ขึ้น notice, save v4 เก็บ `rep`). ทุกงานมี `faction` = ฝ่ายผู้จ้าง: ส่งทัน +1 ฝ่ายนั้น + ทิป 10 บาท/แต้มบวก
-  (`Jobs.tip`), ส่งสาย ไม่ได้ทั้งคู่, ล้ม (ทิ้ง/นอน/ของแตก) -1; `rep` {ฝ่าย: ±} ใช้ตอนส่ง (งานบริษัทเงินดีแต่ชาวบ้าน -);
-  `requires_rep` / `requires_rep_below` กั้นงาน. dialog: `if_rep_at_least` / `if_rep_below` {ฝ่าย: n}.
-  บอร์ดโชว์ทิป + "ชื่อเสียง: ..." ต่องาน; HUD ต่อท้ายบรรทัดนาฬิกา. ผลจริงตอนนี้: เฮียเป้งลดค่าเช่าเหลือ 250 เมื่ออู่ ≥3,
-  ลุงเล่าความลับประแจบริษัทเมื่อชาวบ้าน ≥3 (`lung_secret`), เจ๊หมวยแซะเมื่อบริษัท ≥2 / ชมเมื่อชาวบ้าน ≥3, คุณนายวรรณเย็นชาเมื่อบริษัท ≤-2.
-  คุณนายวรรณ (`npc_id: khun_wan`) ยืนข้าง `company_booth` (บูธม่วง "ติดมิเตอร์ใหม่ ฟรี!*", props_th.py) ในซอยหน้าซ้าย;
-  **ยังใช้ sprite je_muay ย้อมม่วง** (ต้อง render ตัวจริง). งานบริษัท: `meter_for_boiler` (ตั้ง `boiler_metered`),
-  `notice_for_lung`, `survey_canal` (สองงานหลังต้องบริษัท ≥1); งานโต้กลับของชาวบ้าน `meter_returned` (มิเตอร์รอยฟันแมว, บริษัท -2)
-- **นาฬิกาวัน**: `GameState.tick` 0..12 (6 ช่วง × 2: เช้า สาย เที่ยง บ่าย เย็น ค่ำ), เปลี่ยนห้อง +1, ส่งของ +2, เกิน 12 = กลางคืน.
-  "นอน" ที่บอร์ด = `Jobs.sleep()`: งานที่ยังไม่ส่ง fail (ของหาย, กลับมาเปิดให้รับใหม่วันถัดไป), วัน+1, HP เต็ม.
-  **ให้เห็นเวลาชัด (เจ้าของ 2026-10-01: "ไม่มี sense of time")**: หน้าปัด `DayClock` (`scripts/ui/day_clock.gd`) มุมขวาบน = ครึ่งวงกลม 6 ช่วง
-  + เข็มมีพระอาทิตย์/พระจันทร์ เข็มกวาดตอนเวลาผ่าน (เปลี่ยนห้อง/ส่งของ) + ชื่อช่วง/วัน; ใต้หน้าปัด = รายการงานที่ถืออยู่พร้อม "เหลือ n ช่วง"/"สายแล้ว!";
-  notice "เวลาผ่านไป ... ตอนนี้X" ทุกครั้งที่ข้ามช่วง; ชื่อเสียงย้ายไปบรรทัดใต้เงิน. สีแสงแต่ละช่วงเข้มขึ้น (เช้าส้มอ่อน เย็นส้ม ค่ำม่วง คืนน้ำเงิน)
-  แสงตามช่วงเวลา = tween `RoomHolder.modulate` ใน `main.gd` (**อย่าใช้ CanvasModulate** — ทำ Godot crash signal 11 ตอนรัน GUT)
-  เงินค่าเช่า: คุยเฮียเป้งเมื่อ `if_money_at_least: 300` → จ่าย + `rent_paid`. save v3 เก็บ day/tick/cargo/active/done/failed jobs
+- **P0 loop (2026-10-01)** — เมนูหลัก `scenes/ui/main_menu.tscn` (run/main_scene): เล่นต่อ (เซฟล่าสุด) / เกมใหม่ / โหลด / ตั้งค่า / ออก →
+  `scenes/main.tscn` (Main): นาฬิกาเดินเวลาจริง (`Settings.seconds_per_minute`, หยุดตอน dialog/เมนู/การ์ด), สีแสงตามชั่วโมง+ฝน,
+  `sleep()` = จบวัน (สลิป + เช้าหักค่าเช่ารถ/ดอก), ตอนจบ (`ENDINGS`)
+- **เมือง**: `CityGen.generate(seed)` (pure) = 15 จุด 7 ประเภท (restaurant market house condo office gas garage) ชื่อไทยสุ่ม +
+  ถนน (MST + เพื่อนบ้านใกล้ 2 จุด, main/soi, km, นาที, `flood` 0-2) + `route()` Dijkstra (น้ำลึกปิด, น้ำตื้องลุยช้า ×1.6).
+  save เก็บแค่ seed. autoload `City`: get_city/node/here/forecast/rain_now/water_now/route_to/**travel(dest)** (เวลา+น้ำมัน+ซุปหก+
+  น้ำมันหมด=เข็น แล้ว `SceneRouter.go_to(LOCATION_SCENE)`)
+- **ฝน/น้ำท่วม**: `Weather` (pure) ฝน 0-2 ช่วง/วันจาก seed+day; น้ำบนถนน = ฝนสะสม 120 นาที (หนัก ≥30 นาที = ลึก, ฝนรวม ≥40 = ตื้น)
+  จำกัดด้วย `flood` ของถนน; ฝน = ขี่ช้า ×1.25/×1.5, ค่ารอบ +10, ซุปหก 15% (ลุยน้ำ 50%). แผนที่วาดถนนน้ำตื้น = ประฟ้า, ลึก = กากบาท
+- **ออเดอร์**: `OrderGen` (pure) food/parcel/doc ต่าง behavior (อาหาร: ready_at รอร้าน, ร้อน→อุ่น→เย็น, หก; พัสดุ: size 1-2 ช่อง, COD
+  สำรองจ่าย; เอกสาร: sign_name, deadline แข็ง) + `rate()` ดาว (สาย/เย็น/หก + รีวิว 1 ดาวไม่ยุติธรรม 8%). ค่ารอบจ่ายแค่ช่วงรับ→ส่ง.
+  autoload `Orders`: offer เด้งตามเวลา (หมดอายุ), accept/decline/cancel, กระเป๋า 3 ช่อง, รับของ = แตะ NPC `npc_id "merchant"`,
+  ส่ง = แตะลูกค้า `npc_id "customer_<id>"` (เกิดในห้องเมื่อมีออเดอร์ปลายทางนี้), `end_day()` งานค้าง = 1 ดาว
+- **สถานที่**: `scenes/rooms/location.tscn` + `LocationRoom` (extends IsoRoom) สร้างจาก `LocationTemplates.T[type]` ตอน `_ready`
+  ก่อน IsoRoom อบ navmesh: props + extras สุ่ม (seed = city seed + node id), merchant (`behind_counter` = ไม่มี collision กัน navmesh
+  sliver ระหว่างเคาน์เตอร์-NPC-ผนัง), ลูกค้า (ป้ายชื่อบนหัว), รถตัวเองมุมหน้าขวา (`bike_cell`, แตะ = เปิดแผนที่), ชื่อร้านบนผนัง.
+  `Interactable.action`: "open_map", "refuel" (เด็กปั๊ม). **กติกา template**: ระยะห่างของ↔ของ/ผนัง ห้ามอยู่ช่วง 0.85–1.15 ช่อง
+  (= 2× agent radius → navmesh sliver) — `test_templates_avoid_sliver_gaps` ตรวจ + `test_every_place_builds_a_valid_room` (4 seed × ทุกจุด)
+- **เงิน/หนี้/ตัวเลข** (`GameState`, consts ปรับ balance ที่นั่น): เริ่ม 300 บาท, หนี้ 3000 ดอก 60/วัน (ดอกลอย), ค่าเช่ารถ 150/วัน,
+  ไม่พอจ่ายตอนเช้า 3 ครั้ง = รถโดนยึด, เรตติ้ง (เฉลี่ย 40 งานล่าสุด, เริ่ม 4.8) < 4.3 = บัญชีถูกระงับ, ครบวันที่ 7 = ตอนจบ
+  (ปลดหนี้ / ยังติดหนี้), น้ำมัน 4 ลิตร 40 กม./ลิตร 38 บาท/ลิตร (เติมที่ปั๊ม), อัตรารับงาน = accepted/offered
+- **Save v5**: `SaveData` = {version, meta, state} (state = `GameState.snapshot()`); slot 0 = ออโต้เซฟ (ทุกครั้งที่ถึงที่หมาย + ตอนนอน),
+  slot 1–3 บันทึกเองจากแอป; save < v5 (เกมย่านเก่า) ถูกข้าม. **Settings** autoload → `user://settings.cfg` (ความเร็วนาฬิกา/ตัวหนังสือ,
+  เสียง, คำแนะนำ). `config/name` = "Rider 5 Stars" (โฟลเดอร์ user:// บน PC เปลี่ยนตาม)
+- **UI** (สร้างด้วยโค้ด, `UiKit`): HUD = เงิน·หนี้ / น้ำมัน·ดาว·รับงาน, หน้าปัด `DayClock` (07:00–23:00 + สภาพอากาศ), รายการงาน
+  + เวลาเหลือ, ปุ่ม "แอปไรเดอร์" (ปุ่มเดียวบนจอ — ข้อยกเว้นกฎไม่มีปุ่ม เพราะแอปคือแกนเกม), แบนเนอร์งานใหม่, `RainOverlay`,
+  `show_overlay()` (สลิป/ตอนจบ). `Phone` แท็บ งาน / แผนที่ (`CityMapView`) / เงิน / เมนู (`SaveSlots`, `SettingsPanel`, หน้าแรก)
 - **Dialog**: JSON-driven; เงื่อนไขต่อ entry: `if_flag`/`if_not_flag`/`if_item`/`if_not_item` (+`else` chain);
   action ต่อบรรทัด: `set_flag`/`give_item`/`take_item`/`money` (ทำตอนบรรทัดโชว์ → HUD ขึ้น notice). แตะที่ไหนก็ได้ = next
   (ถ้ากำลังพิมพ์ = แสดงทั้งบรรทัด). Quest = flags + inventory ใน dialog.json ล้วนๆ ไม่มี quest system แยก
-- **Inventory/เงิน/HP** อยู่ใน `GameState` (`inventory` = Array ของ item id, ชื่อโชว์ใน `GameState.ITEMS`;
-  `money`; `hp`/`MAX_HP`=5) + save v2 (`SaveData` อ่าน save เก่าได้ ค่า default). HUD มุมซ้ายบน: หัวใจ, ฿/หนี้, กระเป๋า,
-  และ notice ต่อคิว (`GameState.notice`)
-- **ไม่มีการต่อสู้แล้ว (M2, เจ้าของ 2026-10-01: "ศัตรูตายแล้วไม่มีอะไรใหม่ งงๆ")** — ตีไม่ได้, ไม่มี HP บนจอ (`GameState.hp` เหลือไว้แค่ save เข้ากันได้),
+- **ไม่มีการต่อสู้ (เจ้าของ 2026-10-01: "ศัตรูตายแล้วไม่มีอะไรใหม่ งงๆ")** — ตีไม่ได้, ไม่มี HP. `PatrolBot` เก็บไว้ใช้ทำเจ้าหนี้/รปภ./หมา ใน P1 (ยังไม่ได้วางในฉากไหน);
   ไม่มี blackout. หุ่นบริษัท = **`PatrolBot`** (`scripts/world/patrol_bot.gd`, `scenes/props/patrol_bot.tscn`) อุปสรรคแบบปริศนา:
   เดินตาม `patrol` (offset จากจุดเริ่ม) มี**กรวยสายตาบนพื้น** (Polygon2D z -1 + ขอบ Line2D, ยิง ray ตัดตรงที่ของบัง; backdrop ห้องจึงตั้ง z -10)
   เห็นไรเดอร์ที่**ถือของ** = ไล่ (!) → จับได้ = "เรียกตรวจของ": ของ fragile แตก (`Jobs.on_player_caught`), เวลา +1 tick, โดนผลักออก, หุ่นเฉย 3 วิ;
@@ -206,7 +178,7 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
 - ห้อง: ถ้า obstacle 2 ชิ้นเกือบชนกัน (ช่องห่าง < ~1px หลัง inflate) navmesh จะมี edge สั้นมาก → error
   "Attempted to merge a navigation mesh polygon edge" (เคยเกิดกับ LungPradit ชิดรถเข็น). test_scenes ตรวจ
   `IsoRoom.shortest_nav_edge >= 1` และ spawn ต้องห่าง StaticBody2D > 90px — วางของใหม่แล้วรัน test เสมอ
-- ประตูกับช่องในผนังไม่ตรงกัน (เจ้าของเจอ 2026-10-01 ที่ตลาด): (1) `RoomCanvas` เคยคิดความกว้างภาพเป็น gw*128 แต่
+- (ย่านเก่า แต่ใช้ต่อได้ถ้าวาด backdrop ใหม่) ประตูกับช่องในผนังไม่ตรงกัน (เจ้าของเจอ 2026-10-01 ที่ตลาด): (1) `RoomCanvas` เคยคิดความกว้างภาพเป็น gw*128 แต่
   backdrop rect จริงกว้าง (gw+gh)*64 และเริ่มที่ x=-gh*64 → ห้องไม่จัตุรัสเลื่อน/ยืด (ซอย 12×12 ไม่โดน); (2) Door node อยู่
   หน้าผนัง 22px และวาดแผ่นเอง → ตอนนี้ภาพผนังวาด doorway ขนาดเท่า Door (±56px, สูง 170) ที่ระนาบผนัง และ
   `IsoRoom.apply_art` ตั้ง `door.show_panel=false` (Door เหลือ trigger + exit marker: ลูกศรทองเหลืองเด้ง + วงแหวนกะพริบที่พื้น ใน `Door._draw_marker`).
@@ -228,7 +200,9 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
   Android cmdline-tools (`platform-tools`, `build-tools;34.0.0`) + ตั้ง `export/android/android_sdk_path`
 
 ## สถานะ / ยังไม่ได้ทำ
-- ธีมตกลงแล้ว (BKK steampunk) แต่ยังไม่มีเรื่องหลัก/ตัวเอก/เป้าหมายของเกม
-- save เก่าที่ชี้ room_01/room_02 (ถูก rename) จะเริ่มใหม่ที่ซอยทองเหลืองเอง
-- test "path bends around the pillar" flake = navmesh map ยังไม่ sync หลังเปลี่ยนห้อง → test รอจน `map_get_path` ได้ path (≤30 เฟรม)
-- ยังไม่มี: บทที่ 2 (ใครแกะวาล์ว), เสียง, เมนู/new game, sprite จริงของเฮียเป้ง/พี่แจ่ม/คุณนายวรรณ (ลบ save = `adb shell run-as com.drums55.game25d rm files/save_0.json`)
+- **P0 เสร็จ (2026-10-01)**: เมนู/เซฟ 3 ช่อง+ออโต้/ตั้งค่า, เมืองสุ่ม+แผนที่+ขี่, ฝน/น้ำท่วม, แอป (งานเข้า/รับ/ข้าม/ยกเลิก/นำทาง),
+  อาหาร/พัสดุ/เอกสาร, ดาว+รีวิว, เงิน/หนี้/ค่าเช่า/น้ำมัน/ปั๊ม, สลิปรายวัน, ตอนจบ 4 แบบ
+- ต่อไป (DESIGN 10.8): **P1** ปักหมุดผิด, COD ไม่รับ, ยกเลิกหลังซื้อ, รปภ.คอนโด, เจ้าหนี้ตามหา (PatrolBot), รีวิว 1 ดาว+อุทธรณ์;
+  **art กรุงเทพฯ ปัจจุบัน** (พื้น/ผนังต่อประเภท, prop: เซเว่น ตู้กดน้ำ โต๊ะสแตนเลส ป้อม รปภ. หัวจ่ายน้ำมัน ฯลฯ ด้วย paint.py)
+- ยังไม่มี: เสียง, sprite จริงของ NPC แต่ละแบบ, balance (ตัวเลขใน GameState/OrderGen ยังเดา)
+- ลบ save บนแท็บเล็ต = `adb shell run-as com.drums55.game25d rm files/save_0.json`
