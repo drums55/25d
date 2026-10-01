@@ -23,8 +23,13 @@
 - **ตัวเอก = ไรเดอร์** (ไรเดอร์ส่งของ/วินฯ ใส่หมวกกันน็อก+แว่นกันลม ถือประแจท่อเป็นอาวุธ)
 - **เรื่องหลัก = แบบ B (เจ้าของเลือก 2026-10-01)**: ไรเดอร์ติดหนี้ค่าเช่ามอเตอร์ไซค์ไอน้ำ 300 บาท (`GameState.RENT_DUE`)
   ต้องรับงานส่งของจากคนในย่านทีละงาน (คุย → ไปเอาของ → ส่ง → ได้เงิน) แต่ละงานพาไปเจอความลับของย่าน (เครื่องจักรเริ่มรวน)
-  งานที่ 1 ทำแล้ว: ลุงประดิษฐ์ (flag `job1_accepted`) → เจ๊หมวยให้ `brass_gear` (`job1_pickup`) → หุ่นเฝ้าตลาดรวน (Enemy
-  `MarketGuard`, flag `market_guard_down` เมื่อตาย) → ส่งลุง +80 บาท (`job1_done`). งานถัดไปยังไม่มี
+  งานที่ 1: ลุงประดิษฐ์ (`job1_accepted`) → เจ๊หมวยให้ `brass_gear` (`job1_pickup`) → หุ่นเฝ้าตลาดรวน (`MarketGuard`,
+  `market_guard_down`) → ส่งลุง +80 (`job1_done`)
+  งานที่ 2: เจ๊หมวยให้ `parts_box` (`job2_accepted`) → ส่งเฮียเป้งที่อู่ +100 (`job2_done`) → เฮียสั่งงาน 3 (`job3_accepted`)
+  งานที่ 3: หมุน `pressure_valve` จากหม้อไอน้ำตลาด (Interactable "ดู" ของ Boiler, `job3_pickup`) → เฮีย +120 (`job3_done`)
+  → คุยเฮียอีกครั้ง จ่าย 300 (`money: -300`) → `rent_paid` (จบบทที่ 1; เบาะแส: วาล์วมีรอยแกะ = มีคนตั้งใจทำเครื่องรวน)
+  ห้องที่ 3 `steam_garage` (อู่ไอน้ำเฮียเป้ง, 10×10, ผนังสังกะสี) เข้าจากประตูผนังซ้ายของซอย (u=3.2). ศัตรู `GarageBot` (hp 4)
+  **เฮียเป้งยังใช้ sprite ของ lung_pradit ย้อมฟ้า** (`modulate` บน Rig) — ต้อง render ตัวจริงใน tools/art/3d ทีหลัง
 - **Art ตอนนี้ = vector SVG ที่วาดด้วยโค้ด** `tools/art/gen_svg.py` (รันแล้วได้ `assets/art/**.svg` ทุกชิ้น) —
   ใน cloud ไม่มี AI image gen; วิดีโอที่ Cowork ทำก็ใช้ภาพถ่าย+overlay ไม่ได้วาดเอง. แก้ art = แก้ generator
   แล้วรันใหม่ (อย่าแก้ .svg ตรงๆ จะโดนทับ). ถ้าได้ภาพ AI (png) มาทีหลัง วางชื่อเดียวกัน → .svg ชนะ ต้องลบ .svg ออก
@@ -61,7 +66,8 @@
 - Target: Redmi Pad Pro (2560×1600, 16:10, Android 16) + Samsung S24 FE; landscape; touch
 - **Control = point & click** (เจ้าของสั่ง 2026-10-01 แทน virtual joystick): แตะพื้น = เดิน (กดค้างลาก = บังคับต่อ),
   แตะ NPC/ป้าย = เดินไปคุย, แตะของที่ตีได้ = เดินไปตี, แตะประตู = เดินเข้า, ระหว่าง dialog แตะที่ไหนก็ได้ = next.
-  บนจอเหลือปุ่ม ATK ปุ่มเดียว (ตีไปทางที่หันอยู่). joystick/USE ถูกลบ (ดูได้ใน git ที่ e252590)
+  **ไม่มีปุ่มบนจอเลย** (ปุ่ม ATK ถูกลบ 2026-10-01 — เจ้าของ: แตะศัตรูก็ตีอยู่แล้ว ปุ่มดูเหมือนชุดตรวจโควิด);
+  คีย์ J/Space ยังตีได้บน PC. joystick/USE ถูกลบก่อนหน้า (ดูได้ใน git ที่ e252590)
 - Dev loop = PC: `tools\update.ps1` (pull → headless export → adb install wireless → launch)
 - **CI ห้าม build APK** (quota Actions 500 MB เคยเต็มใน repo blackbox) — CI = gdformat/gdlint + GUT เท่านั้น
 - Godot Android editor บน tablet = ของแถม ไม่ใช่ทางหลัก
@@ -71,7 +77,7 @@
 project.godot            viewport 1920x1200, stretch canvas_items/expand, sensor landscape
 export_presets.cfg       preset "Android": arm64 only, non-gradle, package com.drums55.game25d
 scenes/main.tscn         root: RoomHolder + Player (persistent) + HUD
-scenes/rooms/*.tscn      soi_brass, steam_market — IsoRoom: World (y-sort) + Spawns (Marker2D ชื่อ = spawn id)
+scenes/rooms/*.tscn      soi_brass, steam_market, steam_garage — IsoRoom: World (y-sort) + Spawns (Marker2D ชื่อ = spawn id)
 scenes/characters/       character_view.tscn (sprite 8 ทิศ; ใช้จริง), cutout_rig.tscn (placeholder fallback)
 scenes/props/            prop_block, door, npc, interactable, training_dummy
 scenes/ui/               hud (ปุ่ม ATK + dialog box), dialog_box

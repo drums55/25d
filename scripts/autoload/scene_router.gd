@@ -9,6 +9,7 @@ const FADE_TIME := 0.25
 var _host: Node = null
 var _busy := false
 var _fade: ColorRect
+var _label: Label
 
 
 func _ready() -> void:
@@ -47,6 +48,25 @@ func go_to(room_path: String, spawn_id := "default", fade := true) -> void:
 		await _fade_to(0.0)
 	GameState.input_locked = false
 	_busy = false
+
+
+## Full-screen fade to black with a message, hold, then fade back. Used for
+## knock-outs; callers lock input themselves.
+func blackout(message: String, hold := 1.0) -> void:
+	if _label == null:
+		_label = Label.new()
+		_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_label.add_theme_font_size_override("font_size", 64)
+		_label.add_theme_color_override("font_color", Color(0.95, 0.8, 0.5))
+		_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_fade.add_child(_label)
+	_label.text = message
+	await _fade_to(1.0)
+	await get_tree().create_timer(hold).timeout
+	_label.text = ""
+	await _fade_to(0.0)
 
 
 func _fade_to(alpha: float) -> void:

@@ -1,6 +1,7 @@
 class_name Hud
 extends CanvasLayer
-## On-screen UI: ATK button, dialog box, and the room title shown on entry.
+## On-screen UI: status (hearts/money/items), notices, dialog box, room title.
+## No buttons: everything is point & click (tap an enemy to attack it).
 
 const TITLE_HOLD := 1.6
 const TITLE_FADE := 0.6

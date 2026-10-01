@@ -98,5 +98,57 @@ func test_player_knocked_out_respawns_with_full_hp():
 	for i in GameState.MAX_HP:
 		_player._invuln = 0.0
 		_player.take_hit(1, _player.global_position + Vector2(10, 0))
+	assert_eq(GameState.hp, 0)
+	assert_true(GameState.input_locked, "blackout locks input")
+	await wait_seconds(2.5)
 	assert_eq(GameState.hp, GameState.MAX_HP)
+	assert_false(GameState.input_locked)
 	assert_lt(_player.global_position.distance_to(room.get_spawn_position("default")), 1.0)
+
+
+func _go(room: String, spawn: String) -> void:
+	SceneRouter.go_to(room, spawn, false)
+	await wait_physics_frames(5)
+
+
+func test_jobs_2_and_3_clear_the_rent():
+	GameState.set_flag("job1_done")
+	GameState.set_flag("job1_accepted")
+	GameState.set_flag("job1_pickup")
+	GameState.set_flag("market_guard_down")
+	GameState.set_flag("garage_bot_down")
+	GameState.money = 80
+	await _go("res://scenes/rooms/steam_market.tscn", "from_soi")
+	await _talk("JeMuay")
+	assert_true(GameState.has_item("parts_box"))
+	assert_true(GameState.has_flag("job2_accepted"))
+	await _go("res://scenes/rooms/steam_garage.tscn", "from_soi")
+	await _talk("HiaPeng")
+	assert_false(GameState.has_item("parts_box"))
+	assert_eq(GameState.money, 180)
+	assert_true(GameState.has_flag("job3_accepted"))
+	await _go("res://scenes/rooms/steam_market.tscn", "from_soi")
+	await _talk("Boiler")
+	assert_true(GameState.has_item("pressure_valve"))
+	await _go("res://scenes/rooms/steam_garage.tscn", "from_soi")
+	await _talk("HiaPeng")
+	assert_eq(GameState.money, 300)
+	assert_true(GameState.has_flag("job3_done"))
+	assert_false(GameState.has_flag("rent_paid"), "paying is a separate talk")
+	await _talk("HiaPeng")
+	assert_eq(GameState.money, 0)
+	assert_true(GameState.has_flag("rent_paid"))
+	await _talk("HiaPeng")
+	assert_eq(GameState.money, 0, "no double charge")
+
+
+func test_garage_door_round_trip():
+	var soi: IsoRoom = _player.get_parent().get_parent()
+	var door := soi.get_world().get_node("DoorToGarage")
+	assert_eq(door.target_room, "res://scenes/rooms/steam_garage.tscn")
+	await _go(door.target_room, door.target_spawn)
+	var garage: IsoRoom = _player.get_parent().get_parent()
+	assert_eq(garage.room_title, "อู่ไอน้ำเฮียเป้ง")
+	assert_not_null(garage.get_node("Navigation"))
+	var back := garage.get_world().get_node("DoorToSoi")
+	assert_eq(back.target_spawn, "from_garage")

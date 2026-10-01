@@ -449,7 +449,7 @@ def soi_brass(out):
     mint = hexc("#5E8F86")
     # right wall first (lit less), then left wall overlaps the corner seam
     shophouse_wall(c, "R", gw, wh, mint * 0.95, door_u=5.65, seed=1)
-    shophouse_wall(c, "L", gh, wh, mint, seed=2)
+    shophouse_wall(c, "L", gh, wh, mint, door_u=3.2, seed=2)
     wall_edge(c, gw, gh, wh)
     concrete_floor(c, gw, gh, hexc("#7C736B"))
     c.apply_door_pools()
@@ -468,7 +468,72 @@ def steam_market(out):
     c.finish(out, sil=0)
 
 
-ROOMS = {"soi_brass": soi_brass, "steam_market": steam_market}
+def zinc_wall(c, side, length, wall_h, zinc, door_u=None, seed=6):
+    """Corrugated zinc sheets with rust streaks, a tool board and lanterns."""
+    s = c.ss
+    H = wall_h * 2
+    k_face = 1.0 if side == "L" else 0.78
+    quad = c.wall_quad(side, 0, length, 0, H)
+    face = c.mask_poly(quad)
+    yt, yb = min(q[1] for q in quad), max(q[1] for q in quad)
+    field = c.grad(zinc, k_face * 1.1, k_face * 0.75, yt, yb)
+    rust = np.clip(c.noise(30, seed) * 0.5 + c.noise(8, seed + 1) * 0.3, -1, 1)
+    field = field * (1 + 0.08 * rust)[..., None]
+    c.paint(face, field, outline=0, tex=0.05)
+    rng = np.random.default_rng(seed)
+    # corrugation: alternating light/dark vertical stripes
+    u = 0.0
+    while u < length:
+        c.stroke([c.wp(side, u, 0), c.wp(side, u, H)], 3.0, zinc * 0.62 * k_face, 0.55)
+        c.stroke([c.wp(side, u + 0.045, 0), c.wp(side, u + 0.045, H)], 2.0, zinc * 1.25 * k_face, 0.35)
+        u += 0.09
+    # sheet seams + bolts every 2 cells
+    for u in np.arange(0.0, length + 0.01, 2.0):
+        c.stroke([c.wp(side, u, 0), c.wp(side, u, H)], 4.0, zinc * 0.45 * k_face, 0.8)
+        for z in range(40, H, 90):
+            x, y = c.wp(side, u, z)
+            c.disc(x, y, 4 * s, 4 * s, STEEL, 1.0, 0.3)
+    # rust streaks running down from bolts
+    for _ in range(14):
+        uu = rng.uniform(0.2, length - 0.2)
+        z0 = rng.uniform(140, H - 20)
+        m = c.mask_line([c.wp(side, uu, z0), c.wp(side, uu + rng.uniform(-0.03, 0.03), z0 - rng.uniform(60, 220))], rng.uniform(4, 10) * s)
+        c.glaze(ndimage.gaussian_filter(m, 2 * s), COPPER * 0.7, rng.uniform(0.25, 0.45))
+    if door_u is not None:
+        doorway(c, side, door_u)
+    # tool board
+    tb0 = length * 0.55
+    bm = c.mask_poly(c.wall_quad(side, tb0, tb0 + 1.6, 150, 330))
+    c.paint(bm, c.grad(WOOD * 0.8 * k_face, 1.05, 0.85, yt, yb), 2.0, 0.3, tex=0.08)
+    for k in range(6):
+        uu = tb0 + 0.2 + k * 0.22
+        z1 = 300 - (k % 3) * 20
+        c.stroke([c.wp(side, uu, z1), c.wp(side, uu, z1 - rng.uniform(60, 110))], 5, STEEL * 0.8)
+        x, y = c.wp(side, uu, z1)
+        c.disc(x, y, 6 * s, 6 * s, BRASS, 1.0, 0.3)
+    # grime band + pipe along the base, lanterns
+    c.glaze(c.mask_poly(c.wall_quad(side, 0, length, 0, 70)), SOOT, 0.35)
+    c.pipe([c.wp(side, 0, 34), c.wp(side, length, 34)], 9, COPPER, spec=0.7)
+    for u in np.arange(1.5, length, 3.0):
+        lx, ly = c.wp(side, u, 390)
+        c.stroke([c.wp(side, u, 430), (lx, ly)], 4, SOOT)
+        c.disc(lx, ly + 8 * s, 11 * s, 14 * s, BRASS_L, 1.6, 0.4, spec=1.0)
+        c.glaze(c.mask_ellipse(lx, ly + 10 * s, 55 * s, 55 * s), WARM, 0.14)
+
+
+def steam_garage(out):
+    gw, gh, wh = 10, 10, 240
+    c = RoomCanvas(gw, gh, wh, ss=1)
+    zinc = hexc("#6F7A80")
+    zinc_wall(c, "R", gw, wh, zinc, door_u=5.0, seed=6)
+    zinc_wall(c, "L", gh, wh, zinc * 1.05, seed=7)
+    wall_edge(c, gw, gh, wh)
+    concrete_floor(c, gw, gh, hexc("#5E5B5C"), seed=8)
+    c.apply_door_pools()
+    c.finish(out, sil=0)
+
+
+ROOMS = {"soi_brass": soi_brass, "steam_market": steam_market, "steam_garage": steam_garage}
 
 if __name__ == "__main__":
     name = sys.argv[1]

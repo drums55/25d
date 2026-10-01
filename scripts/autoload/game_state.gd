@@ -17,6 +17,8 @@ const RENT_DUE := 300
 ## Item id -> display name (Thai). Items are plain ids in `inventory`.
 const ITEMS := {
 	"brass_gear": "เฟืองทองเหลืองของลุง",
+	"parts_box": "กล่องอะไหล่ของเจ๊หมวย",
+	"pressure_valve": "วาล์วแรงดันจากตลาด",
 }
 
 var room_path := START_ROOM

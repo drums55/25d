@@ -197,13 +197,20 @@ func take_hit(amount: int, from: Vector2) -> void:
 		_knocked_out()
 
 
+## Fade to black, revive at the room's default spawn with full HP. Enemies
+## already defeated stay defeated; nothing else is lost.
 func _knocked_out() -> void:
-	GameState.notice.emit("หมดแรง... กลับไปตั้งหลักที่ปากซอย")
+	GameState.input_locked = true
+	cancel_order()
+	velocity = Vector2.ZERO
+	await SceneRouter.blackout("หมดแรง...", 1.2)
 	GameState.hp = GameState.MAX_HP
 	var room := get_parent().get_parent() as IsoRoom
 	if room:
 		global_position = room.get_spawn_position("default")
 	_invuln = invuln_time * 2.0
+	GameState.notice.emit("ตื่นขึ้นมาอีกครั้ง... ค่อยๆ ไปใหม่")
+	GameState.input_locked = false
 
 
 func _on_interact() -> void:
