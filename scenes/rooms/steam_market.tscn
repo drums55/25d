@@ -75,6 +75,26 @@ target_room = "res://scenes/rooms/soi_brass.tscn"
 target_spawn = "from_market"
 wall_axis = 1
 
+[node name="MooPingCart" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(441.6, 323.2)
+footprint_cells = Vector2(1.0, 0.6)
+height = 90.0
+art_name = "moo_ping_cart"
+
+[node name="Interactable" parent="World/MooPingCart" instance=ExtResource("3_int")]
+prompt = "ดู"
+dialog_id = "moo_ping"
+
+[node name="ShopCat" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(-352, 272)
+footprint_cells = Vector2(0.6, 0.6)
+height = 80.0
+art_name = "shop_cat"
+
+[node name="Interactable" parent="World/ShopCat" instance=ExtResource("3_int")]
+prompt = "ลูบ"
+dialog_id = "shop_cat"
+
 [node name="Spawns" type="Node2D" parent="."]
 
 [node name="default" type="Marker2D" parent="Spawns"]

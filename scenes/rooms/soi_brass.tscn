@@ -31,10 +31,10 @@ npc_id = "spirit_house"
 
 [node name="JobBoard" parent="World" instance=ExtResource("2_prop")]
 position = Vector2(192, 160)
-footprint_cells = Vector2(0.5, 0.3)
-height = 110.0
+footprint_cells = Vector2(1.6, 0.6)
+height = 210.0
 color = Color(0.85, 0.7, 0.3, 1)
-art_name = "sign"
+art_name = "win_stand"
 
 [node name="Interactable" parent="World/JobBoard" instance=ExtResource("7_int")]
 prompt = "บอร์ดงาน"
@@ -119,6 +119,36 @@ wall_axis = 1
 position = Vector2(361.6, 203.2)
 target_room = "res://scenes/rooms/steam_market.tscn"
 target_spawn = "from_soi"
+
+[node name="BusStop" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(-448, 448)
+footprint_cells = Vector2(0.35, 0.35)
+height = 180.0
+art_name = "bus_stop"
+
+[node name="Interactable" parent="World/BusStop" instance=ExtResource("7_int")]
+prompt = "อ่าน"
+dialog_id = "bus_stop"
+
+[node name="Payphone" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(416, 464)
+footprint_cells = Vector2(0.55, 0.55)
+height = 170.0
+art_name = "payphone"
+
+[node name="Interactable" parent="World/Payphone" instance=ExtResource("7_int")]
+prompt = "ดู"
+dialog_id = "payphone"
+
+[node name="TirePlanter" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(-492.8, 297.6)
+footprint_cells = Vector2(0.6, 0.6)
+height = 60.0
+art_name = "tire_planter"
+
+[node name="Interactable" parent="World/TirePlanter" instance=ExtResource("7_int")]
+prompt = "ดู"
+dialog_id = "tire_planter"
 
 [node name="Spawns" type="Node2D" parent="."]
 

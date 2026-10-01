@@ -90,6 +90,16 @@ position = Vector2(320, 182)
 target_room = "res://scenes/rooms/soi_brass.tscn"
 target_spawn = "from_garage"
 
+[node name="TirePlanter" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(-179.2, 166.4)
+footprint_cells = Vector2(0.6, 0.6)
+height = 60.0
+art_name = "tire_planter"
+
+[node name="Interactable" parent="World/TirePlanter" instance=ExtResource("3_int")]
+prompt = "ดู"
+dialog_id = "tire_planter_garage"
+
 [node name="Spawns" type="Node2D" parent="."]
 
 [node name="default" type="Marker2D" parent="Spawns"]

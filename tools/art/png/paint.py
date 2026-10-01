@@ -378,6 +378,39 @@ class Canvas:
             self.paint(lip, self.flat(np.asarray(col) * 0.5), 0.6, 0)
 
     # ---------------- finish ----------------
+    def text(self, txt, p0, p1, height, c, alpha=1.0, size=140, align="center"):
+        """Flat-painted text on a face. p0 -> p1 (SS coords) is the top edge of
+        the text box along the face; `height` is the box height in 1x px
+        (straight down on screen, i.e. vertical faces). Thai shapes correctly
+        (PIL with raqm + Kanit)."""
+        from PIL import ImageFont
+        import os as _os
+        font = ImageFont.truetype(_os.path.join(_os.path.dirname(__file__), "..", "..", "..",
+                                                "assets", "fonts", "Kanit-Medium.ttf"), size)
+        l, t, r, b = font.getbbox(txt)
+        tw, th = r - l, b - t
+        timg = Image.new("L", (tw + 8, th + 8), 0)
+        ImageDraw.Draw(timg).text((4 - l, 4 - t), txt, font=font, fill=255)
+        tw, th = timg.size
+        ux, uy = p1[0] - p0[0], p1[1] - p0[1]
+        L = math.hypot(ux, uy)
+        H = height * self.ss
+        k = min(L / tw, H / th)
+        ex, ey = ux / L, uy / L
+        off = (L - tw * k) * (0.5 if align == "center" else 0.0)
+        ox = p0[0] + ex * off
+        oy = p0[1] + ey * off + (H - th * k) * 0.5
+        # output (X, Y) = o + x*k*e + y*k*(0, 1)  ->  inverse for PIL AFFINE
+        m = np.array([[k * ex, 0.0], [k * ey, k]])
+        inv = np.linalg.inv(m)
+        cx = -(inv[0, 0] * ox + inv[0, 1] * oy)
+        cy = -(inv[1, 0] * ox + inv[1, 1] * oy)
+        warped = timg.transform((self.W, self.H), Image.AFFINE,
+                                (inv[0, 0], inv[0, 1], cx, inv[1, 0], inv[1, 1], cy), resample=Image.BILINEAR)
+        mm = np.asarray(warped, np.float32) / 255.0 * alpha
+        self.rgb = self.rgb * (1 - mm[..., None]) + np.asarray(c)[None, None, :] * mm[..., None]
+        self.a = self.a + mm * (1 - self.a)
+
     def finish(self, path, sil=2.6):
         s = self.ss
         a = self.a
