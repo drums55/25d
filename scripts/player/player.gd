@@ -188,6 +188,7 @@ func take_hit(amount: int, from: Vector2) -> void:
 		return
 	_invuln = invuln_time
 	GameState.hp -= amount
+	Jobs.on_player_hit()
 	cancel_order()
 	var push := (global_position - from).normalized()
 	if push.length_squared() > 0.0:

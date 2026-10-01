@@ -53,6 +53,7 @@ art_name = "dragon_jar"
 [node name="Interactable" parent="World/DragonJar" instance=ExtResource("3_int")]
 prompt = "ดู"
 dialog_id = "dragon_jar"
+npc_id = "dragon_jar"
 
 [node name="DragonJar2" parent="World" instance=ExtResource("2_prop")]
 position = Vector2(608, 400)

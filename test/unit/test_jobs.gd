@@ -16,6 +16,7 @@ func before_each():
 
 
 func after_each():
+	_finish_dialog()
 	GameState.delete_save()
 	GameState.new_game()
 
@@ -138,3 +139,64 @@ func test_board_prop_opens_ui_and_rent_pays_with_money_condition():
 	_finish_dialog()
 	assert_true(GameState.has_flag("rent_paid"))
 	assert_eq(GameState.money, 0)
+
+
+func _ids(jobs: Array[Dictionary]) -> Array[String]:
+	var out: Array[String] = []
+	for job in jobs:
+		out.append(str(job["id"]))
+	return out
+
+
+func test_from_day_gates_offers():
+	assert_does_not_have(_ids(Jobs.available()), "croc_egg", "day 2 job")
+	GameState.new_day()
+	assert_has(_ids(Jobs.available()), "croc_egg")
+
+
+func test_fragile_cargo_breaks_when_player_is_hit():
+	assert_true(Jobs.accept("eggs_for_lung"))
+	_player.take_hit(1, _player.global_position + Vector2(50, 0))
+	assert_true(Jobs.is_active("eggs_for_lung"), "not picked yet: nothing to break")
+	assert_true(Jobs.on_interact("je_muay"))
+	_finish_dialog()
+	await wait_seconds(1.0)  # invulnerability window
+	_player.take_hit(1, _player.global_position + Vector2(50, 0))
+	assert_false(Jobs.is_active("eggs_for_lung"), "eggs broke")
+	assert_false(GameState.has_item("eggs"))
+	assert_has(GameState.failed_jobs, "eggs_for_lung")
+
+
+func test_redirect_chain_moves_the_receiver():
+	assert_true(Jobs.accept("parcel_somchai"))
+	Jobs.on_interact("boatman")
+	_finish_dialog()
+	assert_true(Jobs.on_interact("lung_pradit"), "lung redirects")
+	_finish_dialog()
+	assert_true(GameState.has_item("somchai_parcel"), "still carrying")
+	assert_eq(Jobs.active_jobs()[0]["target_where"], "ตลาดไอน้ำ (ถามเจ๊หมวย)")
+	assert_false(Jobs.on_interact("lung_pradit"), "lung is no longer the receiver")
+	assert_true(Jobs.on_interact("je_muay"))
+	_finish_dialog()
+	assert_true(Jobs.on_interact("hia_peng"), "delivered to the real Somchai")
+	assert_has(GameState.done_jobs, "parcel_somchai")
+	assert_eq(GameState.money, 70)
+
+
+func test_needs_blocks_delivery_until_item_found():
+	GameState.new_day()
+	assert_true(Jobs.accept("cake_for_boiler"))
+	Jobs.on_interact("lung_pradit")
+	_finish_dialog()
+	assert_true(Jobs.on_interact("market_boiler"), "refusal plays")
+	_finish_dialog()
+	assert_true(Jobs.is_active("cake_for_boiler"), "no candle, no delivery")
+	var data: Dictionary = JSON.parse_string(
+		FileAccess.get_file_as_string("res://assets/dialog/dialog.json")
+	)
+	var lines := DialogData.resolve(data, "spirit_house", GameState.flags, GameState.inventory)
+	assert_eq(lines[-1].get("give_item", ""), "incense", "shrine hands out incense")
+	GameState.give_item("incense")
+	assert_true(Jobs.on_interact("market_boiler"))
+	assert_has(GameState.done_jobs, "cake_for_boiler")
+	assert_false(GameState.has_item("incense"), "incense used up")

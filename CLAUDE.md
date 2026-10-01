@@ -128,6 +128,14 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   (`available/accept/abandon/on_interact/sleep`). รับงานที่ **บอร์ดงาน** (prop `JobBoard` ในซอย → `Interactable.opens_job_board`
   → `Hud.open_job_board` → UI `scenes/ui/job_board.tscn`, input lock ตอนเปิด). ช่องเก็บของ `GameState.cargo_slots` (เริ่ม 2).
   pickup/dropoff = แตะ NPC ที่ `Interactable.npc_id` ตรง (job มาก่อน dialog ปกติ; dropoff ก่อน pickup). ส่งสาย = `late_reward`
+- **งานแบบปริศนา (M2, 2026-10-01, เจ้าของ: "งานเหี้ยๆ ฮาๆ")**: key เสริมต่องานใน jobs.json (doc อยู่หัว `jobs.gd`):
+  `from_day` (เปิดตั้งแต่วันที่ n), `fragile` + `break_notice` (ถือของอยู่แล้วโดนตี = ของแตก งาน fail; `Player.take_hit` เรียก
+  `Jobs.on_player_hit()`), `redirects` [{at,to,where,lines}] (คุยกับผู้รับแล้วโดนส่งต่อ — ผู้รับย้าย/ผิดคน, ต่อเป็น chain ได้,
+  entry เก็บ `target`/`target_where`/`redirected` ลง save), `needs` {item|flag, take, lines} (ผู้รับไม่รับจนกว่าจะมีของ/flag).
+  งาน: `eggs_for_lung` (ไข่ 30 ฟอง fragile ผ่านหุ่นตลาด), `parcel_somchai` (พัสดุถึง "สมชาย": ลุง→เจ๊หมวย→เฮียเป้ง = ชื่อเก่าเฮีย),
+  `cake_for_boiler` (วันที่ 2+: เค้กวันเกิดหม้อไอน้ำตลาด ต้องมีธูปจากศาลพระภูมิ — `spirit_house_cake` ให้ `incense` เมื่อถือเค้ก),
+  `croc_egg` (วันที่ 2+: ไข่จระเข้ fragile จากอู่ (มี GarageBot) → พี่แจ่มไม่รับ → โอ่งมังกร `npc_id: dragon_jar`).
+  ผู้รับเป็น prop ได้ (ใส่ `npc_id` บน Interactable). บอร์ดงานโชว์ "งานที่รับไว้" ก่อน "งานที่มีวันนี้" และติดป้าย [แตกง่าย]
 - **นาฬิกาวัน**: `GameState.tick` 0..12 (6 ช่วง × 2: เช้า สาย เที่ยง บ่าย เย็น ค่ำ), เปลี่ยนห้อง +1, ส่งของ +2, เกิน 12 = กลางคืน.
   "นอน" ที่บอร์ด = `Jobs.sleep()`: งานที่ยังไม่ส่ง fail (ของหาย, กลับมาเปิดให้รับใหม่วันถัดไป), วัน+1, HP เต็ม.
   แสงตามช่วงเวลา = tween `RoomHolder.modulate` ใน `main.gd` (**อย่าใช้ CanvasModulate** — ทำ Godot crash signal 11 ตอนรัน GUT)

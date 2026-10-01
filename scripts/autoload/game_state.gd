@@ -25,6 +25,11 @@ const ITEMS := {
 	"red_soda": "น้ำแดงถวายศาล",
 	"mackerel": "ปลาทูแม่กลอง",
 	"boat_garland": "พวงมาลัยผูกหัวเรือ",
+	"eggs": "ไข่ไก่ 30 ฟอง (แตกง่าย)",
+	"somchai_parcel": "พัสดุถึงคุณสมชาย",
+	"birthday_cake": "เค้กวันเกิดหม้อไอน้ำ",
+	"incense": "ธูป 1 ดอก (ใช้แทนเทียน)",
+	"croc_egg": "ไข่จระเข้ (อุ่นๆ ขยับได้)",
 }
 ## Day clock: 6 slots of TICKS_PER_SLOT ticks. Changing rooms costs 1 tick,
 ## a delivery 2; past DAY_TICKS it is night and only sleeping starts a new day.

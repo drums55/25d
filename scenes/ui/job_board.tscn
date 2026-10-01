@@ -66,16 +66,6 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="OffersTitle" type="Label" parent="VBox/Scroll/Lists"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.78, 0.4, 1)
-theme_override_font_sizes/font_size = 32
-text = "งานที่มีวันนี้"
-
-[node name="Offers" type="VBoxContainer" parent="VBox/Scroll/Lists"]
-unique_name_in_owner = true
-layout_mode = 2
-
 [node name="ActiveTitle" type="Label" parent="VBox/Scroll/Lists"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.78, 0.4, 1)
@@ -83,6 +73,16 @@ theme_override_font_sizes/font_size = 32
 text = "งานที่รับไว้"
 
 [node name="Active" type="VBoxContainer" parent="VBox/Scroll/Lists"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="OffersTitle" type="Label" parent="VBox/Scroll/Lists"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.78, 0.4, 1)
+theme_override_font_sizes/font_size = 32
+text = "งานที่มีวันนี้"
+
+[node name="Offers" type="VBoxContainer" parent="VBox/Scroll/Lists"]
 unique_name_in_owner = true
 layout_mode = 2
 

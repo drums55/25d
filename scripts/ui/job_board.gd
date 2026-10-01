@@ -76,7 +76,8 @@ func _offer_row(job: Dictionary) -> Control:
 	var row := HBoxContainer.new()
 	var text := VBoxContainer.new()
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	text.add_child(_label("%s — %s" % [job["title"], job.get("from", "")], 30))
+	var tag := " [แตกง่าย ห้ามโดนตี]" if job.get("fragile", false) else ""
+	text.add_child(_label("%s — %s%s" % [job["title"], job.get("from", ""), tag], 30))
 	text.add_child(
 		_label(
 			(
@@ -107,7 +108,7 @@ func _active_row(job: Dictionary) -> Control:
 	var row := HBoxContainer.new()
 	var status := "ไปรับที่ %s" % job["pickup"].get("where", "?")
 	if job.get("picked", false):
-		status = "ถือของอยู่ → ส่งที่ %s" % job["dropoff"].get("where", "?")
+		status = "ถือของอยู่ → ส่งที่ %s" % job.get("target_where", "?")
 	var left := int(job.get("due_tick", 0)) - GameState.tick
 	var due := (
 		"สายแล้ว" if left < 0 else "เหลือ %d ช่วง" % ceili(left / float(GameState.TICKS_PER_SLOT))

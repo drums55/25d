@@ -3,6 +3,18 @@ extends Node
 ## accepts up to GameState.cargo_slots, then talking to the pickup / dropoff
 ## npc (Interactable.npc_id) hands the item over. State lives in GameState
 ## (active_jobs / done_jobs / failed_jobs) so it is saved with everything else.
+##
+## Puzzle twists (optional keys per job, M2):
+##   "from_day": n            -- only offered from day n on
+##   "fragile": true          -- the item breaks (job fails) if the player gets hit
+##                               while carrying it; "break_notice" overrides the text
+##   "redirects": [{"at", "to", "where", "lines"}]
+##                            -- talking to the current receiver "at" sends the
+##                               rider on to "to" instead (moved / wrong person);
+##                               chains are allowed, each step fires once
+##   "needs": {"item"|"flag", "take", "lines"}
+##                            -- the receiver refuses (plays "lines") until the
+##                               rider has the item / flag; "take" consumes the item
 
 signal jobs_changed
 ## Emitted after a dropoff with the reward actually paid.
@@ -48,7 +60,7 @@ func available() -> Array[Dictionary]:
 	for id in _order:
 		if is_active(id) or GameState.done_jobs.has(id):
 			continue
-		var ok := true
+		var ok := GameState.day >= int(_jobs[id].get("from_day", 1))
 		for flag in _jobs[id].get("requires", []):
 			if not GameState.has_flag(str(flag)):
 				ok = false
@@ -76,6 +88,7 @@ func active_jobs() -> Array[Dictionary]:
 			var merged := job.duplicate()
 			merged["picked"] = entry.get("picked", false)
 			merged["due_tick"] = entry.get("due_tick", 0)
+			merged["target_where"] = dropoff_where(entry, job)
 			out.append(merged)
 	return out
 
@@ -108,6 +121,15 @@ func abandon(id: String) -> void:
 	jobs_changed.emit()
 
 
+## Current receiver of an active job (changes when a redirect fires).
+func dropoff_npc(entry: Dictionary, job: Dictionary) -> String:
+	return str(entry.get("target", job.get("dropoff", {}).get("npc", "")))
+
+
+func dropoff_where(entry: Dictionary, job: Dictionary) -> String:
+	return str(entry.get("target_where", job.get("dropoff", {}).get("where", "?")))
+
+
 func is_late(entry: Dictionary) -> bool:
 	return GameState.tick > int(entry.get("due_tick", 0))
 
@@ -120,8 +142,9 @@ func on_interact(npc_id: String) -> bool:
 	# dropoffs first: a picked job waiting for this npc
 	for entry in GameState.active_jobs:
 		var job := get_job(str(entry["id"]))
-		if entry.get("picked", false) and job.get("dropoff", {}).get("npc", "") == npc_id:
-			_deliver(entry, job)
+		if entry.get("picked", false) and dropoff_npc(entry, job) == npc_id:
+			if not _try_redirect(entry, job, npc_id) and not _refuse(job):
+				_deliver(entry, job)
 			return true
 	for entry in GameState.active_jobs:
 		var job := get_job(str(entry["id"]))
@@ -134,6 +157,51 @@ func on_interact(npc_id: String) -> bool:
 	return false
 
 
+func _try_redirect(entry: Dictionary, job: Dictionary, npc_id: String) -> bool:
+	var used: Array = entry.get("redirected", [])
+	for step in job.get("redirects", []):
+		if str(step.get("at", "")) != npc_id or used.has(npc_id):
+			continue
+		used.append(npc_id)
+		entry["redirected"] = used
+		entry["target"] = str(step.get("to", ""))
+		entry["target_where"] = str(step.get("where", "?"))
+		GameState.notice.emit("ผู้รับเปลี่ยน → %s" % entry["target_where"])
+		Dialog.start_lines(step.get("lines", []), "job_redirect_" + str(job["id"]))
+		jobs_changed.emit()
+		return true
+	return false
+
+
+## True (and plays the refusal) when the receiver's "needs" are not met yet.
+func _refuse(job: Dictionary) -> bool:
+	var needs: Dictionary = job.get("needs", {})
+	if needs.is_empty():
+		return false
+	var ok := true
+	if needs.has("item") and not GameState.has_item(str(needs["item"])):
+		ok = false
+	if needs.has("flag") and not GameState.has_flag(str(needs["flag"])):
+		ok = false
+	if ok:
+		return false
+	Dialog.start_lines(needs.get("lines", []), "job_needs_" + str(job["id"]))
+	return true
+
+
+## Player.take_hit calls this: fragile cargo breaks.
+func on_player_hit() -> void:
+	for entry in GameState.active_jobs.duplicate():
+		var job := get_job(str(entry["id"]))
+		if not (entry.get("picked", false) and job.get("fragile", false)):
+			continue
+		GameState.active_jobs.erase(entry)
+		GameState.take_item(str(job.get("item", "")))
+		GameState.failed_jobs.append(str(job["id"]))
+		GameState.notice.emit(str(job.get("break_notice", "ของแตก! งาน %s พัง" % job["title"])))
+		jobs_changed.emit()
+
+
 func _deliver(entry: Dictionary, job: Dictionary) -> void:
 	var late := is_late(entry)
 	var reward := (
@@ -142,6 +210,9 @@ func _deliver(entry: Dictionary, job: Dictionary) -> void:
 	GameState.active_jobs.erase(entry)
 	GameState.done_jobs.append(str(job["id"]))
 	GameState.take_item(str(job.get("item", "")))
+	var needs: Dictionary = job.get("needs", {})
+	if needs.get("take", false) and needs.has("item"):
+		GameState.take_item(str(needs["item"]))
 	GameState.add_money(reward)
 	for flag in job.get("sets", []):
 		GameState.set_flag(str(flag))
