@@ -41,8 +41,7 @@ Push-Location $RepoRoot
 try {
     if (-not $NoPull) {
         Step "git pull"
-        Invoke-Native { git pull --ff-only 2>&1 }
-        if ($LASTEXITCODE -ne 0) { throw "git pull failed" }
+        & (Join-Path $PSScriptRoot 'pull.ps1')
     }
     Invoke-Native { git log -1 --format='%h %s' }
 

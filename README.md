@@ -35,7 +35,7 @@ Linux/macOS/Git Bash: `GODOT=/path/to/godot ADB_SERIAL=ip:port tools/update.sh [
 Play on the PC without a device (no export):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools\run.ps1                              # game
+powershell -ExecutionPolicy Bypass -File tools\run.ps1                              # git pull + import + run
 powershell -ExecutionPolicy Bypass -File tools\run.ps1 --rendering-driver opengl3   # if the window is black
 powershell -ExecutionPolicy Bypass -File tools\run.ps1 -Editor                      # Godot editor (F5 = run)
 ```

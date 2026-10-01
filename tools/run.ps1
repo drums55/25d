@@ -2,18 +2,21 @@
 .SYNOPSIS
   Run the game on the PC (no export, no device).
 .EXAMPLE
-  powershell -ExecutionPolicy Bypass -File tools\run.ps1
+  powershell -ExecutionPolicy Bypass -File tools\run.ps1            # pulls latest, imports, runs
+  powershell -ExecutionPolicy Bypass -File tools\run.ps1 -NoPull
   powershell -ExecutionPolicy Bypass -File tools\run.ps1 --rendering-driver opengl3
   powershell -ExecutionPolicy Bypass -File tools\run.ps1 -Editor
 #>
 param(
     [switch]$Editor,
+    [switch]$NoPull,
     [Parameter(ValueFromRemainingArguments = $true)][string[]]$GodotArgs
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'godot_path.ps1')
 $godot = Resolve-Godot
 $root = Split-Path -Parent $PSScriptRoot
+if (-not $NoPull) { & (Join-Path $PSScriptRoot 'pull.ps1') }
 if (-not (Test-Path (Join-Path $root 'addons\gut\plugin.cfg'))) { & (Join-Path $PSScriptRoot 'fetch_gut.ps1') }
 if ($Editor) {
     # The non-console exe sits next to the console one.
