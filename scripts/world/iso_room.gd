@@ -64,6 +64,8 @@ func apply_art() -> bool:
 	sprite.name = "Backdrop"
 	sprite.texture = tex
 	sprite.centered = false
+	# below floor-level overlays (patrol bot vision cones use z -1)
+	sprite.z_index = -10
 	var rect := get_backdrop_rect()
 	sprite.position = rect.position
 	sprite.scale = rect.size / tex.get_size()

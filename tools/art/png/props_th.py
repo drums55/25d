@@ -447,7 +447,35 @@ def company_booth(out):
     c.finish(out)
 
 
-PROPS = {f.__name__: f for f in (win_stand, payphone, bus_stop, moo_ping_cart, shop_cat, tire_planter,
+def steam_valve(out):
+    """วาล์วระบายไอน้ำ: copper pipe out of the floor, big red hand wheel,
+    pressure gauge and a hand-written "ห้ามหมุน (บริษัท)" tag."""
+    c = Canvas(240, 520, seed=53)
+    p, s = c.p, c.ss
+    c.ground_shadow(0.5, 0.5)
+    c.cylinder(0, 0, 0.16, 0, 14, SOOT * 1.5, spec=0.3)
+    c.pipe([p(0, 0, 10), p(0, 0, 200)], 18, COPPER, spec=0.8)
+    c.pipe([p(0, 0, 200), p(0, -0.5, 200)], 14, COPPER, spec=0.7)
+    c.band(0, 0, 0.1, 120, 132, BRASS, spec=0.9)
+    # hand wheel (front, facing +gy)
+    wx, wy = p(0, 0.14, 160)
+    c.disc(wx, wy, 46 * s, 40 * s, RED, 2.0, 0.6, dome=False)
+    c.disc(wx, wy, 34 * s, 29 * s, SOOT, 1.0, 0, dome=False)
+    for k in range(5):
+        a = k * 2 * math.pi / 5
+        c.stroke([(wx, wy), (wx + math.cos(a) * 34 * s, wy + math.sin(a) * 29 * s)], 3.4, RED, 1.0)
+    c.disc(wx, wy, 8 * s, 7 * s, BRASS_L, 1.2, 0.5)
+    gx, gy = p(0.12, 0.0, 228)
+    c.gauge(gx, gy, 14, angle=70)
+    # warning tag on a string
+    tag = [p(-0.17, 0.12, 128), p(0.0, 0.12, 128), p(0.0, 0.12, 92), p(-0.17, 0.12, 92)]
+    c.paint(c.mask_poly(tag), c.flat(YELLOW), 1.0, 0)
+    c.text("ห้ามหมุน", p(-0.16, 0.12, 124), p(-0.01, 0.12, 124), 11, RED)
+    c.text("(บริษัท)", p(-0.16, 0.12, 106), p(-0.01, 0.12, 106), 9, INK)
+    c.finish(out)
+
+
+PROPS = {f.__name__: f for f in (steam_valve, win_stand, payphone, bus_stop, moo_ping_cart, shop_cat, tire_planter,
                                  longtail_boat, dragon_jar, pier_sign, company_booth)}
 
 if __name__ == "__main__":

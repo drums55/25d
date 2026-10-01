@@ -1,0 +1,41 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/patrol_bot.gd" id="1_bot"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_bot"]
+radius = 26.0
+
+[node name="PatrolBot" type="CharacterBody2D"]
+script = ExtResource("1_bot")
+
+[node name="Cone" type="Polygon2D" parent="."]
+z_index = -1
+color = Color(1, 0.85, 0.35, 0.16)
+
+[node name="Edge" type="Line2D" parent="Cone"]
+width = 3.0
+default_color = Color(1, 0.92, 0.6, 0.75)
+joint_mode = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_bot")
+
+[node name="Body" type="Node2D" parent="."]
+
+[node name="Post" type="Polygon2D" parent="Body"]
+color = Color(0.45, 0.32, 0.2, 1)
+polygon = PackedVector2Array(-6, 0, 6, 0, 6, -150, -6, -150)
+
+[node name="Sack" type="Polygon2D" parent="Body"]
+color = Color(0.8, 0.4, 0.3, 1)
+polygon = PackedVector2Array(-26, -60, 26, -60, 32, -100, 26, -140, 0, -150, -26, -140, -32, -100)
+
+[node name="Mark" type="Label" parent="."]
+offset_left = -60.0
+offset_top = -250.0
+offset_right = 60.0
+offset_bottom = -180.0
+theme_override_colors/font_outline_color = Color(0.1, 0.06, 0.04, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 56
+horizontal_alignment = 1

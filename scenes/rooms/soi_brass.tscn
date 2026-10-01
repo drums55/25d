@@ -3,7 +3,6 @@
 [ext_resource type="Script" path="res://scripts/world/iso_room.gd" id="1_room"]
 [ext_resource type="PackedScene" path="res://scenes/props/prop_block.tscn" id="2_prop"]
 [ext_resource type="PackedScene" path="res://scenes/props/npc.tscn" id="3_npc"]
-[ext_resource type="PackedScene" path="res://scenes/props/training_dummy.tscn" id="4_dummy"]
 [ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="5_door"]
 [ext_resource type="PackedScene" path="res://scenes/props/steam_vent.tscn" id="6_steam"]
 [ext_resource type="PackedScene" path="res://scenes/props/interactable.tscn" id="7_int"]
@@ -106,8 +105,14 @@ footprint_cells = Vector2(1.4, 0.7)
 height = 70.0
 color = Color(0.75, 0.5, 0.2, 1)
 
-[node name="BrassAutomaton" parent="World" instance=ExtResource("4_dummy")]
+[node name="BrassAutomaton" parent="World" instance=ExtResource("2_prop")]
 position = Vector2(192, 416)
+footprint_cells = Vector2(0.4, 0.4)
+height = 150.0
+
+[node name="Interactable" parent="World/BrassAutomaton" instance=ExtResource("7_int")]
+prompt = "ดู"
+dialog_id = "brass_automaton"
 
 [node name="DoorToGarage" parent="World" instance=ExtResource("5_door")]
 position = Vector2(-204.8, 124.4)

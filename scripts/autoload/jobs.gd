@@ -6,8 +6,8 @@ extends Node
 ##
 ## Puzzle twists (optional keys per job, M2):
 ##   "from_day": n            -- only offered from day n on
-##   "fragile": true          -- the item breaks (job fails) if the player gets hit
-##                               while carrying it; "break_notice" overrides the text
+##   "fragile": true          -- the item breaks (job fails) if a patrol bot catches
+##                               the rider carrying it; "break_notice" overrides the text
 ##   "redirects": [{"at", "to", "where", "lines"}]
 ##                            -- talking to the current receiver "at" sends the
 ##                               rider on to "to" instead (moved / wrong person);
@@ -215,8 +215,16 @@ func _refuse(job: Dictionary) -> bool:
 	return true
 
 
-## Player.take_hit calls this: fragile cargo breaks.
-func on_player_hit() -> void:
+## True while the rider holds any picked-up delivery (patrol bots inspect it).
+func carrying_cargo() -> bool:
+	for entry in GameState.active_jobs:
+		if entry.get("picked", false):
+			return true
+	return false
+
+
+## A patrol bot caught the rider: fragile cargo breaks.
+func on_player_caught() -> void:
 	for entry in GameState.active_jobs.duplicate():
 		var job := get_job(str(entry["id"]))
 		if not (entry.get("picked", false) and job.get("fragile", false)):

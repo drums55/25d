@@ -12,7 +12,7 @@ class_name DialogData
 ## `if_not_item`, `if_money_at_least` (int), `if_rep_at_least` / `if_rep_below`
 ## ({"faction": n}, every listed faction must hold; factions in GameState.FACTIONS).
 ## Line actions (applied when the line is shown): `set_flag`,
-## `give_item`, `take_item`, `money` (int, +/-).
+## `give_item`, `take_item`, `money` (int, +/-), `event` (Dialog.event signal).
 
 const MAX_REDIRECTS := 16
 
@@ -103,6 +103,7 @@ static func _normalize(lines) -> Array:
 						"give_item": str(line.get("give_item", "")),
 						"take_item": str(line.get("take_item", "")),
 						"money": int(line.get("money", 0)),
+						"event": str(line.get("event", "")),
 					}
 				)
 			)

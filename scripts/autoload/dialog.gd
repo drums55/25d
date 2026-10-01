@@ -6,6 +6,9 @@ signal started(id: String)
 signal line_shown(speaker: String, text: String)
 signal skip_typing_requested
 signal finished(id: String)
+## Line action `"event": "<name>"`: world objects react (e.g. "steam_valve"
+## freezes steam-powered patrol bots).
+signal event(name: String)
 
 const DIALOG_PATH := "res://assets/dialog/dialog.json"
 
@@ -81,3 +84,5 @@ func _show_current() -> void:
 	GameState.give_item(line.get("give_item", ""))
 	GameState.take_item(line.get("take_item", ""))
 	GameState.add_money(line.get("money", 0))
+	if not str(line.get("event", "")).is_empty():
+		event.emit(str(line["event"]))

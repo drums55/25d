@@ -86,12 +86,17 @@ func test_click_floor_walks_there():
 	assert_eq(_player.order, Player.Order.NONE)
 
 
-func test_click_dummy_walks_up_and_hits_it():
-	var dummy := _world("BrassAutomaton")
-	_player.click_at(dummy.global_position + Vector2(0, -100))
-	assert_eq(_player.order, Player.Order.ATTACK)
+func test_click_bot_walks_up_and_tampers():
+	SceneRouter.go_to("res://scenes/rooms/steam_market.tscn", "from_soi", false)
+	await wait_physics_frames(5)
+	var bot: PatrolBot = _player.get_parent().get_node("MarketGuard")
+	bot.patrol = PackedVector2Array()
+	bot.facing = Vector2(1, 0)  # looking away from the rider (who comes from the left)
+	_player.global_position = bot.global_position + Vector2(-260, 0)
+	_player.click_at(bot.global_position + Vector2(0, -100))
+	assert_eq(_player.order, Player.Order.TAMPER)
 	await wait_physics_frames(90)
-	assert_eq(dummy.hits, 1)
+	assert_eq(bot.state, PatrolBot.State.OFF, "fuse pulled from behind")
 
 
 func test_click_npc_starts_dialog_and_taps_advance():

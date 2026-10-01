@@ -154,14 +154,14 @@ func test_from_day_gates_offers():
 	assert_has(_ids(Jobs.available()), "croc_egg")
 
 
-func test_fragile_cargo_breaks_when_player_is_hit():
+func test_fragile_cargo_breaks_when_caught():
 	assert_true(Jobs.accept("eggs_for_lung"))
-	_player.take_hit(1, _player.global_position + Vector2(50, 0))
+	Jobs.on_player_caught()
 	assert_true(Jobs.is_active("eggs_for_lung"), "not picked yet: nothing to break")
 	assert_true(Jobs.on_interact("je_muay"))
 	_finish_dialog()
-	await wait_seconds(1.0)  # invulnerability window
-	_player.take_hit(1, _player.global_position + Vector2(50, 0))
+	assert_true(Jobs.carrying_cargo())
+	Jobs.on_player_caught()
 	assert_false(Jobs.is_active("eggs_for_lung"), "eggs broke")
 	assert_false(GameState.has_item("eggs"))
 	assert_has(GameState.failed_jobs, "eggs_for_lung")

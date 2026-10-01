@@ -133,8 +133,8 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   → `Hud.open_job_board` → UI `scenes/ui/job_board.tscn`, input lock ตอนเปิด). ช่องเก็บของ `GameState.cargo_slots` (เริ่ม 2).
   pickup/dropoff = แตะ NPC ที่ `Interactable.npc_id` ตรง (job มาก่อน dialog ปกติ; dropoff ก่อน pickup). ส่งสาย = `late_reward`
 - **งานแบบปริศนา (M2, 2026-10-01, เจ้าของ: "งานเหี้ยๆ ฮาๆ")**: key เสริมต่องานใน jobs.json (doc อยู่หัว `jobs.gd`):
-  `from_day` (เปิดตั้งแต่วันที่ n), `fragile` + `break_notice` (ถือของอยู่แล้วโดนตี = ของแตก งาน fail; `Player.take_hit` เรียก
-  `Jobs.on_player_hit()`), `redirects` [{at,to,where,lines}] (คุยกับผู้รับแล้วโดนส่งต่อ — ผู้รับย้าย/ผิดคน, ต่อเป็น chain ได้,
+  `from_day` (เปิดตั้งแต่วันที่ n), `fragile` + `break_notice` (ถือของอยู่แล้วโดนหุ่นจับ = ของแตก งาน fail; `PatrolBot` เรียก
+  `Jobs.on_player_caught()`), `redirects` [{at,to,where,lines}] (คุยกับผู้รับแล้วโดนส่งต่อ — ผู้รับย้าย/ผิดคน, ต่อเป็น chain ได้,
   entry เก็บ `target`/`target_where`/`redirected` ลง save), `needs` {item|flag, take, lines} (ผู้รับไม่รับจนกว่าจะมีของ/flag).
   งาน: `eggs_for_lung` (ไข่ 30 ฟอง fragile ผ่านหุ่นตลาด), `parcel_somchai` (พัสดุถึง "สมชาย": ลุง→เจ๊หมวย→เฮียเป้ง = ชื่อเก่าเฮีย),
   `cake_for_boiler` (วันที่ 2+: เค้กวันเกิดหม้อไอน้ำตลาด ต้องมีธูปจากศาลพระภูมิ — `spirit_house_cake` ให้ `incense` เมื่อถือเค้ก),
@@ -162,17 +162,20 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
 - **Inventory/เงิน/HP** อยู่ใน `GameState` (`inventory` = Array ของ item id, ชื่อโชว์ใน `GameState.ITEMS`;
   `money`; `hp`/`MAX_HP`=5) + save v2 (`SaveData` อ่าน save เก่าได้ ค่า default). HUD มุมซ้ายบน: หัวใจ, ฿/หนี้, กระเป๋า,
   และ notice ต่อคิว (`GameState.notice`)
-- **Enemy** (`scripts/world/enemy.gd`, `scenes/props/enemy.tscn`): CharacterBody2D layer world+hittable, idle จนผู้เล่นเข้า
-  `aggro_range` 330 → ไล่ (speed 170) → ตีเมื่อระยะ < 70 ทุก 1.1s (wind-up 0.3s ก่อนครั้งแรก); `take_hit` ลด hp (3) +
-  knockback; ตายแล้วเป็นเศษเหล็ก (ยังชนได้ ตีไม่ได้) และตั้ง `defeat_flag` → โหลดห้องใหม่ไม่ฟื้น. art = prop png
-  (`art_name`, default brass_automaton ย้อมแดง). Player `take_hit`: invuln 0.8s กะพริบ, knockback, hp 0 → `SceneRouter.blackout("หมดแรง...")` (จอดำ+ข้อความ ~2.5s, input lock)
-  แล้วฟื้นที่ spawn default ของห้องเต็มหลอด ไม่เสียอะไร (ตั้งใจให้เบา ไม่มี game over screen). เอาไปวางห้องอื่น = instance `enemy.tscn` ใน World + ตั้ง `defeat_flag`
+- **ไม่มีการต่อสู้แล้ว (M2, เจ้าของ 2026-10-01: "ศัตรูตายแล้วไม่มีอะไรใหม่ งงๆ")** — ตีไม่ได้, ไม่มี HP บนจอ (`GameState.hp` เหลือไว้แค่ save เข้ากันได้),
+  ไม่มี blackout. หุ่นบริษัท = **`PatrolBot`** (`scripts/world/patrol_bot.gd`, `scenes/props/patrol_bot.tscn`) อุปสรรคแบบปริศนา:
+  เดินตาม `patrol` (offset จากจุดเริ่ม) มี**กรวยสายตาบนพื้น** (Polygon2D z -1 + ขอบ Line2D, ยิง ray ตัดตรงที่ของบัง; backdrop ห้องจึงตั้ง z -10)
+  เห็นไรเดอร์ที่**ถือของ** = ไล่ (!) → จับได้ = "เรียกตรวจของ": ของ fragile แตก (`Jobs.on_player_caught`), เวลา +1 tick, โดนผลักออก, หุ่นเฉย 3 วิ;
+  เห็นตอนมือเปล่า = แค่จ้อง (?). ทางแก้: ย่องตอนมันหันไปทางอื่น/หลบหลังของ, **แตะหุ่นจากด้านหลัง** (นอกกรวย) = ดึงฟิวส์ ปิดทั้งวัน
+  (flag `<bot_id>_off_d<day>`; ครั้งแรกตลอดเกม `<bot_id>_fused`: +20 บาท ชาวบ้าน +1 บริษัท -1), **หมุนวาล์วไอน้ำ** (prop `steam_valve`, dialog
+  line action `"event": "steam_valve"` → `Dialog.event`) = หุ่น steam_powered ค้าง 20 วิ (zz). ตลาด `MarketGuard`, อู่ `GarageBot` + วาล์วห้องละอัน;
+  หุ่นในซอย (`BrassAutomaton`) เป็น prop สอนเล่น ("ฟิวส์อยู่ข้างหลัง"). Player: order `TAMPER` (เล่นท่า attack = ไขประแจ) → `bot.tamper(player)`,
+  `caught_by(bot)` กะพริบ+ผลัก. input action `attack` ลบแล้ว
 - **CharacterView** (ตัวจริง): ดูหัวข้อ sprite 8 ทิศด้านบน. Player แตะทิศ → `rig.set_facing(Iso.dir8)` → เปลี่ยนแถว
   โดยคงเฟรมเดิมถ้า anim เดียวกัน (เดินหันทิศไม่กระตุก); attack ไม่ถูก walk ขัด จบแล้วกลับ state ค้างไว้
 - **Cut-out rig**: animate แบบ procedural (walk swing, idle, attack) ใน `cutout_rig.gd`; rig ออกแบบหันขวา
   หันซ้าย = `scale.x = -1`; หันหลัง (NW/N/NE) = ซ่อนหน้า / สลับ texture `*_back`. ใส่ art ด้วย `CutoutSkin`
-- **Attack**: Hitbox (Area2D, ใช้แค่เป็นที่เก็บ shape) ขยับตาม facing; ตอนตี query `intersect_shape` (mask layer 4)
-  แล้วเรียก `take_hit(damage, from)`. Physics layers: 1 world, 2 player, 3 interactable, 4 hittable
+- Physics layers: 1 world (ของ, ผนัง, หุ่น), 2 player, 3 interactable, 4 hittable (ไม่ใช้แล้ว)
 
 ## Gotchas (เจอแล้ว)
 - GDScript `:=` กับค่าที่ type ไม่แน่นอน (เช่น `event.pressed and ...`, `"str" + obj.prop`) = parse error

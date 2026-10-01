@@ -1,7 +1,7 @@
 class_name Hud
 extends CanvasLayer
 ## On-screen UI: status (hearts/money/items), notices, dialog box, room title.
-## No buttons: everything is point & click (tap an enemy to attack it).
+## No buttons: everything is point & click. No HP (no combat since M2).
 
 const TITLE_HOLD := 1.6
 const TITLE_FADE := 0.6
@@ -33,7 +33,7 @@ func _ready() -> void:
 	Jobs.jobs_changed.connect(_on_jobs)
 	_on_time(GameState.day, GameState.tick)
 	add_to_group("hud")
-	_on_hp(GameState.hp, GameState.MAX_HP)
+	_hearts.visible = false
 	_on_money(GameState.money)
 	_on_inventory(GameState.inventory)
 	_notice.modulate.a = 0.0
