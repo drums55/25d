@@ -8,8 +8,8 @@
 <polygon points="150.0,584.0 278.0,520.0 278.0,507.4 150.0,571.4" fill="#000000" stroke="none" stroke-width="0" stroke-linejoin="round" opacity="0.18"/>
 <polyline points="22.0,492.0 150.0,428.0 278.0,492.0" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
 <polyline points="22.0,492.0 22.0,520.0" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
-<defs><linearGradient id="g2116" x1="0" x2="1"><stop offset="0" stop-color="#5C3721"/><stop offset="0.45" stop-color="#B56D41"/><stop offset="1" stop-color="#643C24"/></linearGradient></defs>
-<path d="M96.2,160.0 L96.2,492.0 A53.8,26.9 0 0,0 203.8,492.0 L203.8,160.0 A53.8,26.9 0 0,0 96.2,160.0 Z" fill="url(#g2116)" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<defs><linearGradient id="g8127" x1="0" x2="1"><stop offset="0" stop-color="#5C3721"/><stop offset="0.45" stop-color="#B56D41"/><stop offset="1" stop-color="#643C24"/></linearGradient></defs>
+<path d="M96.2,160.0 L96.2,492.0 A53.8,26.9 0 0,0 203.8,492.0 L203.8,160.0 A53.8,26.9 0 0,0 96.2,160.0 Z" fill="url(#g8127)" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
 <ellipse cx="150.0" cy="160.0" rx="53.8" ry="26.9" fill="#C17446" stroke="#1E1A1F" stroke-width="3"/>
 <polyline points="116.7,166.0 116.7,482.0" fill="none" stroke="#FFFFFF" stroke-width="8.6016" stroke-linecap="round" opacity="0.45"/>
 <path d="M96.2,492.0 A53.8,26.9 0 0,0 203.8,492.0 L203.8,392.4 A53.8,26.9 0 0,1 96.2,392.4 Z" fill="#000000" opacity="0.22"/>

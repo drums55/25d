@@ -80,12 +80,12 @@ dialog_id = "lung_pradit"
 
 [node name="SteamTukTuk" parent="World" instance=ExtResource("2_prop")]
 position = Vector2(-32, 560)
-footprint_cells = Vector2(1.8, 1)
+footprint_cells = Vector2(1, 1.8)
 height = 95.0
 color = Color(0.2, 0.47, 0.46, 1)
 
 [node name="SteamVent" parent="World/SteamTukTuk" instance=ExtResource("6_steam")]
-position = Vector2(-64, -149)
+position = Vector2(64, -215)
 
 [node name="SteamBike" parent="World" instance=ExtResource("2_prop")]
 position = Vector2(288, 544)

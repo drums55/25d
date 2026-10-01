@@ -220,70 +220,126 @@ def noodle_cart():
 
 
 def steam_tuktuk():
-    """Three-wheeler: single front wheel, open sides, canvas roof on posts,
-    rear bench, driver up front, brass boiler on the tail. Faces front-right."""
-    W, H = 480, 500 + FOOT
+    """Classic Bangkok tuk-tuk (blue body, red cowl, standing windshield, black
+    rounded roof, twin headlamps, single front wheel, red bench, white rails)
+    with a brass boiler on the tail. Front points down-left (+y)."""
+    W, H = 500, 420 + FOOT
     svg, iso = Svg(W, H), Iso(W, H)
-    iso.shadow(svg, 1.8, 1.0)
+    iso.shadow(svg, 1.0, 1.8)
     p = iso.p
+    BLUE, BLUE_D, BLUE_L = "#2B4C8C", "#1B3160", "#3F67B5"
+    TRED, TRED_D = "#C8372D", "#8A2219"
+    ROOF, ROOF_L = "#26262B", "#3C3C44"
+    YEL = "#E8C23A"
+    WHITE = "#EDEDEA"
 
-    def wheel(gx, gy, r=26):
-        wx, wy = p(gx, gy, 13)
-        svg.ellipse(wx, wy, r, r * 1.15, SOOT, OUT)
-        svg.ellipse(wx, wy, r * 0.42, r * 0.5, BRASS, BRASS_D)
-        svg.glow(wx - r * 0.3, wy - r * 0.5, r * 0.25, r * 0.35, 0.25)
+    def wheel(gx, gy, r):
+        wx, wy = p(gx, gy, 14)
+        svg.ellipse(wx, wy, r * 0.62, r, SOOT, OUT)
+        svg.ellipse(wx, wy, r * 0.3, r * 0.5, STEEL, STEEL_D, 2)
+        svg.glow(wx - r * 0.2, wy - r * 0.5, r * 0.15, r * 0.3, 0.3)
 
-    # rear wheels (the back one first so the floor pan covers its inner half)
-    wheel(-0.55, -0.5)
-    # boiler on the tail
-    iso.cylinder(svg, -1.0, 0.0, 0.2, 30, 95, COPPER)
-    bx, by = p(-1.0, 0.0, 95)
-    svg.line([(bx, by - 4), (bx, by - 44)], STEEL_D, 12)
-    svg.line([(bx, by - 4), (bx, by - 44)], STEEL, 7)
-    svg.ellipse(bx, by - 44, 9, 4, SOOT, OUT, 2)
-    svg.gauge(*p(-1.0, 0.2, 70), 9)
-    # floor pan
-    iso.box(svg, -0.9, -0.5, 0.9, 0.5, 20, 34, TEAL_D)
-    # rear bench + backrest
-    iso.box(svg, -0.85, -0.45, -0.35, 0.45, 34, 58, RED)
-    iso.box(svg, -0.85, -0.45, -0.73, 0.45, 58, 100, RED_D)
+    def q(a, b, c):
+        return "M%.1f,%.1f Q%.1f,%.1f %.1f,%.1f" % (a + b + c)
+
+    # far rear wheel, boiler on the tail
+    wheel(-0.55, -0.5, 30)
+    iso.cylinder(svg, 0.0, -1.0, 0.18, 30, 92, COPPER)
+    bx, by = p(0.0, -1.0, 92)
+    svg.line([(bx, by - 2), (bx, by - 120)], STEEL_D, 11)
+    svg.line([(bx, by - 2), (bx, by - 120)], STEEL, 6)
+    svg.ellipse(bx, by - 120, 9, 4, SOOT, OUT, 2)
+    # chassis + rear cargo box
+    iso.box(svg, -0.5, -0.9, 0.5, 0.6, 18, 30, BLUE_D)
+    iso.box(svg, -0.5, -0.9, 0.5, -0.05, 30, 62, BLUE)
+    # bench + backrest
+    iso.box(svg, -0.4, -0.78, 0.4, -0.3, 62, 84, TRED)
+    iso.box(svg, -0.4, -0.78, 0.4, -0.68, 84, 118, TRED_D)
+    # white side rails on the cargo box (near side = +x face)
+    for z in (74, 86):
+        svg.line([p(0.5, -0.9, z), p(0.5, -0.05, z)], WHITE, 4)
+    for gy in (-0.9, -0.48, -0.05):
+        svg.line([p(0.5, gy, 62), p(0.5, gy, 86)], WHITE, 4)
     # driver seat
-    iso.box(svg, 0.0, -0.18, 0.3, 0.18, 34, 56, SOOT_L)
-    # front cowl (rounded nose) + headlamp + handlebar
-    iso.box(svg, 0.42, -0.32, 0.92, 0.32, 34, 66, TEAL)
-    nx, ny = p(0.92, 0.0, 50)
-    svg.ellipse(nx + 6, ny, 10, 16, TEAL_D, OUT)
-    hx, hy = p(0.75, 0.0, 66)
-    svg.circle(hx, hy - 6, 13, BRASS_L, OUT)
-    svg.circle(hx, hy - 6, 6, "#FFF6C8", "none", 0)
-    svg.glow(hx - 4, hy - 10, 3, 2, 0.8)
-    sx, sy = p(0.45, 0.0, 66)
-    svg.line([(sx, sy), (sx + 6, sy - 40)], STEEL_D, 6)
-    svg.line([(sx - 22, sy - 48), (sx + 34, sy - 36)], STEEL, 6)
-    # rear wheel (near side) and the single front wheel
-    wheel(-0.55, 0.5)
-    wheel(0.8, 0.0, 24)
-    # roof posts (open sides = the tuk-tuk look)
-    for gx, gy in ((-0.9, -0.5), (0.55, -0.5), (0.55, 0.5), (-0.9, 0.5)):
-        a, b = p(gx, gy, 34), p(gx, gy, 118)
-        svg.line([a, b], STEEL_D, 7)
-        svg.line([a, b], STEEL, 3)
-    # canvas roof: flat box + curved cap, with a white stripe
-    iso.box(svg, -1.0, -0.58, 0.65, 0.58, 118, 126, TEAL)
-    rl, rr = p(-1.0, 0.58, 126), p(0.65, -0.58, 126)
-    rb, rf = p(-1.0, -0.58, 126), p(0.65, 0.58, 126)
-    svg.path("M%.1f,%.1f Q%.1f,%.1f %.1f,%.1f L%.1f,%.1f Q%.1f,%.1f %.1f,%.1f Z"
-             % (rl[0], rl[1], (rl[0] + rb[0]) / 2, (rl[1] + rb[1]) / 2 - 22, rb[0], rb[1],
-                rr[0], rr[1], (rr[0] + rf[0]) / 2, (rr[1] + rf[1]) / 2 - 22, rf[0], rf[1]),
-             TEAL_L, OUT)
-    svg.line_op([((rl[0] + rb[0]) / 2, (rl[1] + rb[1]) / 2 - 16), ((rr[0] + rf[0]) / 2, (rr[1] + rf[1]) / 2 - 16)],
-                CREAM, 6, 0.8)
-    # fringe along the near roof edge
-    for k in range(0, 9):
-        t = k / 8.0
-        fx = rf[0] + (rl[0] - rf[0]) * t
-        fy = rf[1] + (rl[1] - rf[1]) * t + 10
-        svg.poly([(fx - 7, fy - 8), (fx + 7, fy - 8), (fx, fy + 4)], BRASS, OUT, 1.5)
+    iso.box(svg, -0.18, 0.02, 0.18, 0.34, 30, 56, SOOT)
+    # ---- front cowl: blue rounded nose, red hood, windshield ----
+    fl_b, fr_b = p(-0.5, 0.45, 30), p(0.5, 0.45, 30)      # cowl base rear corners
+    fl_t, fr_t = p(-0.5, 0.45, 72), p(0.5, 0.45, 72)
+    nl_b, nr_b = p(-0.34, 0.95, 26), p(0.34, 0.95, 26)    # nose base corners
+    nl_t, nr_t = p(-0.34, 0.95, 72), p(0.34, 0.95, 72)
+    nose_ctrl_b = p(0.0, 1.22, 26)
+    nose_ctrl_t = p(0.0, 1.22, 72)
+    # near side (+x face) of the cowl
+    svg.poly([fr_b, nr_b, nr_t, fr_t], shade(BLUE, 0.5))
+    # front nose face (curved)
+    svg.path("M%.1f,%.1f L%.1f,%.1f Q%.1f,%.1f %.1f,%.1f L%.1f,%.1f Q%.1f,%.1f %.1f,%.1f Z"
+             % (nl_b + nl_t + nose_ctrl_t + nr_t + nr_b + nose_ctrl_b + nl_b), BLUE, OUT)
+    # far side (-x face) sliver
+    svg.poly([fl_b, nl_b, nl_t, fl_t], shade(BLUE, 0.78))
+    # red hood (top) with a bulged front edge
+    svg.path("M%.1f,%.1f L%.1f,%.1f Q%.1f,%.1f %.1f,%.1f L%.1f,%.1f Z"
+             % (fl_t + nl_t + nose_ctrl_t + nr_t + fr_t), TRED, OUT)
+    svg.line_op([fl_t, nl_t], "#FFFFFF", 3, 0.5)
+    # headlamps on the nose
+    for gx in (-0.17, 0.17):
+        hx, hy = p(gx, 1.02, 50)
+        svg.ellipse(hx, hy, 13, 15, WHITE, OUT)
+        svg.ellipse(hx, hy, 8, 10, YEL, "none", 0)
+        svg.glow(hx - 3, hy - 4, 3, 3, 0.8)
+    # brass gauge on the near side of the cowl
+    svg.gauge(*p(0.5, 0.7, 52), 9)
+    # windshield: standing panel from the hood front edge, tilting back
+    ws = [p(-0.36, 0.92, 72), p(0.36, 0.92, 72), p(0.34, 0.74, 124), p(-0.34, 0.74, 124)]
+    svg.poly(ws, TRED, OUT)
+    glass = [p(-0.29, 0.9, 78), p(0.29, 0.9, 78), p(0.27, 0.76, 118), p(-0.27, 0.76, 118)]
+    svg.poly(glass, "#4C5A6E", OUT, 2)
+    svg.poly([glass[0], glass[1], (glass[1][0] - 20, glass[1][1] - 30), (glass[0][0] + 10, glass[0][1] - 30)],
+             "#FFFFFF", "none", 0, 0.18)
+    vis = [p(-0.22, 0.78, 108), p(0.22, 0.78, 108), p(0.22, 0.78, 100), p(-0.22, 0.78, 100)]
+    svg.poly(vis, YEL, OUT, 2)
+    # handlebar peeking over the hood
+    hx, hy = p(0.0, 0.5, 72)
+    svg.line([(hx, hy), (hx + 4, hy - 26)], STEEL_D, 6)
+    svg.line([(hx - 26, hy - 32), (hx + 30, hy - 22)], STEEL, 6)
+    # roof posts (white) rear corners + middle
+    for gx, gy in ((-0.5, -0.9), (0.5, -0.9), (0.5, -0.05), (-0.5, -0.05)):
+        svg.line([p(gx, gy, 62), p(gx, gy, 124)], WHITE, 5)
+    # near rear wheel + front wheel with fork
+    wheel(0.55, -0.5, 30)
+    fx, fy = p(0.0, 1.0, 14)
+    svg.line([p(0.0, 0.95, 40), (fx, fy)], STEEL_D, 8)
+    wheel(0.0, 1.0, 32)
+    svg.line([p(0.06, 1.0, 40), (fx + 8, fy)], STEEL, 4)
+    # black rounded roof slab
+    r = 0.12
+    c1, c2, c3, c4 = p(-0.54, -0.98, 124), p(0.54, -0.98, 124), p(0.54, 0.86, 124), p(-0.54, 0.86, 124)
+    e1, e2, e3, e4 = p(-0.54, -0.98, 132), p(0.54, -0.98, 132), p(0.54, 0.86, 132), p(-0.54, 0.86, 132)
+
+    def rounded(a, b, c, d, z):
+        pts = []
+        corners = [(-0.54, -0.98), (0.54, -0.98), (0.54, 0.86), (-0.54, 0.86)]
+        path = ""
+        for k in range(4):
+            gx, gy = corners[k]
+            nx, ny = corners[(k + 1) % 4]
+            px_, py_ = corners[k - 1]
+            # move the corner inward along both neighbouring edges
+            ax = gx + (px_ - gx) * (r / abs(px_ - gx) if px_ != gx else 0) if px_ != gx else gx
+            ay = gy + (py_ - gy) * (r / abs(py_ - gy) if py_ != gy else 0) if py_ != gy else gy
+            bx_ = gx + (nx - gx) * (r / abs(nx - gx) if nx != gx else 0) if nx != gx else gx
+            by_ = gy + (ny - gy) * (r / abs(ny - gy) if ny != gy else 0) if ny != gy else gy
+            A, C, B = p(ax, ay, z), p(gx, gy, z), p(bx_, by_, z)
+            path += ("M%.1f,%.1f " % A if k == 0 else "L%.1f,%.1f " % A) + "Q%.1f,%.1f %.1f,%.1f " % (C + B)
+        return path + "Z"
+
+    # roof side faces (thickness)
+    svg.poly([c4, c3, e3, e4], ROOF, OUT)
+    svg.poly([c3, c2, e2, e3], shade(ROOF, 0.8), OUT)
+    svg.path(rounded(e1, e2, e3, e4, 132), ROOF_L, OUT)
+    svg.line_op([p(-0.46, 0.76, 132), p(-0.46, -0.88, 132), p(0.42, -0.88, 132)], "#FFFFFF", 4, 0.35)
+    # roof light bar
+    lx, ly = p(0.0, 0.55, 132)
+    svg.ellipse(lx, ly - 4, 20, 9, YEL, OUT, 2)
     svg.write("props/steam_tuk_tuk")
 
 
