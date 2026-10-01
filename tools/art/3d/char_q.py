@@ -54,12 +54,29 @@ def tex_of(mat):
     return None
 
 
-def toon_tex(name, img, tint="#FFFFFF", rim=0.35, spec=0.0):
+def toon_tex(name, img, tint="#FFFFFF", rim=0.35, spec=0.0, skin=None):
     m = toon_material(name, tint, rim=rim, spec=spec)
     if img is not None:
         N, L = m.node_tree.nodes, m.node_tree.links
         t = N.new("ShaderNodeTexImage")
         t.image = img
+        if skin is not None:
+            # keep the texture's detail (brows, lips, shading) but re-tone it:
+            # luminance of the texture x target skin colour
+            bw = N.new("ShaderNodeRGBToBW")
+            L.new(t.outputs[0], bw.inputs[0])
+            lift = N.new("ShaderNodeMapRange")
+            lift.inputs["From Min"].default_value = 0.0
+            lift.inputs["From Max"].default_value = 0.42
+            lift.inputs["To Min"].default_value = 0.0
+            lift.inputs["To Max"].default_value = 1.0
+            L.new(bw.outputs[0], lift.inputs["Value"])
+            sk = N.new("ShaderNodeMix"); sk.data_type = "RGBA"; sk.blend_type = "MULTIPLY"; sk.inputs[0].default_value = 1.0
+            sk.inputs[6].default_value = srgb(skin)
+            L.new(lift.outputs["Result"], sk.inputs[7])
+            mix = [n for n in N if n.type == "MIX" and n.blend_type == "MULTIPLY" and n is not sk][0]
+            L.new(sk.outputs[2], mix.inputs[6])
+            return m
         mix = [n for n in N if n.type == "MIX" and n.blend_type == "MULTIPLY"][0]
         tm = N.new("ShaderNodeMix"); tm.data_type = "RGBA"; tm.blend_type = "MULTIPLY"; tm.inputs[0].default_value = 1.0
         tm.inputs[7].default_value = srgb(tint)
@@ -80,6 +97,90 @@ def toonify(o, tint="#FFFFFF", rim=0.35):
     for i, m in enumerate(o.data.materials):
         o.data.materials[i] = toon_tex("T_" + o.name + str(i), tex_of(m), tint, rim)
     add_ink(o)
+
+
+def make_overlay(body, keys_over, under_key, offset=0.014):
+    """Lift the faces painted as `keys_over` into their own garment shell
+    (thicker, own ink outline); the body underneath gets `under_key`."""
+    names = [m.name.split("_" + body.name)[0] for m in body.data.materials]
+    over_idx = {i for i, n in enumerate(names) if n in keys_over}
+    if not over_idx:
+        return None
+    ob = body.copy()
+    ob.data = body.data.copy()
+    ob.name = body.name + "_" + "_".join(keys_over)
+    bpy.context.scene.collection.objects.link(ob)
+    import bmesh as _bm
+    bm = _bm.new(); bm.from_mesh(ob.data)
+    _bm.ops.delete(bm, geom=[f for f in bm.faces if f.material_index not in over_idx], context="FACES")
+    bm.to_mesh(ob.data); bm.free()
+    disp = ob.modifiers.new("lift", "DISPLACE")
+    disp.strength = offset
+    disp.mid_level = 0.0
+    ob.modifiers.move(ob.modifiers.find("lift"), 0)
+    # body: overlay faces take the under colour
+    if under_key not in names:
+        hexcol, rim, spec = PAL[under_key]
+        body.data.materials.append(toon_material(under_key + "_" + body.name, hexcol, rim=rim, spec=spec, term=0.22))
+        names.append(under_key)
+        # keep the ink material last for the solidify offset
+        ink_i = [i for i, m in enumerate(body.data.materials) if m.name.startswith("Ink")]
+    u = names.index(under_key)
+    for p in body.data.polygons:
+        if p.material_index in over_idx:
+            p.material_index = u
+    return ob
+
+
+def body_section(body, z, band=0.02):
+    """Half-extents (x, front y, back y) of the rest-pose body around height z."""
+    xs, ys = [], []
+    mw = body.matrix_world
+    for v in body.data.vertices:
+        w = mw @ v.co
+        if abs(w.z - z) < band and abs(w.x) < 0.3:
+            xs.append(abs(w.x)); ys.append(w.y)
+    return (max(xs), min(ys), max(ys)) if xs else (0.15, -0.12, 0.12)
+
+
+def garment(B, body, name, key, bone, z0, z1, arc=150, pad=0.025, flare=0.0, ink=0.007):
+    """Curved cloth panel wrapping the front of the body between heights z0..z1
+    (z1 top). Shape follows the body section at each ring; flare widens the hem."""
+    import bmesh as _bm
+    me = bpy.data.meshes.new(name)
+    bm = _bm.new()
+    rings = 8
+    seg = 16
+    grid = []
+    for i in range(rings + 1):
+        t = i / rings
+        z = z1 + (z0 - z1) * t
+        hx, fy, by = body_section(body, z)
+        cy = (fy + by) / 2
+        rx = hx + pad + flare * t
+        ry = (by - fy) / 2 + pad + flare * t * 0.6
+        row = []
+        for j in range(seg + 1):
+            a = math.radians(-90 - arc / 2 + arc * j / seg)
+            row.append(bm.verts.new((math.cos(a) * rx, cy + math.sin(a) * ry, z)))
+        grid.append(row)
+    for i in range(rings):
+        for j in range(seg):
+            bm.faces.new((grid[i][j], grid[i][j + 1], grid[i + 1][j + 1], grid[i + 1][j]))
+    _bm.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    bm.to_mesh(me); bm.free()
+    obj = B.link(name, me)
+    sol = obj.modifiers.new("thick", "SOLIDIFY"); sol.thickness = 0.008; sol.offset = 0
+    return B.finish_obj(obj, key, bone, ink)
+
+
+def finish_body(body, overlays):
+    for keys_over, under in overlays:
+        ob = make_overlay(body, keys_over, under)
+        if ob is not None:
+            # the copy inherited the body's ink-less material list; give it its own ink
+            add_ink(ob, 0.008)
+    add_ink(body, 0.010)
 
 
 def dominant_bone(o, v):
@@ -111,14 +212,13 @@ def paint_regions(o, region_fn, keep_tex_regions=("skin",)):
     o.data.materials.clear()
     for k in keys:
         if k in keep_tex_regions:
-            o.data.materials.append(toon_tex("skin_" + o.name, img, "#FFFFFF", 0.35))
+            o.data.materials.append(toon_tex("skin_" + o.name, img, "#FFFFFF", 0.35, skin=SKIN_TONE))
         else:
             hexcol, rim, spec = PAL[k]
             o.data.materials.append(toon_material(k + "_" + o.name, hexcol, rim=rim, spec=spec, term=0.22))
     for p, k in zip(o.data.polygons, face_key):
         p.material_index = keys.index(k)
         p.use_smooth = True
-    add_ink(o, 0.010)
 
 
 # ---------------------------------------------------------------------------
@@ -272,6 +372,8 @@ def attach_rigid(parts, arm):
 
 PAL = {}
 LIGHT_SKIN = {}
+SKIN_TONE = None
+SKIN_TONES = {'rider': '#EDC29A', 'lung_pradit': '#D7A273', 'je_muay': '#F6D7B8'}
 
 
 def build(name):
@@ -286,6 +388,9 @@ def build(name):
     arm = [o for o in objs if o.type == "ARMATURE"][0]
     arm.rotation_mode = "XYZ"
     body = [o for o in objs if o.type == "MESH" and o.name.lower().startswith("superhero")][0]
+    global BODY, SKIN_TONE
+    BODY = body
+    SKIN_TONE = SKIN_TONES[name]
     tex_dir = UBC + "/Base Characters/Textures/"
     LIGHT_SKIN[body.name[:20]] = tex_dir + ("T_Superhero_Female_Light_BaseColor.png" if female else "T_Superhero_Male_Ligh.png")
     for o in objs:
@@ -313,6 +418,7 @@ def build(name):
                 return "reflect"
             return "vest"
         paint_regions(body, region)
+        finish_body(body, [(("vest", "reflect"), "shirt")])
         parts = import_gltf(OUTF + "Male_Ranger_Feet_Boots.gltf") + import_gltf(OUTF + "Male_Ranger_Acc_Pauldron.gltf")
         for o in rebind(parts, arm):
             if True:
@@ -324,24 +430,22 @@ def build(name):
                 return "skin"
             if bone.startswith(("foot", "ball")):
                 return "skin"
-            if p.y < -0.06 and 0.62 < p.z < 1.32 and abs(p.x) < 0.2:
-                return "apron"
             if bone.startswith(("thigh", "calf")) or bone == "pelvis" or p.z < 0.98:
                 return "pants"
             return "shirt"
         paint_regions(body, region)
+        finish_body(body, [])
     else:
         def region(bone, p):
             if bone in ("Head", "neck_01") or bone.startswith(("hand", "index", "middle", "ring", "pinky", "thumb", "lowerarm")):
                 return "skin"
             if bone.startswith(("foot", "ball")):
                 return "shoe"
-            if p.y < -0.06 and 0.93 < p.z < 1.22 and abs(p.x) < 0.15:
-                return "apron"
             if bone.startswith(("thigh", "calf")) or bone == "pelvis" or p.z < 0.95:
                 return "pants"
             return "blouse"
         paint_regions(body, region)
+        finish_body(body, [])
         opts = dict(akimbo=True)
     return sc, arm, B, opts
 
@@ -378,12 +482,18 @@ def accessories(name, B, arm):
             arm.pose.bones[bn].scale = sc_
         B.sphere("Cap", hc + Vector((0, 0.015, 0.06)), 0.118, "cap", "Head", scale=(1.0, 1.08, 0.8), cut=0.1)
         B.box("Visor", hc + Vector((0, -0.14, 0.072)), (0.14, 0.11, 0.012), "cap", "Head", rot=(math.radians(-8), 0, 0), bevel=0.02)
-        B.sphere("Belly", bone_world(arm, "pelvis") + Vector((0, -0.07, 0.2)), 0.16, "apron", "spine_01", scale=(1.0, 0.75, 0.9), ink=0.008)
+        B.sphere("Belly", bone_world(arm, "pelvis") + Vector((0, -0.05, 0.2)), 0.15, "shirt", "spine_01", scale=(1.0, 0.75, 0.9), ink=0.008)
+        garment(B, BODY, "ApronBib", "apron", "spine_02", 1.0, 1.27, arc=80, pad=0.03)
+        garment(B, BODY, "ApronSkirt", "apron", "pelvis", 0.52, 1.0, arc=140, pad=0.035, flare=0.03)
+        for sx in (1, -1):
+            B.cyl("ApronStrap", bone_world(arm, "neck_01") + Vector((sx * 0.06, -0.06, -0.08)), 0.008, 0.16, "apron", "spine_03",
+                  rot=(math.radians(-20), math.radians(sx * 20), 0), ink=0.004)
         for s in ("l", "r"):
             f = bone_world(arm, "foot_" + s)
             B.box("Sandal", Vector((f.x, f.y - 0.05, 0.01)), (0.11, 0.27, 0.02), "sandal", "foot_" + s, bevel=0.006)
     else:
         B.cyl("Pin", top + Vector((0, 0.0, 0.0)), 0.006, 0.22, "brass", "Head", rot=(0, math.radians(70), 0))
+        garment(B, BODY, "Apron", "apron", "pelvis", 0.6, 1.0, arc=140, pad=0.03, flare=0.05)
         for s_ in ("l", "r"):
             f = bone_world(arm, "foot_" + s_)
             B.box("Shoe", Vector((f.x, f.y - 0.06, 0.035)), (0.1, 0.26, 0.07), "shoe", "foot_" + s_, bevel=0.03)
