@@ -23,10 +23,13 @@ func _ready() -> void:
 		var sprite := Sprite2D.new()
 		sprite.texture = tex
 		sprite.centered = false
-		sprite.offset = Vector2(-tex.get_width() * 0.5, -tex.get_height())
+		sprite.offset = Vector2(
+			-tex.get_width() * 0.5, -tex.get_height() + ArtLibrary.PROP_FOOT_MARGIN
+		)
 		sprite.scale = Vector2.ONE / ArtLibrary.ART_SCALE
 		$Body.add_child(sprite)
-		$Hits.position.y = -tex.get_height() / ArtLibrary.ART_SCALE - 40
+		var top := (tex.get_height() - ArtLibrary.PROP_FOOT_MARGIN) / ArtLibrary.ART_SCALE
+		$Hits.position.y = -top - 40
 
 
 func take_hit(_damage: int, from: Vector2) -> void:

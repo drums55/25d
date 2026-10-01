@@ -55,7 +55,7 @@ the .svg when replacing a piece with AI-painted PNG.
 
 | put file at | used by |
 |---|---|
-| `props/<node name in snake_case>.png` | PropBlock / TrainingDummy, origin = bottom centre |
+| `props/<node name in snake_case>.png` | PropBlock / TrainingDummy, floor contact point = (W/2, H - 160): keep 160 px of image below it for front corners/shadow |
 | `rooms/<room scene name>.png` | IsoRoom backdrop (floor + back walls), see `IsoRoom.get_backdrop_rect` |
 | `characters/<character_name>/<part>.png` | CutoutRig with that `character_name` |
 

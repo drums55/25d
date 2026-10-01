@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="380" height="260" viewBox="0 0 380 260">
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="420" viewBox="0 0 380 420">
 <ellipse cx="190.0" cy="264.0" rx="115.9" ry="58.0" fill="#000000" opacity="0.15200000000000002"/>
 <ellipse cx="190.0" cy="262.0" rx="100.8" ry="50.4" fill="#000000" opacity="0.38"/>
 <ellipse cx="126.0" cy="200.0" rx="30.0" ry="34.0" fill="#2B2629" stroke="#1E1A1F" stroke-width="3"/>
@@ -25,8 +25,8 @@
 <polygon points="213.0,190.9 243.8,175.5 243.8,153.9 213.0,169.3" fill="#000000" stroke="none" stroke-width="0" stroke-linejoin="round" opacity="0.18"/>
 <polyline points="155.4,114.1 186.2,98.7 243.8,127.5" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
 <polyline points="155.4,114.1 155.4,162.1" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
-<defs><linearGradient id="g1082" x1="0" x2="1"><stop offset="0" stop-color="#6E5828"/><stop offset="0.45" stop-color="#D9AC4F"/><stop offset="1" stop-color="#78602C"/></linearGradient></defs>
-<path d="M118.3,93.1 L118.3,173.1 A17.9,9.0 0 0,0 154.2,173.1 L154.2,93.1 A17.9,9.0 0 0,0 118.3,93.1 Z" fill="url(#g1082)" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<defs><linearGradient id="g2006" x1="0" x2="1"><stop offset="0" stop-color="#6E5828"/><stop offset="0.45" stop-color="#D9AC4F"/><stop offset="1" stop-color="#78602C"/></linearGradient></defs>
+<path d="M118.3,93.1 L118.3,173.1 A17.9,9.0 0 0,0 154.2,173.1 L154.2,93.1 A17.9,9.0 0 0,0 118.3,93.1 Z" fill="url(#g2006)" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
 <ellipse cx="136.2" cy="93.1" rx="17.9" ry="9.0" fill="#E7B855" stroke="#1E1A1F" stroke-width="3"/>
 <polyline points="125.1,99.1 125.1,163.1" fill="none" stroke="#FFFFFF" stroke-width="2.8672000000000004" stroke-linecap="round" opacity="0.45"/>
 <path d="M118.3,173.1 A17.9,9.0 0 0,0 154.2,173.1 L154.2,149.1 A17.9,9.0 0 0,1 118.3,149.1 Z" fill="#000000" opacity="0.22"/>

@@ -47,7 +47,7 @@ func apply_art() -> bool:
 	sprite.name = "Art"
 	sprite.texture = tex
 	sprite.centered = false
-	sprite.offset = Vector2(-tex.get_width() * 0.5, -tex.get_height())
+	sprite.offset = Vector2(-tex.get_width() * 0.5, -tex.get_height() + ArtLibrary.PROP_FOOT_MARGIN)
 	sprite.scale = Vector2.ONE / ArtLibrary.ART_SCALE
 	add_child(sprite)
 	draw_placeholder = false

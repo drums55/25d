@@ -4,7 +4,7 @@ class_name ArtLibrary
 ## assets/art/ (then import: tools\run.ps1 does it) — no scene edits needed.
 ##
 ## Files may be .svg (vector, imported by Godot) or .png; .svg wins.
-##   assets/art/props/<prop_name>.png          origin = bottom centre (feet)
+##   assets/art/props/<prop_name>.png          origin = (W/2, H - PROP_FOOT_MARGIN)
 ##   assets/art/rooms/<room_name>.png          floor + back walls backdrop
 ##   assets/art/characters/<name>/<part>.png   head, torso, arm_l, arm_r,
 ##                                             leg_l, leg_r (+ head_back, torso_back)
@@ -19,6 +19,9 @@ class_name ArtLibrary
 const ROOT := "res://assets/art"
 ## Author art at 2x: a 160 px tall character is a 320 px PNG.
 const ART_SCALE := 2.0
+## Prop images keep this many (2x) pixels below the floor-contact point so the
+## front corners / wheels / shadow are not clipped: origin = (W/2, H - margin).
+const PROP_FOOT_MARGIN := 160.0
 const PARTS := ["head", "torso", "arm_l", "arm_r", "leg_l", "leg_r", "head_back", "torso_back"]
 
 

@@ -13,6 +13,9 @@ import math
 import os
 
 S = 2.0  # ART_SCALE
+# Props keep this much image below the origin (ArtLibrary.PROP_FOOT_MARGIN) so
+# the front corners, wheels and the contact shadow are not clipped.
+FOOT = 160
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "art")
 
 # palette
@@ -114,7 +117,7 @@ class Iso:
     """Image-space projection for a prop. origin = bottom centre of image."""
 
     def __init__(self, w, h):
-        self.ox, self.oy = w / 2.0, h
+        self.ox, self.oy = w / 2.0, h - FOOT
 
     def p(self, gx, gy, z=0.0):
         return (self.ox + (gx - gy) * 64 * S, self.oy + (gx + gy) * 32 * S - z * S)
@@ -171,7 +174,7 @@ class Iso:
 # ----------------------------------------------------------------------------
 
 def noodle_cart():
-    W, H = 420, 330
+    W, H = 420, 330 + FOOT
     svg, iso = Svg(W, H), Iso(W, H)
     iso.shadow(svg, 1.6, 0.9)
     fx, fy = 1.6, 0.9
@@ -219,7 +222,7 @@ def noodle_cart():
 def steam_tuktuk():
     """Three-wheeler: single front wheel, open sides, canvas roof on posts,
     rear bench, driver up front, brass boiler on the tail. Faces front-right."""
-    W, H = 480, 500
+    W, H = 480, 500 + FOOT
     svg, iso = Svg(W, H), Iso(W, H)
     iso.shadow(svg, 1.8, 1.0)
     p = iso.p
@@ -285,7 +288,7 @@ def steam_tuktuk():
 
 
 def spirit_house():
-    W, H = 220, 360
+    W, H = 220, 360 + FOOT
     svg, iso = Svg(W, H), Iso(W, H)
     iso.shadow(svg, 0.7, 0.7)
     # pedestal
@@ -325,7 +328,7 @@ def gear(svg, cx, cy, r, col, teeth=8):
 
 
 def power_pole():
-    W, H = 160, 720
+    W, H = 160, 720 + FOOT
     svg, iso = Svg(W, H), Iso(W, H)
     iso.shadow(svg, 0.35, 0.35)
     cx, cy = iso.p(0, 0, 0)
@@ -352,7 +355,7 @@ def power_pole():
 
 
 def water_tank():
-    W, H = 300, 440
+    W, H = 300, 440 + FOOT
     svg, iso = Svg(W, H), Iso(W, H)
     iso.shadow(svg, 1.0, 1.0)
     # legs
@@ -377,7 +380,7 @@ def water_tank():
 
 
 def stool(name, col):
-    W, H = 110, 130
+    W, H = 110, 130 + FOOT
     svg, iso = Svg(W, H), Iso(W, H)
     iso.shadow(svg, 0.4, 0.4)
     for gx, gy in ((-0.15, -0.15), (0.15, -0.15), (0.15, 0.15), (-0.15, 0.15)):
@@ -390,7 +393,7 @@ def stool(name, col):
 
 
 def steam_bike():
-    W, H = 380, 260
+    W, H = 380, 260 + FOOT
     svg, iso = Svg(W, H), Iso(W, H)
     iso.shadow(svg, 1.4, 0.7)
     for gx in (-0.5, 0.5):
@@ -423,7 +426,7 @@ def steam_bike():
 
 
 def boiler():
-    W, H = 300, 520
+    W, H = 300, 520 + FOOT
     svg, iso = Svg(W, H), Iso(W, H)
     iso.shadow(svg, 1.0, 1.0)
     iso.box(svg, -0.5, -0.5, 0.5, 0.5, 0, 14, SOOT_L)
@@ -452,7 +455,7 @@ def boiler():
 
 
 def gear_stall():
-    W, H = 400, 280
+    W, H = 400, 280 + FOOT
     svg, iso = Svg(W, H), Iso(W, H)
     iso.shadow(svg, 1.5, 1.0)
     fx, fy = 1.5, 1.0
@@ -478,7 +481,7 @@ def gear_stall():
 
 
 def crate():
-    W, H = 240, 200
+    W, H = 240, 200 + FOOT
     svg, iso = Svg(W, H), Iso(W, H)
     iso.shadow(svg, 0.9, 0.9)
     iso.box(svg, -0.45, -0.45, 0.45, 0.45, 0, 60, WOOD)
@@ -492,7 +495,7 @@ def crate():
 
 
 def sign():
-    W, H = 180, 300
+    W, H = 180, 300 + FOOT
     svg, iso = Svg(W, H), Iso(W, H)
     iso.shadow(svg, 0.5, 0.3)
     x, y = iso.p(0, 0, 0)
@@ -508,7 +511,7 @@ def sign():
 
 def brass_automaton():
     """Training dummy: brass torso on a post, origin at the post foot."""
-    W, H = 180, 380
+    W, H = 180, 380 + FOOT
     svg, iso = Svg(W, H), Iso(W, H)
     iso.shadow(svg, 0.5, 0.5)
     x, y = iso.p(0, 0, 0)
