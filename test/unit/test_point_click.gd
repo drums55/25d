@@ -57,6 +57,27 @@ func test_pick_prefers_targets_and_ignores_floor():
 	assert_null(Player.pick(nodes, _player.global_position + Vector2(-300, 0)), "tap floor")
 
 
+func test_pick_uses_drawn_pixels_not_rects():
+	# NPC standing just in front of a prop: tapping the prop where the NPC is
+	# not drawn must pick the prop, even though the NPC's old rect covered it.
+	var nodes := get_tree().get_nodes_in_group("pickable")
+	var npc := _world("LungPradit/Interactable")
+	var prop := _world("JobBoard/Interactable") as Node2D
+	var hits := {}
+	for x in range(-200, 201, 8):
+		for y in range(-300, 1, 8):
+			var p := prop.global_position + Vector2(x, y)
+			var on_prop := PickTest.visual_hit(prop.get_parent(), p, 0.0) == 1
+			var on_npc := PickTest.visual_hit(npc.get_parent(), p, 0.0) == 1
+			if on_prop and not on_npc:
+				hits[Player.pick(nodes, p)] = true
+	assert_eq(hits.keys().size(), 1, "every opaque prop pixel picks one node")
+	assert_true(hits.has(prop), "and it is the prop")
+	# transparent corner of the NPC frame (inside its old 140x280 rect)
+	var corner := npc.global_position + Vector2(-66, -240)
+	assert_ne(Player.pick(nodes, corner), npc, "empty part of the frame is not the NPC")
+
+
 func test_click_floor_walks_there():
 	var dest := _player.global_position + Vector2(120, -60)
 	_player.click_at(dest)

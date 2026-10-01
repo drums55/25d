@@ -42,18 +42,40 @@ func _ready() -> void:
 	_update_hitbox()
 
 
-## Topmost pickable (group "pickable", has `pick_rect` relative to its origin)
-## under `world_pos`. Front-most (largest y) wins.
+## Pickable (group "pickable") under `world_pos`. A node whose visuals are
+## sprites is hit only where they are opaque (PickTest); the front-most (largest
+## y) such hit wins, as that is the one drawn on top. Nodes without sprites
+## (doors, placeholder props) use `pick_rect` around their origin and only win
+## when no sprite was hit; then the nearest rect centre wins.
 static func pick(nodes: Array, world_pos: Vector2) -> Node2D:
 	var best: Node2D = null
+	var fallback: Node2D = null
+	var fallback_d := INF
 	for n in nodes:
 		if not n is Node2D or not n.is_visible_in_tree():
 			continue
-		var rect: Rect2 = n.get("pick_rect")
-		if rect.has_point(world_pos - n.global_position):
+		var hit := PickTest.visual_hit(_visual_root(n), world_pos)
+		if hit == 1:
 			if best == null or n.global_position.y > best.global_position.y:
 				best = n
-	return best
+		elif hit == -1:
+			var rect: Rect2 = n.get("pick_rect")
+			var local: Vector2 = world_pos - n.global_position
+			if rect.has_point(local):
+				var d := local.distance_to(rect.get_center())
+				if d < fallback_d:
+					fallback = n
+					fallback_d = d
+	return best if best else fallback
+
+
+## What a pickable looks like: an Interactable is a child of the prop / NPC
+## that draws it; everything else draws itself.
+static func _visual_root(n: Node) -> Node:
+	var parent := n.get_parent()
+	if n is Interactable and parent and parent.name != "World":
+		return parent
+	return n
 
 
 ## Point & click entry point (world coordinates).

@@ -106,10 +106,14 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   (`emulate_touch_from_mouse=true` → คลิกเมาส์บน PC = แตะ). ไม่ใช้ mouse event (มือถือส่ง mouse จำลองซ้ำ).
   ปุ่ม ATK (`TouchActionButton`) จับ touch ใน `_input` แล้ว `set_input_as_handled` → ไม่ทำให้เดินไปที่ปุ่ม.
   DialogBox `mouse_filter = IGNORE` ทั้งหมด. คีย์บอร์ด WASD/E/J ยังใช้ได้และยกเลิกคำสั่งคลิก
-- **Point & click**: `Player.click_at(world_pos)` → `Player.pick()` หา node ใน group `pickable` ที่ `pick_rect`
-  (Rect2 รอบ origin/เท้า ครอบภาพด้านบน) โดนจุดแตะ เลือกตัวที่ y มากสุด (อยู่หน้า). Interactable → order INTERACT
-  (หยุดเมื่อ InteractArea ทับ), มี `take_hit` → ATTACK (หยุดที่ระยะ 80), อื่นๆ/พื้น → MOVE.
-  ของใหม่ที่อยากให้แตะได้: ใส่ `@export var pick_rect` + `add_to_group("pickable")`
+- **Point & click**: `Player.click_at(world_pos)` → `Player.pick()` หา node ใน group `pickable`.
+  **Hit test = พิกเซลจริงของภาพ** (`PickTest`, `scripts/core/pick_test.gd`, 2026-10-01 — เจ้าของ: "ของ/คนที่อยู่ใกล้กัน คลิกผิดบ่อย"
+  เพราะเดิมใช้กรอบ 140×280 เท่ากันทุกชิ้นแล้วเลือกตัวหน้าสุด): แตะโดน Sprite2D/AnimatedSprite2D ของ node นั้นตรงที่ alpha ≥ 0.5
+  (เงาพื้นที่อบในภาพจางกว่า ไม่นับ) เผื่อนิ้ว 14px; โดนหลายตัว = ตัวที่ y มากสุด (วาดทับอยู่บน). Interactable ใช้ภาพของ parent
+  (prop/NPC). node ที่ไม่มี sprite (ประตู, prop placeholder) ใช้ `pick_rect` และชนะเฉพาะตอนไม่โดนภาพใคร (ใกล้ศูนย์กลาง rect สุด).
+  mask อัลฟาสร้างครั้งแรกที่แตะต่อ texture (BitMap cache; AtlasTexture ใช้ sheet + region).
+  Interactable → order INTERACT (หยุดเมื่อ InteractArea ทับ), มี `take_hit` → ATTACK (หยุดที่ระยะ 80), อื่นๆ/พื้น → MOVE.
+  ของใหม่ที่อยากให้แตะได้: `add_to_group("pickable")` + มี sprite (หรือ `@export var pick_rect` ถ้าไม่มีภาพ)
 - **Pathfinding**: `IsoRoom._build_navigation()` อบ NavigationPolygon ตอน runtime = พื้นห้อง − footprint
   collision ของ StaticBody2D ลูกของ World (CollisionPolygon2D / CircleShape2D), agent_radius 28.
   Player ใช้ NavigationAgent2D (`NavAgent`). แตะนอกพื้น = ไปจุดใกล้สุดที่ไปได้
