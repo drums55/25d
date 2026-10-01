@@ -1,0 +1,6 @@
+max-line-length: 100
+max-file-lines: 600
+excluded_directories: !!set
+  .git: null
+  .godot: null
+  addons: null

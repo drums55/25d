@@ -1,0 +1,63 @@
+extends Node
+## Runs one dialog at a time. UI (DialogBox) listens to the signals; gameplay
+## code only calls start()/advance()/is_active().
+
+signal started(id: String)
+signal line_shown(speaker: String, text: String)
+signal skip_typing_requested
+signal finished(id: String)
+
+const DIALOG_PATH := "res://assets/dialog/dialog.json"
+
+## Set by the dialog box while the typewriter effect is running.
+var typing := false
+
+var _data := {}
+var _id := ""
+var _lines: Array = []
+var _index := -1
+
+
+func _ready() -> void:
+	_data = DialogData.load_file(DIALOG_PATH)
+
+
+func is_active() -> bool:
+	return _index >= 0
+
+
+func start(id: String) -> bool:
+	if is_active():
+		return false
+	_lines = DialogData.resolve(_data, id, GameState.flags)
+	if _lines.is_empty():
+		push_warning("Dialog: unknown or empty dialog '%s'" % id)
+		return false
+	_id = id
+	_index = 0
+	started.emit(id)
+	_show_current()
+	return true
+
+
+func advance() -> void:
+	if not is_active():
+		return
+	if typing:
+		skip_typing_requested.emit()
+		return
+	_index += 1
+	if _index >= _lines.size():
+		var done_id := _id
+		_index = -1
+		_lines = []
+		_id = ""
+		finished.emit(done_id)
+		return
+	_show_current()
+
+
+func _show_current() -> void:
+	var line: Dictionary = _lines[_index]
+	GameState.set_flag(line.get("set_flag", ""))
+	line_shown.emit(line["speaker"], line["text"])

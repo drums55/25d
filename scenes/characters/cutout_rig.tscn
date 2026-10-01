@@ -1,0 +1,96 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/cutout_rig.gd" id="1_rig"]
+
+[node name="Rig" type="Node2D"]
+script = ExtResource("1_rig")
+
+[node name="Skeleton2D" type="Skeleton2D" parent="."]
+
+[node name="Hip" type="Bone2D" parent="Skeleton2D"]
+position = Vector2(0, -68)
+rest = Transform2D(1, 0, 0, 1, 0, -68)
+auto_calculate_length_and_angle = false
+length = 10.0
+bone_angle = -90.0
+
+[node name="LegL" type="Bone2D" parent="Skeleton2D/Hip"]
+position = Vector2(-13, 0)
+rest = Transform2D(1, 0, 0, 1, -13, 0)
+auto_calculate_length_and_angle = false
+length = 66.0
+bone_angle = 90.0
+
+[node name="Placeholder" type="Polygon2D" parent="Skeleton2D/Hip/LegL"]
+color = Color(0.25, 0.27, 0.4, 1)
+polygon = PackedVector2Array(-9, 0, 9, 0, 8, 66, -8, 66)
+
+[node name="LegR" type="Bone2D" parent="Skeleton2D/Hip"]
+position = Vector2(13, 0)
+rest = Transform2D(1, 0, 0, 1, 13, 0)
+auto_calculate_length_and_angle = false
+length = 66.0
+bone_angle = 90.0
+
+[node name="Placeholder" type="Polygon2D" parent="Skeleton2D/Hip/LegR"]
+color = Color(0.3, 0.32, 0.46, 1)
+polygon = PackedVector2Array(-9, 0, 9, 0, 8, 66, -8, 66)
+
+[node name="Torso" type="Bone2D" parent="Skeleton2D/Hip"]
+position = Vector2(0, -2)
+rest = Transform2D(1, 0, 0, 1, 0, -2)
+auto_calculate_length_and_angle = false
+length = 60.0
+bone_angle = -90.0
+
+[node name="Placeholder" type="Polygon2D" parent="Skeleton2D/Hip/Torso"]
+color = Color(0.75, 0.3, 0.25, 1)
+polygon = PackedVector2Array(-24, 6, 24, 6, 28, -60, -28, -60)
+
+[node name="ArmL" type="Bone2D" parent="Skeleton2D/Hip/Torso"]
+show_behind_parent = true
+position = Vector2(-24, -54)
+rest = Transform2D(1, 0, 0, 1, -24, -54)
+auto_calculate_length_and_angle = false
+length = 54.0
+bone_angle = 90.0
+
+[node name="Placeholder" type="Polygon2D" parent="Skeleton2D/Hip/Torso/ArmL"]
+color = Color(0.6, 0.24, 0.2, 1)
+polygon = PackedVector2Array(-7, 0, 7, 0, 6, 54, -6, 54)
+
+[node name="Head" type="Bone2D" parent="Skeleton2D/Hip/Torso"]
+position = Vector2(0, -62)
+rest = Transform2D(1, 0, 0, 1, 0, -62)
+auto_calculate_length_and_angle = false
+length = 56.0
+bone_angle = -90.0
+
+[node name="Placeholder" type="Polygon2D" parent="Skeleton2D/Hip/Torso/Head"]
+color = Color(0.95, 0.8, 0.65, 1)
+polygon = PackedVector2Array(0, -58, 21, -49, 30, -28, 21, -7, 0, 2, -21, -7, -30, -28, -21, -49)
+
+[node name="Face" type="Node2D" parent="Skeleton2D/Hip/Torso/Head"]
+
+[node name="EyeL" type="Polygon2D" parent="Skeleton2D/Hip/Torso/Head/Face"]
+color = Color(0.1, 0.08, 0.12, 1)
+polygon = PackedVector2Array(-3, -34, 3, -34, 3, -24, -3, -24)
+
+[node name="EyeR" type="Polygon2D" parent="Skeleton2D/Hip/Torso/Head/Face"]
+color = Color(0.1, 0.08, 0.12, 1)
+polygon = PackedVector2Array(13, -34, 19, -34, 19, -24, 13, -24)
+
+[node name="ArmR" type="Bone2D" parent="Skeleton2D/Hip/Torso"]
+position = Vector2(24, -54)
+rest = Transform2D(1, 0, 0, 1, 24, -54)
+auto_calculate_length_and_angle = false
+length = 54.0
+bone_angle = 90.0
+
+[node name="Placeholder" type="Polygon2D" parent="Skeleton2D/Hip/Torso/ArmR"]
+color = Color(0.82, 0.36, 0.3, 1)
+polygon = PackedVector2Array(-7, 0, 7, 0, 6, 54, -6, 54)
+
+[node name="Weapon" type="Polygon2D" parent="Skeleton2D/Hip/Torso/ArmR"]
+color = Color(0.8, 0.82, 0.88, 1)
+polygon = PackedVector2Array(-4, 46, 4, 46, 3, 118, 0, 126, -3, 118)

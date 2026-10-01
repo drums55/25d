@@ -1,0 +1,53 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/iso_room.gd" id="1_room"]
+[ext_resource type="PackedScene" path="res://scenes/props/prop_block.tscn" id="2_prop"]
+[ext_resource type="PackedScene" path="res://scenes/props/interactable.tscn" id="3_int"]
+[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="4_door"]
+
+[node name="Room02" type="Node2D"]
+script = ExtResource("1_room")
+room_title = "Room 02"
+grid_size = Vector2i(10, 8)
+floor_color_a = Color(0.26, 0.33, 0.3, 1)
+floor_color_b = Color(0.23, 0.29, 0.27, 1)
+wall_color = Color(0.14, 0.2, 0.18, 1)
+
+[node name="World" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Barrel" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(256, 256)
+footprint_cells = Vector2(0.8, 0.8)
+height = 90.0
+color = Color(0.5, 0.36, 0.22, 1)
+
+[node name="Rock" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(-192, 288)
+footprint_cells = Vector2(1.5, 1.2)
+height = 50.0
+color = Color(0.45, 0.47, 0.45, 1)
+
+[node name="Sign" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(64, 416)
+footprint_cells = Vector2(0.5, 0.3)
+height = 110.0
+color = Color(0.6, 0.5, 0.3, 1)
+
+[node name="Interactable" parent="World/Sign" instance=ExtResource("3_int")]
+prompt = "Read"
+dialog_id = "sign_room02"
+
+[node name="DoorToRoom01" parent="World" instance=ExtResource("4_door")]
+position = Vector2(-233.6, 139.2)
+target_room = "res://scenes/rooms/room_01.tscn"
+target_spawn = "from_room_02"
+wall_axis = 1
+
+[node name="Spawns" type="Node2D" parent="."]
+
+[node name="default" type="Marker2D" parent="Spawns"]
+position = Vector2(64, 288)
+
+[node name="from_room_01" type="Marker2D" parent="Spawns"]
+position = Vector2(-153.6, 179.2)

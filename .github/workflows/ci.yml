@@ -1,0 +1,51 @@
+# Check lane only. NEVER build/upload APKs here: Actions storage quota (500 MB)
+# filled up from ~100 MB APK artifacts in another repo. APKs are built on the PC.
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.4.1
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: gdformat / gdlint
+        run: |
+          pip install "gdtoolkit==4.*"
+          gdformat --check scripts test
+          gdlint scripts test
+
+      - name: Cache Godot
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
+      - name: Download Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot && cd ~/godot
+          curl -sSL -o g.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q g.zip && rm g.zip
+
+      - name: GUT unit tests (headless)
+        run: |
+          export GODOT=~/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64
+          bash tools/run_tests.sh

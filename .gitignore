@@ -1,0 +1,19 @@
+# Godot
+.godot/
+*.import.tmp
+export_credentials.cfg
+/android/
+
+# Build output (APKs never go in git or CI artifacts)
+/build/
+*.apk
+*.aab
+
+# GUT is fetched at a pinned tag by tools/fetch_gut.* (not vendored)
+/addons/gut/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+__pycache__/

@@ -1,0 +1,17 @@
+{
+	"elder": {
+		"if_flag": "met_elder",
+		"lines": [
+			{"speaker": "Elder", "text": "Back again? The door to the east still leads where it did."}
+		],
+		"else": "elder_first"
+	},
+	"elder_first": [
+		{"speaker": "Elder", "text": "Ah, a traveller. This is only a placeholder world for now."},
+		{"speaker": "Elder", "text": "Try the dummy over there with the attack button, then walk through the door."},
+		{"speaker": "Elder", "text": "Your progress is saved every time you change rooms.", "set_flag": "met_elder"}
+	],
+	"sign_room02": [
+		"A weathered sign: \"Room 02 — art coming soon.\""
+	]
+}
