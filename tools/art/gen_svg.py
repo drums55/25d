@@ -217,35 +217,70 @@ def noodle_cart():
 
 
 def steam_tuktuk():
-    W, H = 470, 330
+    """Three-wheeler: single front wheel, open sides, canvas roof on posts,
+    rear bench, driver up front, brass boiler on the tail. Faces front-right."""
+    W, H = 480, 500
     svg, iso = Svg(W, H), Iso(W, H)
     iso.shadow(svg, 1.8, 1.0)
-    fx, fy = 1.8, 1.0
-    for gx, gy in ((-0.6, 0.45), (0.65, 0.45), (0.65, -0.45)):
-        wx, wy = iso.p(gx, gy, 12)
-        svg.ellipse(wx, wy, 24, 28, SOOT_L, OUT)
-        svg.ellipse(wx, wy, 9, 11, BRASS, BRASS_D)
-    iso.box(svg, -fx / 2, -fy / 2, fx / 2, fy / 2, 22, 60, TEAL)
-    # cabin (rear 60%)
-    iso.box(svg, -0.9, -0.5, 0.25, 0.5, 60, 118, TEAL)
-    # open window (front side)
-    a, b = iso.p(-0.75, 0.5, 70), iso.p(0.1, 0.5, 70)
-    c, d = iso.p(0.1, 0.5, 108), iso.p(-0.75, 0.5, 108)
-    svg.poly([a, b, c, d], SOOT, OUT)
-    # roof
-    iso.box(svg, -0.95, -0.55, 0.3, 0.55, 118, 126, BRASS)
-    # boiler on the back
-    iso.cylinder(svg, -0.95, 0.0, 0.22, 60, 112, COPPER)
-    cx, cy = iso.p(-0.95, 0.0, 112)
-    svg.circle(cx, cy - 10, 8, BRASS, OUT)
-    svg.line([(cx, cy - 18), (cx, cy - 40)], STEEL_D, 7)
-    # front hood + headlamp
-    iso.box(svg, 0.25, -0.35, 0.9, 0.35, 60, 80, TEAL_D)
-    hx, hy = iso.p(0.9, 0.0, 70)
-    svg.circle(hx, hy, 12, BRASS_L, BRASS_D)
-    svg.circle(hx, hy, 6, CREAM, "none", 0)
-    svg.gauge(*iso.p(0.5, 0.35, 72), 9)
-    svg.rivets([iso.p(x, 0.5, 115) for x in (-0.8, -0.5, -0.2, 0.1)])
+    p = iso.p
+
+    def wheel(gx, gy, r=26):
+        wx, wy = p(gx, gy, 13)
+        svg.ellipse(wx, wy, r, r * 1.15, SOOT, OUT)
+        svg.ellipse(wx, wy, r * 0.42, r * 0.5, BRASS, BRASS_D)
+        svg.glow(wx - r * 0.3, wy - r * 0.5, r * 0.25, r * 0.35, 0.25)
+
+    # rear wheels (the back one first so the floor pan covers its inner half)
+    wheel(-0.55, -0.5)
+    # boiler on the tail
+    iso.cylinder(svg, -1.0, 0.0, 0.2, 30, 95, COPPER)
+    bx, by = p(-1.0, 0.0, 95)
+    svg.line([(bx, by - 4), (bx, by - 44)], STEEL_D, 12)
+    svg.line([(bx, by - 4), (bx, by - 44)], STEEL, 7)
+    svg.ellipse(bx, by - 44, 9, 4, SOOT, OUT, 2)
+    svg.gauge(*p(-1.0, 0.2, 70), 9)
+    # floor pan
+    iso.box(svg, -0.9, -0.5, 0.9, 0.5, 20, 34, TEAL_D)
+    # rear bench + backrest
+    iso.box(svg, -0.85, -0.45, -0.35, 0.45, 34, 58, RED)
+    iso.box(svg, -0.85, -0.45, -0.73, 0.45, 58, 100, RED_D)
+    # driver seat
+    iso.box(svg, 0.0, -0.18, 0.3, 0.18, 34, 56, SOOT_L)
+    # front cowl (rounded nose) + headlamp + handlebar
+    iso.box(svg, 0.42, -0.32, 0.92, 0.32, 34, 66, TEAL)
+    nx, ny = p(0.92, 0.0, 50)
+    svg.ellipse(nx + 6, ny, 10, 16, TEAL_D, OUT)
+    hx, hy = p(0.75, 0.0, 66)
+    svg.circle(hx, hy - 6, 13, BRASS_L, OUT)
+    svg.circle(hx, hy - 6, 6, "#FFF6C8", "none", 0)
+    svg.glow(hx - 4, hy - 10, 3, 2, 0.8)
+    sx, sy = p(0.45, 0.0, 66)
+    svg.line([(sx, sy), (sx + 6, sy - 40)], STEEL_D, 6)
+    svg.line([(sx - 22, sy - 48), (sx + 34, sy - 36)], STEEL, 6)
+    # rear wheel (near side) and the single front wheel
+    wheel(-0.55, 0.5)
+    wheel(0.8, 0.0, 24)
+    # roof posts (open sides = the tuk-tuk look)
+    for gx, gy in ((-0.9, -0.5), (0.55, -0.5), (0.55, 0.5), (-0.9, 0.5)):
+        a, b = p(gx, gy, 34), p(gx, gy, 118)
+        svg.line([a, b], STEEL_D, 7)
+        svg.line([a, b], STEEL, 3)
+    # canvas roof: flat box + curved cap, with a white stripe
+    iso.box(svg, -1.0, -0.58, 0.65, 0.58, 118, 126, TEAL)
+    rl, rr = p(-1.0, 0.58, 126), p(0.65, -0.58, 126)
+    rb, rf = p(-1.0, -0.58, 126), p(0.65, 0.58, 126)
+    svg.path("M%.1f,%.1f Q%.1f,%.1f %.1f,%.1f L%.1f,%.1f Q%.1f,%.1f %.1f,%.1f Z"
+             % (rl[0], rl[1], (rl[0] + rb[0]) / 2, (rl[1] + rb[1]) / 2 - 22, rb[0], rb[1],
+                rr[0], rr[1], (rr[0] + rf[0]) / 2, (rr[1] + rf[1]) / 2 - 22, rf[0], rf[1]),
+             TEAL_L, OUT)
+    svg.line_op([((rl[0] + rb[0]) / 2, (rl[1] + rb[1]) / 2 - 16), ((rr[0] + rf[0]) / 2, (rr[1] + rf[1]) / 2 - 16)],
+                CREAM, 6, 0.8)
+    # fringe along the near roof edge
+    for k in range(0, 9):
+        t = k / 8.0
+        fx = rf[0] + (rl[0] - rf[0]) * t
+        fy = rf[1] + (rl[1] - rf[1]) * t + 10
+        svg.poly([(fx - 7, fy - 8), (fx + 7, fy - 8), (fx, fy + 4)], BRASS, OUT, 1.5)
     svg.write("props/steam_tuk_tuk")
 
 

@@ -24,8 +24,8 @@ height = 200.0
 color = Color(0.66, 0.4, 0.24, 1)
 
 [node name="SteamVent" parent="World/Boiler" instance=ExtResource("6_steam")]
-position = Vector2(0, -205)
-amount = 22
+position = Vector2(0, -210)
+amount = 14
 
 [node name="Interactable" parent="World/Boiler" instance=ExtResource("3_int")]
 prompt = "ดู"

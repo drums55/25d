@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="220" height="360" viewBox="0 0 220 360">
 <ellipse cx="110.0" cy="364.0" rx="77.3" ry="38.6" fill="#000000" opacity="0.15200000000000002"/>
 <ellipse cx="110.0" cy="362.0" rx="67.2" ry="33.6" fill="#000000" opacity="0.38"/>
-<defs><linearGradient id="g8349" x1="0" x2="1"><stop offset="0" stop-color="#33383D"/><stop offset="0.45" stop-color="#646E77"/><stop offset="1" stop-color="#373D42"/></linearGradient></defs>
-<path d="M92.1,220.0 L92.1,360.0 A17.9,9.0 0 0,0 127.9,360.0 L127.9,220.0 A17.9,9.0 0 0,0 92.1,220.0 Z" fill="url(#g8349)" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<defs><linearGradient id="g1546" x1="0" x2="1"><stop offset="0" stop-color="#33383D"/><stop offset="0.45" stop-color="#646E77"/><stop offset="1" stop-color="#373D42"/></linearGradient></defs>
+<path d="M92.1,220.0 L92.1,360.0 A17.9,9.0 0 0,0 127.9,360.0 L127.9,220.0 A17.9,9.0 0 0,0 92.1,220.0 Z" fill="url(#g1546)" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
 <ellipse cx="110.0" cy="220.0" rx="17.9" ry="9.0" fill="#6A757F" stroke="#1E1A1F" stroke-width="3"/>
 <polyline points="98.9,226.0 98.9,350.0" fill="none" stroke="#FFFFFF" stroke-width="2.8672000000000004" stroke-linecap="round" opacity="0.45"/>
 <path d="M92.1,360.0 A17.9,9.0 0 0,0 127.9,360.0 L127.9,318.0 A17.9,9.0 0 0,1 92.1,318.0 Z" fill="#000000" opacity="0.22"/>

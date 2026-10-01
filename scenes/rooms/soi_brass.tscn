@@ -54,7 +54,7 @@ height = 80.0
 color = Color(0.72, 0.22, 0.16, 1)
 
 [node name="SteamVent" parent="World/NoodleCart" instance=ExtResource("6_steam")]
-position = Vector2(-20, -84)
+position = Vector2(-24, -131)
 
 [node name="StoolA" parent="World" instance=ExtResource("2_prop")]
 position = Vector2(-230.4, 409.6)
@@ -85,7 +85,7 @@ height = 95.0
 color = Color(0.2, 0.47, 0.46, 1)
 
 [node name="SteamVent" parent="World/SteamTukTuk" instance=ExtResource("6_steam")]
-position = Vector2(70, -100)
+position = Vector2(-64, -149)
 
 [node name="SteamBike" parent="World" instance=ExtResource("2_prop")]
 position = Vector2(288, 544)
