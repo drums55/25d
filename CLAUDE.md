@@ -120,8 +120,8 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
 - **Enemy** (`scripts/world/enemy.gd`, `scenes/props/enemy.tscn`): CharacterBody2D layer world+hittable, idle จนผู้เล่นเข้า
   `aggro_range` 330 → ไล่ (speed 170) → ตีเมื่อระยะ < 70 ทุก 1.1s (wind-up 0.3s ก่อนครั้งแรก); `take_hit` ลด hp (3) +
   knockback; ตายแล้วเป็นเศษเหล็ก (ยังชนได้ ตีไม่ได้) และตั้ง `defeat_flag` → โหลดห้องใหม่ไม่ฟื้น. art = prop png
-  (`art_name`, default brass_automaton ย้อมแดง). Player `take_hit`: invuln 0.8s กะพริบ, knockback, hp 0 → ฟื้นที่ spawn
-  default ของห้องเต็มหลอด (ยังไม่มี game over). เอาไปวางห้องอื่น = instance `enemy.tscn` ใน World + ตั้ง `defeat_flag`
+  (`art_name`, default brass_automaton ย้อมแดง). Player `take_hit`: invuln 0.8s กะพริบ, knockback, hp 0 → `SceneRouter.blackout("หมดแรง...")` (จอดำ+ข้อความ ~2.5s, input lock)
+  แล้วฟื้นที่ spawn default ของห้องเต็มหลอด ไม่เสียอะไร (ตั้งใจให้เบา ไม่มี game over screen). เอาไปวางห้องอื่น = instance `enemy.tscn` ใน World + ตั้ง `defeat_flag`
 - **CharacterView** (ตัวจริง): ดูหัวข้อ sprite 8 ทิศด้านบน. Player แตะทิศ → `rig.set_facing(Iso.dir8)` → เปลี่ยนแถว
   โดยคงเฟรมเดิมถ้า anim เดียวกัน (เดินหันทิศไม่กระตุก); attack ไม่ถูก walk ขัด จบแล้วกลับ state ค้างไว้
 - **Cut-out rig**: animate แบบ procedural (walk swing, idle, attack) ใน `cutout_rig.gd`; rig ออกแบบหันขวา
@@ -181,4 +181,4 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
 - save เก่าที่ชี้ room_01/room_02 (ถูก rename) จะเริ่มใหม่ที่ซอยทองเหลืองเอง
 - test "path bends around the pillar" (test_point_click) เคย fail 1 ครั้งตอนรันทั้งชุดหลังเพิ่ม test_quest แล้วผ่านรอบถัดไป
   (navmesh sync timing?) — ถ้าเจออีกให้เพิ่ม wait_physics_frames ใน before_each
-- ยังไม่มี: งานที่ 2+, game over จริง, เสียง, เมนู/new game (ลบ save = `adb shell run-as com.drums55.game25d rm files/save_0.json`)
+- ยังไม่มี: บทที่ 2 (ใครแกะวาล์ว), เสียง, เมนู/new game, sprite จริงของเฮียเป้ง (ลบ save = `adb shell run-as com.drums55.game25d rm files/save_0.json`)
