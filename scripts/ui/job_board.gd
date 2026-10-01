@@ -78,16 +78,20 @@ func _offer_row(job: Dictionary) -> Control:
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var tag := " [แตกง่าย ห้ามโดนตี]" if job.get("fragile", false) else ""
 	text.add_child(_label("%s — %s%s" % [job["title"], job.get("from", ""), tag], 30))
+	var pay := "%d บาท" % int(job.get("reward", 0))
+	if Jobs.tip(job) > 0:
+		pay += " (+ทิป %d)" % Jobs.tip(job)
 	text.add_child(
 		_label(
 			(
-				"%s\nรับที่ %s → ส่งที่ %s · %d บาท · ภายใน %d ช่วง"
+				"%s\nรับที่ %s → ส่งที่ %s · %s · ภายใน %d ช่วง%s"
 				% [
 					job.get("desc", ""),
 					job["pickup"].get("where", "?"),
 					job["dropoff"].get("where", "?"),
-					int(job.get("reward", 0)),
-					int(job.get("deadline_slots", 6))
+					pay,
+					int(job.get("deadline_slots", 6)),
+					_rep_text(job)
 				]
 			),
 			22
@@ -102,6 +106,22 @@ func _offer_row(job: Dictionary) -> Control:
 	btn.pressed.connect(func(): Jobs.accept(job["id"]))
 	row.add_child(btn)
 	return row
+
+
+## "ชื่อเสียง: บริษัทไอน้ำ +1, ชาวบ้าน -2" (employer +1 on time, plus job.rep).
+static func _rep_text(job: Dictionary) -> String:
+	var effects := {}
+	var employer := str(job.get("faction", ""))
+	if GameState.FACTIONS.has(employer):
+		effects[employer] = 1
+	var extra: Dictionary = job.get("rep", {})
+	for faction in extra:
+		effects[faction] = int(effects.get(faction, 0)) + int(extra[faction])
+	var parts: Array[String] = []
+	for faction in effects:
+		if int(effects[faction]) != 0:
+			parts.append("%s %+d" % [GameState.FACTIONS.get(faction, faction), effects[faction]])
+	return "" if parts.is_empty() else "\nชื่อเสียง: " + ", ".join(parts)
 
 
 func _active_row(job: Dictionary) -> Control:

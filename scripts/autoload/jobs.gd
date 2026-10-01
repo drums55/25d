@@ -15,12 +15,20 @@ extends Node
 ##   "needs": {"item"|"flag", "take", "lines"}
 ##                            -- the receiver refuses (plays "lines") until the
 ##                               rider has the item / flag; "take" consumes the item
+##
+## Reputation (M2): "faction" = the employer's side (GameState.FACTIONS).
+## On time: employer +1 and a tip of TIP_PER_REP baht per positive point of
+## the employer's rep; late: no rep, no tip; failed (abandoned / slept / broke):
+## employer -1. "rep": {faction: delta} is applied on any delivery (company
+## jobs hurt the folk). "requires_rep" / "requires_rep_below": {faction: n}
+## gate the offer.
 
 signal jobs_changed
 ## Emitted after a dropoff with the reward actually paid.
 signal job_delivered(id: String, reward: int, late: bool)
 
 const JOBS_PATH := "res://assets/jobs/jobs.json"
+const TIP_PER_REP := 10
 
 var _jobs: Dictionary = {}  # id -> job dict
 var _order: Array[String] = []
@@ -63,6 +71,14 @@ func available() -> Array[Dictionary]:
 		var ok := GameState.day >= int(_jobs[id].get("from_day", 1))
 		for flag in _jobs[id].get("requires", []):
 			if not GameState.has_flag(str(flag)):
+				ok = false
+		var at_least: Dictionary = _jobs[id].get("requires_rep", {})
+		for faction in at_least:
+			if GameState.get_rep(faction) < int(at_least[faction]):
+				ok = false
+		var below: Dictionary = _jobs[id].get("requires_rep_below", {})
+		for faction in below:
+			if GameState.get_rep(faction) >= int(below[faction]):
 				ok = false
 		if ok:
 			out.append(_jobs[id])
@@ -118,6 +134,7 @@ func abandon(id: String) -> void:
 		GameState.take_item(str(job.get("item", "")))
 	GameState.failed_jobs.append(id)
 	GameState.notice.emit("ทิ้งงาน: %s" % job.get("title", id))
+	_fail_rep(job)
 	jobs_changed.emit()
 
 
@@ -128,6 +145,15 @@ func dropoff_npc(entry: Dictionary, job: Dictionary) -> String:
 
 func dropoff_where(entry: Dictionary, job: Dictionary) -> String:
 	return str(entry.get("target_where", job.get("dropoff", {}).get("where", "?")))
+
+
+## Extra pay for an on-time delivery: employer's good name with the rider.
+func tip(job: Dictionary) -> int:
+	return TIP_PER_REP * maxi(GameState.get_rep(str(job.get("faction", ""))), 0)
+
+
+func _fail_rep(job: Dictionary) -> void:
+	GameState.add_rep(str(job.get("faction", "")), -1)
 
 
 func is_late(entry: Dictionary) -> bool:
@@ -199,13 +225,16 @@ func on_player_hit() -> void:
 		GameState.take_item(str(job.get("item", "")))
 		GameState.failed_jobs.append(str(job["id"]))
 		GameState.notice.emit(str(job.get("break_notice", "ของแตก! งาน %s พัง" % job["title"])))
+		_fail_rep(job)
 		jobs_changed.emit()
 
 
 func _deliver(entry: Dictionary, job: Dictionary) -> void:
 	var late := is_late(entry)
 	var reward := (
-		int(job.get("late_reward", job.get("reward", 0))) if late else int(job.get("reward", 0))
+		int(job.get("late_reward", job.get("reward", 0)))
+		if late
+		else int(job.get("reward", 0)) + tip(job)
 	)
 	GameState.active_jobs.erase(entry)
 	GameState.done_jobs.append(str(job["id"]))
@@ -216,6 +245,11 @@ func _deliver(entry: Dictionary, job: Dictionary) -> void:
 	GameState.add_money(reward)
 	for flag in job.get("sets", []):
 		GameState.set_flag(str(flag))
+	if not late:
+		GameState.add_rep(str(job.get("faction", "")), 1)
+	var effects: Dictionary = job.get("rep", {})
+	for faction in effects:
+		GameState.add_rep(faction, int(effects[faction]))
 	GameState.advance_time(GameState.DELIVERY_TICKS)
 	var lines: Array = job.get("late_lines", []) if late else job.get("dropoff_lines", [])
 	if late and lines.is_empty():

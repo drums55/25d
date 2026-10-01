@@ -29,7 +29,9 @@ func is_active() -> bool:
 func start(id: String) -> bool:
 	if is_active():
 		return false
-	_lines = DialogData.resolve(_data, id, GameState.flags, GameState.inventory, GameState.money)
+	_lines = DialogData.resolve(
+		_data, id, GameState.flags, GameState.inventory, GameState.money, GameState.rep
+	)
 	if _lines.is_empty():
 		push_warning("Dialog: unknown or empty dialog '%s'" % id)
 		return false

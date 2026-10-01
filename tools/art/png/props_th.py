@@ -402,8 +402,53 @@ def pier_sign(out):
     c.finish(out)
 
 
+CORP = hexc("#5B3A8C")
+CORP_L = hexc("#8E6CC4")
+
+
+def company_booth(out):
+    """บูธบริษัทไอน้ำกรุงเทพฯ: glossy purple counter with chrome trim, a smart
+    steam meter on top, the corporate gear logo and a "free meter*" promo."""
+    c = Canvas(380, 640, seed=51)
+    p, s = c.p, c.ss
+    c.ground_shadow(1.2, 0.6)
+    c.box(-0.6, -0.3, 0.6, 0.3, 0, 6, SOOT * 1.4, rim=0.3)
+    c.box(-0.58, -0.28, 0.58, 0.28, 6, 150, CORP, rim=0.9, top_k=1.25)
+    # chrome counter top + front stripe
+    c.box(-0.62, -0.32, 0.62, 0.32, 150, 160, STEEL * 1.25, rim=1.0)
+    c.stroke([p(-0.58, 0.28, 40), p(0.58, 0.28, 40)], 4.0, CORP_L, 0.9)
+    c.stroke([p(0.58, 0.28, 40), p(0.58, -0.28, 40)], 4.0, CORP_L, 0.7)
+    # promo poster on the front
+    poster = [p(-0.5, 0.29, 140), p(0.12, 0.29, 140), p(0.12, 0.29, 56), p(-0.5, 0.29, 56)]
+    c.paint(c.mask_poly(poster), c.flat(WHITE), 1.0, 0)
+    c.text("ติดมิเตอร์ใหม่", p(-0.48, 0.29, 134), p(0.1, 0.29, 134), 22, CORP)
+    c.text("ฟรี!*", p(-0.48, 0.29, 108), p(0.1, 0.29, 108), 38, RED)
+    c.text("*มีค่าบริการรายเดือน ตลอดชีพ", p(-0.48, 0.29, 70), p(0.1, 0.29, 70), 9, INK)
+    # corporate gear logo on the front right
+    lx, ly = p(0.36, 0.29, 98)
+    c.gear(lx, ly, 30 * s, BRASS_L, teeth=10)
+    c.text("ไอ", p(0.3, 0.3, 112), p(0.42, 0.3, 112), 22, CORP)
+    # side: company name
+    c.text("บริษัทไอน้ำกรุงเทพฯ", p(0.59, 0.26, 130), p(0.59, -0.26, 130), 18, WHITE)
+    # smart meter on the counter: chrome cylinder + dial + little steam pipe
+    c.cylinder(0.25, -0.05, 0.14, 160, 230, STEEL * 1.2, spec=0.9)
+    gx, gy = p(0.25, 0.09, 200)
+    c.gauge(gx, gy, 13, angle=60)
+    c.pipe([p(0.25, -0.05, 230), p(0.25, -0.05, 262), p(0.12, -0.05, 262)], 5, COPPER, spec=0.7)
+    # tall sign board on a pole at the back
+    c.pipe([p(-0.4, -0.2, 160), p(-0.4, -0.2, 380)], 6, STEEL, spec=0.8)
+    c.box(-0.62, -0.22, -0.02, -0.18, 330, 410, CORP_L, rim=0.9)
+    c.text("บริษัทไอน้ำ", p(-0.6, -0.18, 404), p(-0.04, -0.18, 404), 26, WHITE)
+    c.text("กรุงเทพฯ", p(-0.6, -0.18, 372), p(-0.04, -0.18, 372), 22, YELLOW)
+    # stack of brochures + a tiny desk bell
+    c.box(-0.45, 0.0, -0.2, 0.2, 160, 172, WHITE, rim=0.5)
+    bx, by = p(-0.05, 0.12, 166)
+    c.disc(bx, by, 9 * s, 6 * s, BRASS_L, 1.2, 0.5)
+    c.finish(out)
+
+
 PROPS = {f.__name__: f for f in (win_stand, payphone, bus_stop, moo_ping_cart, shop_cat, tire_planter,
-                                 longtail_boat, dragon_jar, pier_sign)}
+                                 longtail_boat, dragon_jar, pier_sign, company_booth)}
 
 if __name__ == "__main__":
     name = sys.argv[1]

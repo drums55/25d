@@ -9,7 +9,8 @@ class_name DialogData
 ## A plain array is an unconditional dialog. An object entry plays `lines` when
 ## all of its conditions hold, otherwise falls through to the dialog id named
 ## in `else`. Conditions: `if_flag`, `if_not_flag`, `if_item` (in inventory),
-## `if_not_item`, `if_money_at_least` (int).
+## `if_not_item`, `if_money_at_least` (int), `if_rep_at_least` / `if_rep_below`
+## ({"faction": n}, every listed faction must hold; factions in GameState.FACTIONS).
 ## Line actions (applied when the line is shown): `set_flag`,
 ## `give_item`, `take_item`, `money` (int, +/-).
 
@@ -29,7 +30,12 @@ static func load_file(path: String) -> Dictionary:
 
 ## Resolves a dialog id to its lines given flags and inventory. Returns [] if unknown.
 static func resolve(
-	data: Dictionary, id: String, flags: Dictionary, inventory: Array = [], money := 0
+	data: Dictionary,
+	id: String,
+	flags: Dictionary,
+	inventory: Array = [],
+	money := 0,
+	rep: Dictionary = {}
 ) -> Array:
 	var current := id
 	for _i in MAX_REDIRECTS:
@@ -38,7 +44,7 @@ static func resolve(
 			return _normalize(entry)
 		if not entry is Dictionary:
 			return []
-		if conditions_hold(entry, flags, inventory, money):
+		if conditions_hold(entry, flags, inventory, money, rep):
 			return _normalize(entry.get("lines", []))
 		current = str(entry.get("else", ""))
 	push_error("DialogData: redirect loop at '%s'" % id)
@@ -46,10 +52,20 @@ static func resolve(
 
 
 static func conditions_hold(
-	entry: Dictionary, flags: Dictionary, inventory: Array, money := 0
+	entry: Dictionary, flags: Dictionary, inventory: Array, money := 0, rep: Dictionary = {}
 ) -> bool:
 	if entry.has("if_money_at_least") and money < int(entry["if_money_at_least"]):
 		return false
+	var at_least = entry.get("if_rep_at_least", {})
+	if at_least is Dictionary:
+		for faction in at_least:
+			if int(rep.get(faction, 0)) < int(at_least[faction]):
+				return false
+	var below = entry.get("if_rep_below", {})
+	if below is Dictionary:
+		for faction in below:
+			if int(rep.get(faction, 0)) >= int(below[faction]):
+				return false
 	var flag := str(entry.get("if_flag", ""))
 	if not flag.is_empty() and not flags.get(flag, false):
 		return false

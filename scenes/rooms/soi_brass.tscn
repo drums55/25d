@@ -150,6 +150,27 @@ art_name = "tire_planter"
 prompt = "ดู"
 dialog_id = "tire_planter"
 
+[node name="CompanyBooth" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(-281.6, 537.6)
+footprint_cells = Vector2(1.2, 0.6)
+height = 160.0
+art_name = "company_booth"
+
+[node name="Interactable" parent="World/CompanyBooth" instance=ExtResource("7_int")]
+prompt = "ดู"
+dialog_id = "company_booth"
+
+[node name="KhunWan" parent="World" instance=ExtResource("3_npc")]
+position = Vector2(-345.6, 496)
+
+[node name="Rig" parent="World/KhunWan"]
+modulate = Color(0.86, 0.78, 1, 1)
+character_name = "je_muay"
+
+[node name="Interactable" parent="World/KhunWan"]
+dialog_id = "khun_wan"
+npc_id = "khun_wan"
+
 [node name="Spawns" type="Node2D" parent="."]
 
 [node name="default" type="Marker2D" parent="Spawns"]

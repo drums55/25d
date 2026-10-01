@@ -2,7 +2,7 @@ class_name SaveData
 extends RefCounted
 ## Serializable game progress. Pure data so it can be unit-tested headless.
 
-const VERSION := 3
+const VERSION := 4
 
 var room_path := ""
 var spawn_id := "default"
@@ -16,6 +16,7 @@ var cargo_slots := 0
 var active_jobs: Array = []
 var done_jobs: Array = []
 var failed_jobs: Array = []
+var rep := {}
 
 
 func to_dict() -> Dictionary:
@@ -33,6 +34,7 @@ func to_dict() -> Dictionary:
 		"active_jobs": active_jobs.duplicate(true),
 		"done_jobs": done_jobs.duplicate(),
 		"failed_jobs": failed_jobs.duplicate(),
+		"rep": rep.duplicate(),
 	}
 
 
@@ -56,6 +58,10 @@ static func from_dict(d: Dictionary) -> SaveData:
 		var arr = d.get(key, [])
 		if arr is Array:
 			s.set(key, arr.duplicate(true))
+	var r = d.get("rep", {})
+	if r is Dictionary:
+		for faction in r:
+			s.rep[str(faction)] = int(r[faction])
 	for entry in s.active_jobs:
 		if entry is Dictionary:
 			entry["id"] = str(entry.get("id", ""))

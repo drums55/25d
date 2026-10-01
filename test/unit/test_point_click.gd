@@ -54,7 +54,7 @@ func test_pick_prefers_targets_and_ignores_floor():
 	var npc := _world("LungPradit/Interactable")
 	var nodes := get_tree().get_nodes_in_group("pickable")
 	assert_eq(Player.pick(nodes, npc.global_position + Vector2(0, -120)), npc, "tap head")
-	assert_null(Player.pick(nodes, _player.global_position + Vector2(-300, 0)), "tap floor")
+	assert_null(Player.pick(nodes, _player.global_position + Vector2(0, -90)), "tap floor")
 
 
 func test_pick_uses_drawn_pixels_not_rects():

@@ -8,6 +8,7 @@ signal hp_changed(hp: int, max_hp: int)
 ## Short player-facing notice (item gained, money, quest update).
 signal notice(text: String)
 signal time_changed(day: int, tick: int)
+signal rep_changed(rep: Dictionary)
 
 const START_ROOM := "res://scenes/rooms/soi_brass.tscn"
 const SAVE_PATH := "user://save_0.json"
@@ -30,6 +31,10 @@ const ITEMS := {
 	"birthday_cake": "เค้กวันเกิดหม้อไอน้ำ",
 	"incense": "ธูป 1 ดอก (ใช้แทนเทียน)",
 	"croc_egg": "ไข่จระเข้ (อุ่นๆ ขยับได้)",
+	"smart_meter": "มิเตอร์ไอน้ำอัจฉริยะ",
+	"golden_letter": "ซองจดหมายสีทอง",
+	"survey_form": "แบบสอบถามความพึงพอใจ",
+	"bitten_meter": "มิเตอร์ (มีรอยฟันแมว)",
 }
 ## Day clock: 6 slots of TICKS_PER_SLOT ticks. Changing rooms costs 1 tick,
 ## a delivery 2; past DAY_TICKS it is night and only sleeping starts a new day.
@@ -39,6 +44,12 @@ const DAY_TICKS := 12
 const ROOM_CHANGE_TICKS := 1
 const DELIVERY_TICKS := 2
 const DEFAULT_CARGO_SLOTS := 2
+## Reputation with the three sides of the district (M2). Range REP_MIN..REP_MAX.
+## Jobs change it (Jobs.gd), dialogs branch on it (if_rep_at_least / if_rep_below),
+## and a good name with the employer's side adds a tip to the job's pay.
+const FACTIONS := {"folk": "ชาวบ้าน", "garage": "อู่", "company": "บริษัทไอน้ำ"}
+const REP_MIN := -5
+const REP_MAX := 5
 
 var room_path := START_ROOM
 var spawn_id := "default"
@@ -59,6 +70,7 @@ var cargo_slots := DEFAULT_CARGO_SLOTS
 var active_jobs: Array = []
 var done_jobs: Array = []
 var failed_jobs: Array = []
+var rep := {"folk": 0, "garage": 0, "company": 0}
 ## Blocks player input (scene transitions, cutscenes). Dialog blocks separately.
 var input_locked := false
 
@@ -100,6 +112,21 @@ func add_money(amount: int) -> void:
 		return
 	money += amount
 	notice.emit(("+%d บาท" if amount > 0 else "%d บาท") % amount)
+
+
+func get_rep(faction: String) -> int:
+	return int(rep.get(faction, 0))
+
+
+func add_rep(faction: String, delta: int) -> void:
+	if delta == 0 or not FACTIONS.has(faction):
+		return
+	var before := get_rep(faction)
+	rep[faction] = clampi(before + delta, REP_MIN, REP_MAX)
+	if rep[faction] == before:
+		return
+	rep_changed.emit(rep)
+	notice.emit("ชื่อเสียง%s %+d" % [FACTIONS[faction], rep[faction] - before])
 
 
 static func item_name(item: String) -> String:
@@ -149,6 +176,8 @@ func new_game() -> void:
 	active_jobs = []
 	done_jobs = []
 	failed_jobs = []
+	rep = {"folk": 0, "garage": 0, "company": 0}
+	rep_changed.emit(rep)
 	time_changed.emit(day, tick)
 
 
@@ -166,6 +195,7 @@ func to_save_data() -> SaveData:
 	s.active_jobs = active_jobs.duplicate(true)
 	s.done_jobs = done_jobs.duplicate()
 	s.failed_jobs = failed_jobs.duplicate()
+	s.rep = rep.duplicate()
 	return s
 
 
@@ -183,6 +213,10 @@ func apply_save_data(s: SaveData) -> void:
 	active_jobs = s.active_jobs.duplicate(true)
 	done_jobs = s.done_jobs.duplicate()
 	failed_jobs = s.failed_jobs.duplicate()
+	rep = {"folk": 0, "garage": 0, "company": 0}
+	for faction in rep:
+		rep[faction] = clampi(int(s.rep.get(faction, 0)), REP_MIN, REP_MAX)
+	rep_changed.emit(rep)
 	time_changed.emit(day, tick)
 
 

@@ -140,6 +140,15 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   `cake_for_boiler` (วันที่ 2+: เค้กวันเกิดหม้อไอน้ำตลาด ต้องมีธูปจากศาลพระภูมิ — `spirit_house_cake` ให้ `incense` เมื่อถือเค้ก),
   `croc_egg` (วันที่ 2+: ไข่จระเข้ fragile จากอู่ (มี GarageBot) → พี่แจ่มไม่รับ → โอ่งมังกร `npc_id: dragon_jar`).
   ผู้รับเป็น prop ได้ (ใส่ `npc_id` บน Interactable). บอร์ดงานโชว์ "งานที่รับไว้" ก่อน "งานที่มีวันนี้" และติดป้าย [แตกง่าย]
+- **ชื่อเสียง 3 ฝ่าย + คุณนายวรรณ (M2, 2026-10-01)**: `GameState.rep` {folk ชาวบ้าน, garage อู่, company บริษัทไอน้ำ}
+  ช่วง -5..5 (`add_rep` ขึ้น notice, save v4 เก็บ `rep`). ทุกงานมี `faction` = ฝ่ายผู้จ้าง: ส่งทัน +1 ฝ่ายนั้น + ทิป 10 บาท/แต้มบวก
+  (`Jobs.tip`), ส่งสาย ไม่ได้ทั้งคู่, ล้ม (ทิ้ง/นอน/ของแตก) -1; `rep` {ฝ่าย: ±} ใช้ตอนส่ง (งานบริษัทเงินดีแต่ชาวบ้าน -);
+  `requires_rep` / `requires_rep_below` กั้นงาน. dialog: `if_rep_at_least` / `if_rep_below` {ฝ่าย: n}.
+  บอร์ดโชว์ทิป + "ชื่อเสียง: ..." ต่องาน; HUD ต่อท้ายบรรทัดนาฬิกา. ผลจริงตอนนี้: เฮียเป้งลดค่าเช่าเหลือ 250 เมื่ออู่ ≥3,
+  ลุงเล่าความลับประแจบริษัทเมื่อชาวบ้าน ≥3 (`lung_secret`), เจ๊หมวยแซะเมื่อบริษัท ≥2 / ชมเมื่อชาวบ้าน ≥3, คุณนายวรรณเย็นชาเมื่อบริษัท ≤-2.
+  คุณนายวรรณ (`npc_id: khun_wan`) ยืนข้าง `company_booth` (บูธม่วง "ติดมิเตอร์ใหม่ ฟรี!*", props_th.py) ในซอยหน้าซ้าย;
+  **ยังใช้ sprite je_muay ย้อมม่วง** (ต้อง render ตัวจริง). งานบริษัท: `meter_for_boiler` (ตั้ง `boiler_metered`),
+  `notice_for_lung`, `survey_canal` (สองงานหลังต้องบริษัท ≥1); งานโต้กลับของชาวบ้าน `meter_returned` (มิเตอร์รอยฟันแมว, บริษัท -2)
 - **นาฬิกาวัน**: `GameState.tick` 0..12 (6 ช่วง × 2: เช้า สาย เที่ยง บ่าย เย็น ค่ำ), เปลี่ยนห้อง +1, ส่งของ +2, เกิน 12 = กลางคืน.
   "นอน" ที่บอร์ด = `Jobs.sleep()`: งานที่ยังไม่ส่ง fail (ของหาย, กลับมาเปิดให้รับใหม่วันถัดไป), วัน+1, HP เต็ม.
   แสงตามช่วงเวลา = tween `RoomHolder.modulate` ใน `main.gd` (**อย่าใช้ CanvasModulate** — ทำ Godot crash signal 11 ตอนรัน GUT)
@@ -213,4 +222,4 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
 - ธีมตกลงแล้ว (BKK steampunk) แต่ยังไม่มีเรื่องหลัก/ตัวเอก/เป้าหมายของเกม
 - save เก่าที่ชี้ room_01/room_02 (ถูก rename) จะเริ่มใหม่ที่ซอยทองเหลืองเอง
 - test "path bends around the pillar" flake = navmesh map ยังไม่ sync หลังเปลี่ยนห้อง → test รอจน `map_get_path` ได้ path (≤30 เฟรม)
-- ยังไม่มี: บทที่ 2 (ใครแกะวาล์ว), เสียง, เมนู/new game, sprite จริงของเฮียเป้ง/พี่แจ่ม (ลบ save = `adb shell run-as com.drums55.game25d rm files/save_0.json`)
+- ยังไม่มี: บทที่ 2 (ใครแกะวาล์ว), เสียง, เมนู/new game, sprite จริงของเฮียเป้ง/พี่แจ่ม/คุณนายวรรณ (ลบ save = `adb shell run-as com.drums55.game25d rm files/save_0.json`)

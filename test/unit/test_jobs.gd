@@ -200,3 +200,56 @@ func test_needs_blocks_delivery_until_item_found():
 	assert_true(Jobs.on_interact("market_boiler"))
 	assert_has(GameState.done_jobs, "cake_for_boiler")
 	assert_false(GameState.has_item("incense"), "incense used up")
+
+
+func test_reputation_moves_with_jobs_and_tips_pay():
+	assert_true(Jobs.accept("gear_for_lung"))
+	Jobs.on_interact("je_muay")
+	_finish_dialog()
+	Jobs.on_interact("lung_pradit")
+	assert_eq(GameState.get_rep("folk"), 1, "folk employer +1 on time")
+	assert_eq(GameState.money, 80, "no tip at rep 0")
+	_finish_dialog()
+	# company job pays well but costs the folk
+	assert_true(Jobs.accept("meter_for_boiler"))
+	Jobs.on_interact("khun_wan")
+	_finish_dialog()
+	Jobs.on_interact("market_boiler")
+	_finish_dialog()
+	assert_eq(GameState.get_rep("company"), 1)
+	assert_eq(GameState.get_rep("folk"), -1)
+	assert_eq(GameState.money, 80 + 150)
+	# folk tip: rep 2 -> +20
+	GameState.add_rep("folk", 3)
+	assert_eq(Jobs.tip(Jobs.get_job("mackerel_for_lung")), 20)
+
+
+func test_failed_job_costs_employer_rep_and_rep_gates_offers():
+	assert_does_not_have(_ids(Jobs.available()), "notice_for_lung", "needs company 1")
+	assert_true(Jobs.accept("parts_box"))
+	Jobs.abandon("parts_box")
+	assert_eq(GameState.get_rep("garage"), -1)
+	GameState.add_rep("company", 1)
+	assert_has(_ids(Jobs.available()), "notice_for_lung")
+
+
+func test_reputation_saved():
+	GameState.add_rep("company", -3)
+	GameState.save_game()
+	GameState.new_game()
+	assert_eq(GameState.get_rep("company"), 0)
+	assert_true(GameState.load_game())
+	assert_eq(GameState.get_rep("company"), -3)
+
+
+func test_rep_branches_dialog_and_discounts_rent():
+	var data: Dictionary = JSON.parse_string(
+		FileAccess.get_file_as_string("res://assets/dialog/dialog.json")
+	)
+	var f := {}
+	var lines := DialogData.resolve(data, "hia_peng", f, [], 260, {"garage": 3})
+	assert_eq(int(lines[1].get("money", 0)), -250, "garage friends pay 250")
+	lines = DialogData.resolve(data, "hia_peng", f, [], 260, {"garage": 0})
+	assert_ne(int(lines[1].get("money", 0)), -250, "others still owe 300")
+	lines = DialogData.resolve(data, "khun_wan", {"met_wan": true}, [], 0, {"company": -2})
+	assert_string_contains(lines[0]["text"], "รอยฟัน", "Wan remembers the cat bite")

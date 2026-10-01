@@ -26,6 +26,7 @@ func _ready() -> void:
 	GameState.inventory_changed.connect(_on_inventory)
 	GameState.notice.connect(_on_notice)
 	GameState.time_changed.connect(_on_time)
+	GameState.rep_changed.connect(_on_rep)
 	_on_time(GameState.day, GameState.tick)
 	add_to_group("hud")
 	_on_hp(GameState.hp, GameState.MAX_HP)
@@ -34,8 +35,17 @@ func _ready() -> void:
 	_notice.modulate.a = 0.0
 
 
-func _on_time(day: int, _tick: int) -> void:
-	_clock.text = "วันที่ %d · %s" % [day, GameState.slot_name()]
+func _on_time(_day: int, _tick: int) -> void:
+	_on_rep(GameState.rep)
+
+
+## Reputation sits on the clock line: "วันที่ 2 · สาย   ชาวบ้าน +2 · อู่ 0 · บริษัท -1"
+func _on_rep(rep: Dictionary) -> void:
+	var parts: Array[String] = []
+	for faction in GameState.FACTIONS:
+		var name: String = GameState.FACTIONS[faction]
+		parts.append("%s %+d" % [name.trim_suffix("ไอน้ำ"), int(rep.get(faction, 0))])
+	_clock.text = "วันที่ %d · %s    %s" % [GameState.day, GameState.slot_name(), " · ".join(parts)]
 
 
 func open_job_board() -> void:
