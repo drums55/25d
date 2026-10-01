@@ -4,15 +4,16 @@ extends Node
 ## y-sorted World node so it sorts against props.
 
 ## Tint per day slot (เช้า..ค่ำ) and night.
+## Strong enough to read at a glance (owner: "no sense of time").
 const SLOT_TINTS := [
-	Color(1.0, 0.96, 0.9),
-	Color(1.0, 1.0, 0.98),
-	Color(1.0, 1.0, 1.0),
+	Color(1.0, 0.88, 0.78),
 	Color(1.0, 0.97, 0.92),
-	Color(1.0, 0.86, 0.72),
-	Color(0.72, 0.68, 0.82),
+	Color(1.0, 1.0, 1.0),
+	Color(1.0, 0.92, 0.8),
+	Color(1.0, 0.72, 0.52),
+	Color(0.62, 0.58, 0.82),
 ]
-const NIGHT_TINT := Color(0.45, 0.48, 0.7)
+const NIGHT_TINT := Color(0.36, 0.4, 0.66)
 
 @onready var _room_holder: Node2D = $RoomHolder
 @onready var _player: Player = $Player

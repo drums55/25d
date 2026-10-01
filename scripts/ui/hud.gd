@@ -10,6 +10,7 @@ const NOTICE_HOLD := 2.2
 var _title_tween: Tween
 var _notices: Array[String] = []
 var _notice_busy := false
+var _last_slot := -1
 
 @onready var _title: Label = %RoomTitle
 @onready var _hearts: Label = %Hearts
@@ -18,6 +19,8 @@ var _notice_busy := false
 @onready var _notice: Label = %Notice
 @onready var _clock: Label = %Clock
 @onready var _board: JobBoard = %JobBoard
+@onready var _deliveries: Label = %Deliveries
+@onready var _day_clock: DayClock = %DayClock
 
 
 func _ready() -> void:
@@ -27,6 +30,7 @@ func _ready() -> void:
 	GameState.notice.connect(_on_notice)
 	GameState.time_changed.connect(_on_time)
 	GameState.rep_changed.connect(_on_rep)
+	Jobs.jobs_changed.connect(_on_jobs)
 	_on_time(GameState.day, GameState.tick)
 	add_to_group("hud")
 	_on_hp(GameState.hp, GameState.MAX_HP)
@@ -37,15 +41,42 @@ func _ready() -> void:
 
 func _on_time(_day: int, _tick: int) -> void:
 	_on_rep(GameState.rep)
+	_on_jobs()
+	_day_clock.queue_redraw()
+	# 0..5 = day slots, 6 = night; announce each step forward
+	var slot := GameState.SLOT_NAMES.size() if GameState.is_night() else GameState.slot()
+	if _last_slot >= 0 and slot > _last_slot:
+		var name: String = "กลางคืน" if GameState.is_night() else GameState.slot_name()
+		_on_notice("เวลาผ่านไป ... ตอนนี้%s" % name)
+	_last_slot = slot
 
 
-## Reputation sits on the clock line: "วันที่ 2 · สาย   ชาวบ้าน +2 · อู่ 0 · บริษัท -1"
+## Active deliveries with their countdown, under the day dial.
+func _on_jobs() -> void:
+	var rows: Array[String] = []
+	for job in Jobs.active_jobs():
+		var left := int(job.get("due_tick", 0)) - GameState.tick
+		var due := (
+			"สายแล้ว!"
+			if left < 0
+			else "เหลือ %d ช่วง" % ceili(left / float(GameState.TICKS_PER_SLOT))
+		)
+		var where: String = (
+			job.get("target_where", "?") if job.get("picked", false) else job["pickup"]["where"]
+		)
+		var verb := "ส่ง" if job.get("picked", false) else "รับ"
+		rows.append("%s · %s %s · %s" % [job["title"], verb, where, due])
+	_deliveries.text = "\n".join(rows)
+
+
+## Reputation line under the money: "ชื่อเสียง  ชาวบ้าน +2 · อู่ +0 · บริษัท -1"
+## (time itself is shown by the DayClock dial).
 func _on_rep(rep: Dictionary) -> void:
 	var parts: Array[String] = []
 	for faction in GameState.FACTIONS:
 		var name: String = GameState.FACTIONS[faction]
 		parts.append("%s %+d" % [name.trim_suffix("ไอน้ำ"), int(rep.get(faction, 0))])
-	_clock.text = "วันที่ %d · %s    %s" % [GameState.day, GameState.slot_name(), " · ".join(parts)]
+	_clock.text = "ชื่อเสียง  " + " · ".join(parts)
 
 
 func open_job_board() -> void:
