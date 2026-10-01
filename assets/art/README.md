@@ -37,11 +37,29 @@ Current placeholder objects and their names (use these names for files):
 | `brass_automaton` | หุ่นทองเหลือง training dummy |
 | `boiler` | market boiler with gauges |
 | `gear_stall` | แผงขายเฟืองมือสอง |
+| `rider` (character, player) | ไรเดอร์: delivery rider, helmet + goggles, pipe wrench |
 | `lung_pradit` (character) | ลุงประดิษฐ์: old noodle vendor / tinkerer |
 | `je_muay` (character) | เจ๊หมวย: gear seller |
 
 Fonts: `assets/fonts/Kanit-Medium.ttf` (SIL OFL, see OFL.txt) is the project
 font because Godot's default font has no Thai glyphs.
+
+## Current art = generated vector (SVG)
+
+Everything in `props/` and `characters/` right now comes from
+`tools/art/gen_svg.py` (plain python, no deps). Edit the generator, run it,
+import. SVG and PNG are both picked up; SVG wins when both exist, so delete
+the .svg when replacing a piece with AI-painted PNG.
+
+## Drop-in rules (no scene edits needed)
+
+| put file at | used by |
+|---|---|
+| `props/<node name in snake_case>.png` | PropBlock / TrainingDummy, origin = bottom centre |
+| `rooms/<room scene name>.png` | IsoRoom backdrop (floor + back walls), see `IsoRoom.get_backdrop_rect` |
+| `characters/<character_name>/<part>.png` | CutoutRig with that `character_name` |
+
+Author at 2x (`ArtLibrary.ART_SCALE`): a 170 px tall character is 340 px.
 
 ## Characters = cut-out parts (not sprite sheets)
 

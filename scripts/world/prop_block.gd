@@ -20,6 +20,9 @@ extends StaticBody2D
 	set(v):
 		draw_placeholder = v
 		queue_redraw()
+## PNG name under assets/art/props/ (default: this node's name in snake_case).
+## When the file exists it replaces the placeholder block automatically.
+@export var art_name := ""
 
 
 func _ready() -> void:
@@ -28,6 +31,27 @@ func _ready() -> void:
 	var shape := CollisionPolygon2D.new()
 	shape.polygon = Iso.footprint(footprint_cells)
 	add_child(shape)
+	apply_art()
+
+
+func get_art_name() -> String:
+	return art_name if not art_name.is_empty() else name.to_snake_case()
+
+
+## Uses assets/art/props/<art_name>.png when present: bottom-centre on origin.
+func apply_art() -> bool:
+	var tex := ArtLibrary.prop(get_art_name())
+	if tex == null:
+		return false
+	var sprite := Sprite2D.new()
+	sprite.name = "Art"
+	sprite.texture = tex
+	sprite.centered = false
+	sprite.offset = Vector2(-tex.get_width() * 0.5, -tex.get_height())
+	sprite.scale = Vector2.ONE / ArtLibrary.ART_SCALE
+	add_child(sprite)
+	draw_placeholder = false
+	return true
 
 
 func _draw() -> void:

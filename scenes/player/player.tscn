@@ -27,6 +27,7 @@ polygon = PackedVector2Array(-34, 0, -24, -10, 0, -14, 24, -10, 34, 0, 24, 10, 0
 shape = SubResource("CircleShape2D_feet")
 
 [node name="Rig" parent="." instance=ExtResource("2_rig")]
+character_name = "rider"
 
 [node name="InteractArea" type="Area2D" parent="."]
 collision_layer = 0

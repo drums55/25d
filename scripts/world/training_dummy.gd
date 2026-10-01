@@ -16,6 +16,17 @@ func _ready() -> void:
 		return
 	collision_layer = 1 | 8  # world + hittable
 	add_to_group("pickable")
+	var tex := ArtLibrary.prop(name.to_snake_case())
+	if tex:
+		for child in $Body.get_children():
+			child.visible = false
+		var sprite := Sprite2D.new()
+		sprite.texture = tex
+		sprite.centered = false
+		sprite.offset = Vector2(-tex.get_width() * 0.5, -tex.get_height())
+		sprite.scale = Vector2.ONE / ArtLibrary.ART_SCALE
+		$Body.add_child(sprite)
+		$Hits.position.y = -tex.get_height() / ArtLibrary.ART_SCALE - 40
 
 
 func take_hit(_damage: int, from: Vector2) -> void:

@@ -18,6 +18,9 @@ const PART_BONES := {
 }
 const ATTACK_TIME := 0.22
 
+## Folder name under assets/art/characters/; its PNGs become the skin when
+## present (see ArtLibrary). Leave empty to keep placeholders.
+@export var character_name := ""
 @export var skin: CutoutSkin:
 	set(v):
 		skin = v
@@ -54,6 +57,8 @@ func _ready() -> void:
 	_hip_rest_y = _hip.position.y
 	$Skeleton2D/Hip/Torso/ArmR/Weapon.visible = show_weapon
 	_apply_tint()
+	if skin == null and not character_name.is_empty() and not Engine.is_editor_hint():
+		skin = ArtLibrary.character(character_name)
 	apply_skin()
 
 
@@ -98,8 +103,10 @@ func apply_skin() -> void:
 			bone.add_child(art)
 		art.texture = skin.get_texture(part)
 		art.offset = -skin.get_pivot(part)
+		art.scale = Vector2.ONE / ArtLibrary.ART_SCALE
 	if has_skin:
 		_face.visible = false
+		$Skeleton2D/Hip/Torso/ArmR/Weapon.visible = false
 
 
 func _swap_textures(back: bool) -> void:

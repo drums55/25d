@@ -20,6 +20,14 @@
   ตุ๊กตุ๊ก ศาลพระภูมิ เสาไฟ + ทองเหลือง/ทองแดง ท่อไอน้ำ เฟือง. ห้องแรก `soi_brass` (ซอยทองเหลือง),
   ห้องสอง `steam_market` (ตลาดไอน้ำ). NPC: ลุงประดิษฐ์, เจ๊หมวย. ข้อความในเกมเป็นภาษาไทย.
   style guide + prompt template สำหรับ AI art อยู่ที่ `assets/art/README.md`
+- **ตัวเอก = ไรเดอร์** (ไรเดอร์ส่งของ/วินฯ ใส่หมวกกันน็อก+แว่นกันลม ถือประแจท่อเป็นอาวุธ) — เรื่องหลัก/เป้าหมายยังไม่คุย
+- **Art ตอนนี้ = vector SVG ที่วาดด้วยโค้ด** `tools/art/gen_svg.py` (รันแล้วได้ `assets/art/**.svg` ทุกชิ้น) —
+  ใน cloud ไม่มี AI image gen; วิดีโอที่ Cowork ทำก็ใช้ภาพถ่าย+overlay ไม่ได้วาดเอง. แก้ art = แก้ generator
+  แล้วรันใหม่ (อย่าแก้ .svg ตรงๆ จะโดนทับ). ถ้าได้ภาพ AI (png) มาทีหลัง วางชื่อเดียวกัน → .svg ชนะ ต้องลบ .svg ออก
+- **Drop-in art pipeline** (`ArtLibrary`): `assets/art/props/<snake_name>.(svg|png)` (origin ล่างกลาง),
+  `assets/art/rooms/<room>.(svg|png)` (backdrop ทั้งห้อง), `assets/art/characters/<name>/<part>.(svg|png)`
+  (+ `pivots.json` optional). PropBlock/IsoRoom/TrainingDummy/CutoutRig หยิบใช้เองตามชื่อ node (snake_case)
+  หรือ `art_name`/`character_name`; ไม่มีไฟล์ = placeholder เดิม. Art วาดที่ 2x (`ART_SCALE`) แล้วย่อครึ่ง
 - ฟอนต์ project = Kanit Medium (OFL) ที่ `assets/fonts/` — ฟอนต์ default ของ Godot ไม่มีอักษรไทย
 - Target: Redmi Pad Pro (2560×1600, 16:10, Android 16) + Samsung S24 FE; landscape; touch
 - **Control = point & click** (เจ้าของสั่ง 2026-10-01 แทน virtual joystick): แตะพื้น = เดิน (กดค้างลาก = บังคับต่อ),
@@ -39,7 +47,8 @@ scenes/characters/       cutout_rig.tscn (Skeleton2D: Hip > LegL/LegR/Torso > Ar
 scenes/props/            prop_block, door, npc, interactable, training_dummy
 scenes/ui/               hud (ปุ่ม ATK + dialog box), dialog_box
 scripts/autoload/        GameState (flags, save/load), Dialog (runner), SceneRouter (fade + room swap)
-scripts/core/            Iso (math), SaveData, DialogData — pure logic, unit-tested
+scripts/core/            Iso (math), SaveData, DialogData, ArtLibrary — pure logic, unit-tested
+tools/art/gen_svg.py     generator ของ art ทั้งหมด (python3, ไม่ต้องลง lib)
 assets/dialog/dialog.json  dialog ทั้งหมด (format อยู่หัวไฟล์ scripts/core/dialog_data.gd)
 test/unit/               GUT tests (test_scenes.gd = smoke test ทุก scene + สัญญาของห้อง)
 tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.ps1/.sh, godot_path.ps1, run_tests.sh, fetch_gut.*

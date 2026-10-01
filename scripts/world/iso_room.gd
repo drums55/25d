@@ -28,6 +28,8 @@ const NAV_MIN_EDGE := 1.0
 	set(v):
 		grid_size = v
 		queue_redraw()
+## PNG name under assets/art/rooms/ (default: node name in snake_case).
+@export var art_name := ""
 @export var draw_placeholder := true:
 	set(v):
 		draw_placeholder = v
@@ -43,6 +45,32 @@ func _ready() -> void:
 		return
 	_build_boundary()
 	_build_navigation()
+	apply_art()
+
+
+## Uses assets/art/rooms/<art_name>.png as backdrop when present. The image
+## must be painted over the placeholder layout: its top-left corner maps to
+## (-grid_w*64, -wall_height) in room space, i.e. the backdrop rect below.
+func get_backdrop_rect() -> Rect2:
+	var c := get_corners()
+	return Rect2(c[3].x, c[0].y - wall_height, c[1].x - c[3].x, c[2].y - c[0].y + wall_height)
+
+
+func apply_art() -> bool:
+	var tex := ArtLibrary.room(art_name if not art_name.is_empty() else name.to_snake_case())
+	if tex == null:
+		return false
+	var sprite := Sprite2D.new()
+	sprite.name = "Backdrop"
+	sprite.texture = tex
+	sprite.centered = false
+	var rect := get_backdrop_rect()
+	sprite.position = rect.position
+	sprite.scale = rect.size / tex.get_size()
+	add_child(sprite)
+	move_child(sprite, 0)
+	draw_placeholder = false
+	return true
 
 
 func get_world() -> Node2D:

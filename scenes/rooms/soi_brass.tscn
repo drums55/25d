@@ -35,12 +35,14 @@ color = Color(0.55, 0.38, 0.25, 1)
 
 [node name="PowerPoleR" parent="World" instance=ExtResource("2_prop")]
 position = Vector2(595.2, 374.4)
+art_name = "power_pole"
 footprint_cells = Vector2(0.35, 0.35)
 height = 330.0
 color = Color(0.3, 0.29, 0.3, 1)
 
 [node name="PowerPoleL" parent="World" instance=ExtResource("2_prop")]
 position = Vector2(-595.2, 374.4)
+art_name = "power_pole"
 footprint_cells = Vector2(0.35, 0.35)
 height = 330.0
 color = Color(0.3, 0.29, 0.3, 1)
@@ -70,6 +72,7 @@ color = Color(0.2, 0.4, 0.85, 1)
 position = Vector2(-256, 240)
 
 [node name="Rig" parent="World/LungPradit"]
+character_name = "lung_pradit"
 tint = Color(0.95, 0.8, 0.55, 1)
 
 [node name="Interactable" parent="World/LungPradit"]
@@ -83,6 +86,12 @@ color = Color(0.2, 0.47, 0.46, 1)
 
 [node name="SteamVent" parent="World/SteamTukTuk" instance=ExtResource("6_steam")]
 position = Vector2(70, -100)
+
+[node name="SteamBike" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(288, 544)
+footprint_cells = Vector2(1.4, 0.7)
+height = 70.0
+color = Color(0.75, 0.5, 0.2, 1)
 
 [node name="BrassAutomaton" parent="World" instance=ExtResource("4_dummy")]
 position = Vector2(192, 416)

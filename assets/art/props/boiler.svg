@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="520" viewBox="0 0 300 520">
+<polygon points="22.0,520.0 150.0,584.0 150.0,556.0 22.0,492.0" fill="#352F33" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<polygon points="150.0,584.0 278.0,520.0 278.0,492.0 150.0,556.0" fill="#262225" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<polygon points="150.0,428.0 278.0,492.0 150.0,556.0 22.0,492.0" fill="#4A4248" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<defs><linearGradient id="g3146" x1="0" x2="1"><stop offset="0" stop-color="#5C3721"/><stop offset="0.45" stop-color="#B56D41"/><stop offset="1" stop-color="#643C24"/></linearGradient></defs>
+<path d="M96.2,160.0 L96.2,492.0 A53.8,26.9 0 0,0 203.8,492.0 L203.8,160.0 A53.8,26.9 0 0,0 96.2,160.0 Z" fill="url(#g3146)" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<ellipse cx="150.0" cy="160.0" rx="53.8" ry="26.9" fill="#A8653D" stroke="#1E1A1F" stroke-width="3"/>
+<ellipse cx="150.0" cy="400.0" rx="53.8" ry="26.9" fill="none" stroke="#8F6B2A" stroke-width="6"/>
+<ellipse cx="201.4" cy="407.9" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="183.4" cy="421.1" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="153.8" cy="426.8" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="122.9" cy="423.2" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="101.4" cy="411.5" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="150.0" cy="280.0" rx="53.8" ry="26.9" fill="none" stroke="#8F6B2A" stroke-width="6"/>
+<ellipse cx="201.4" cy="287.9" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="183.4" cy="301.1" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="153.8" cy="306.8" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="122.9" cy="303.2" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="101.4" cy="291.5" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<path d="M96.2,160.0 A54.0,30.0 0 0,1 203.8,160.0 Z" fill="#C9A04A" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="150.0,132.0 150.0,100.0" fill="none" stroke="#5D666F" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="150.0,132.0 150.0,100.0" fill="none" stroke="#9AA3AD" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="72.2" y="444.9" width="48.0" height="36.0" rx="0" fill="#2B2629" stroke="#1E1A1F" stroke-width="3"/>
+<rect x="80.2" y="452.9" width="32.0" height="18.0" rx="0" fill="#F08A2A" stroke="none" stroke-width="0"/>
+<ellipse cx="96.2" cy="326.9" rx="15.0" ry="15.0" fill="#EFE3C8" stroke="#8F6B2A" stroke-width="3"/>
+<ellipse cx="96.2" cy="326.9" rx="19.0" ry="19.0" fill="none" stroke="#C9A04A" stroke-width="3"/>
+<polyline points="96.2,326.9 103.5,318.3" fill="none" stroke="#C0392B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="96.2" cy="326.9" rx="2.0" ry="2.0" fill="#1E1A1F" stroke="#1E1A1F" stroke-width="1"/>
+<ellipse cx="96.2" cy="246.9" rx="10.0" ry="10.0" fill="#EFE3C8" stroke="#8F6B2A" stroke-width="3"/>
+<ellipse cx="96.2" cy="246.9" rx="14.0" ry="14.0" fill="none" stroke="#C9A04A" stroke-width="3"/>
+<polyline points="96.2,246.9 101.1,241.1" fill="none" stroke="#C0392B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="96.2" cy="246.9" rx="2.0" ry="2.0" fill="#1E1A1F" stroke="#1E1A1F" stroke-width="1"/>
+<ellipse cx="217.8" cy="346.9" rx="16.0" ry="16.0" fill="none" stroke="#C0392B" stroke-width="5"/>
+<polyline points="217.8,330.9 217.8,362.9" fill="none" stroke="#C0392B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="201.8,346.9 233.8,346.9" fill="none" stroke="#C0392B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

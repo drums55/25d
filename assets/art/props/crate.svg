@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="200" viewBox="0 0 240 200">
+<polygon points="4.8,200.0 120.0,257.6 120.0,137.6 4.8,80.0" fill="#64401E" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<polygon points="120.0,257.6 235.2,200.0 235.2,80.0 120.0,137.6" fill="#482E16" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<polygon points="120.0,22.4 235.2,80.0 120.0,137.6 4.8,80.0" fill="#8B5A2B" stroke="#1E1A1F" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="4.8,176.0 120.0,233.6 235.2,176.0" fill="none" stroke="#5C3A1A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="4.8,104.0 120.0,161.6 235.2,104.0" fill="none" stroke="#5C3A1A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="17.6" cy="182.4" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="17.6" cy="110.4" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="107.2" cy="227.2" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="107.2" cy="155.2" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+</svg>

@@ -41,6 +41,7 @@ color = Color(0.78, 0.62, 0.3, 1)
 position = Vector2(-89.6, 299.2)
 
 [node name="Rig" parent="World/JeMuay"]
+character_name = "je_muay"
 tint = Color(0.95, 0.6, 0.75, 1)
 
 [node name="Interactable" parent="World/JeMuay"]

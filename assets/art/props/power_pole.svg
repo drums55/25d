@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="720" viewBox="0 0 160 720">
+<ellipse cx="80.0" cy="720.0" rx="18.0" ry="9.0" fill="#4A4248" stroke="#1E1A1F" stroke-width="3"/>
+<rect x="71.0" y="60.0" width="18.0" height="660.0" rx="0" fill="#6F6763" stroke="#1E1A1F" stroke-width="3"/>
+<rect x="71.0" y="60.0" width="6.0" height="660.0" rx="0" fill="#8A817C" stroke="none" stroke-width="0"/>
+<rect x="20.0" y="75.0" width="120.0" height="10.0" rx="0" fill="#4A4248" stroke="#1E1A1F" stroke-width="3"/>
+<rect x="28.0" y="62.0" width="8.0" height="13.0" rx="0" fill="#EFE3C8" stroke="#1E1A1F" stroke-width="2"/>
+<rect x="60.0" y="62.0" width="8.0" height="13.0" rx="0" fill="#EFE3C8" stroke="#1E1A1F" stroke-width="2"/>
+<rect x="92.0" y="62.0" width="8.0" height="13.0" rx="0" fill="#EFE3C8" stroke="#1E1A1F" stroke-width="2"/>
+<rect x="124.0" y="62.0" width="8.0" height="13.0" rx="0" fill="#EFE3C8" stroke="#1E1A1F" stroke-width="2"/>
+<rect x="20.0" y="125.0" width="120.0" height="10.0" rx="0" fill="#4A4248" stroke="#1E1A1F" stroke-width="3"/>
+<rect x="28.0" y="112.0" width="8.0" height="13.0" rx="0" fill="#EFE3C8" stroke="#1E1A1F" stroke-width="2"/>
+<rect x="60.0" y="112.0" width="8.0" height="13.0" rx="0" fill="#EFE3C8" stroke="#1E1A1F" stroke-width="2"/>
+<rect x="92.0" y="112.0" width="8.0" height="13.0" rx="0" fill="#EFE3C8" stroke="#1E1A1F" stroke-width="2"/>
+<rect x="124.0" y="112.0" width="8.0" height="13.0" rx="0" fill="#EFE3C8" stroke="#1E1A1F" stroke-width="2"/>
+<path d="M10,90 Q50,140 150,94" fill="none" stroke="#1E1A1F" stroke-width="2" stroke-linejoin="round"/>
+<path d="M10,100 Q80,162 150,104" fill="none" stroke="#1E1A1F" stroke-width="2" stroke-linejoin="round"/>
+<path d="M10,120 Q110,194 150,124" fill="none" stroke="#1E1A1F" stroke-width="2" stroke-linejoin="round"/>
+<path d="M10,140 Q140,226 150,144" fill="none" stroke="#1E1A1F" stroke-width="2" stroke-linejoin="round"/>
+<rect x="92.0" y="160.0" width="30.0" height="60.0" rx="0" fill="#C9A04A" stroke="#1E1A1F" stroke-width="3"/>
+<ellipse cx="100.0" cy="170.0" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="114.0" cy="170.0" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="100.0" cy="210.0" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<ellipse cx="114.0" cy="210.0" rx="3.0" ry="3.0" fill="#E8C878" stroke="#8F6B2A" stroke-width="1.5"/>
+<polyline points="80.0,240.0 130.0,220.0" fill="none" stroke="#5D666F" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="120.0" y="220.0" width="22.0" height="30.0" rx="0" fill="#E8C878" stroke="#1E1A1F" stroke-width="4"/>
+<rect x="124.0" y="226.0" width="14.0" height="18.0" rx="0" fill="#FFF2B0" stroke="none" stroke-width="0"/>
+</svg>
