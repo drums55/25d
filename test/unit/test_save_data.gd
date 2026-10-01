@@ -10,9 +10,9 @@ func after_each():
 
 func test_dict_round_trip():
 	var s := SaveData.new()
-	s.room_path = "res://scenes/rooms/room_02.tscn"
-	s.spawn_id = "from_room_01"
-	s.flags = {"met_elder": true}
+	s.room_path = "res://scenes/rooms/steam_market.tscn"
+	s.spawn_id = "from_soi"
+	s.flags = {"met_pradit": true}
 	var back := SaveData.from_dict(s.to_dict())
 	assert_eq(back.room_path, s.room_path)
 	assert_eq(back.spawn_id, s.spawn_id)
@@ -47,16 +47,16 @@ func test_read_missing_or_corrupt_returns_null():
 
 func test_game_state_save_load_and_bad_room_fallback():
 	GameState.new_game()
-	GameState.set_flag("met_elder")
-	GameState.room_path = "res://scenes/rooms/room_02.tscn"
-	GameState.spawn_id = "from_room_01"
+	GameState.set_flag("met_pradit")
+	GameState.room_path = "res://scenes/rooms/steam_market.tscn"
+	GameState.spawn_id = "from_soi"
 	assert_true(GameState.save_game(PATH))
 	GameState.new_game()
-	assert_false(GameState.has_flag("met_elder"))
+	assert_false(GameState.has_flag("met_pradit"))
 	assert_true(GameState.load_game(PATH))
-	assert_true(GameState.has_flag("met_elder"))
-	assert_eq(GameState.room_path, "res://scenes/rooms/room_02.tscn")
-	assert_eq(GameState.spawn_id, "from_room_01")
+	assert_true(GameState.has_flag("met_pradit"))
+	assert_eq(GameState.room_path, "res://scenes/rooms/steam_market.tscn")
+	assert_eq(GameState.spawn_id, "from_soi")
 	# A save pointing at a deleted room falls back to the start room.
 	var s := SaveData.new()
 	s.room_path = "res://scenes/rooms/gone.tscn"

@@ -31,6 +31,7 @@ window/handheld/orientation=4
 
 [gui]
 
+theme/custom_font="res://assets/fonts/Kanit-Medium.ttf"
 theme/default_font_size=32
 
 [input]

@@ -3,7 +3,7 @@ extends Node
 
 signal flag_changed(flag: String, value: bool)
 
-const START_ROOM := "res://scenes/rooms/room_01.tscn"
+const START_ROOM := "res://scenes/rooms/soi_brass.tscn"
 const SAVE_PATH := "user://save_0.json"
 
 var room_path := START_ROOM

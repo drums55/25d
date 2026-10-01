@@ -16,6 +16,11 @@
 - Art **2D isometric แบบ Hades**: Node2D + Y-sort, ไม่มี 3D, ไม่ใช่ HD-2D
 - Graphics ทั้งหมด AI generate → ตัวละครเป็น **cut-out** (ชิ้นแยก + Skeleton2D) ไม่ใช่ sprite sheet;
   ฉาก/prop เป็นภาพนิ่ง ดู `assets/art/README.md`. ตอนนี้ใช้ placeholder polygon
+- **ธีม: ถนนกรุงเทพฯ (street Thai, BKK) × steampunk** (เจ้าของสั่ง 2026-10-01): ซอย ตึกแถว รถเข็นก๋วยเตี๋ยว
+  ตุ๊กตุ๊ก ศาลพระภูมิ เสาไฟ + ทองเหลือง/ทองแดง ท่อไอน้ำ เฟือง. ห้องแรก `soi_brass` (ซอยทองเหลือง),
+  ห้องสอง `steam_market` (ตลาดไอน้ำ). NPC: ลุงประดิษฐ์, เจ๊หมวย. ข้อความในเกมเป็นภาษาไทย.
+  style guide + prompt template สำหรับ AI art อยู่ที่ `assets/art/README.md`
+- ฟอนต์ project = Kanit Medium (OFL) ที่ `assets/fonts/` — ฟอนต์ default ของ Godot ไม่มีอักษรไทย
 - Target: Redmi Pad Pro (2560×1600, 16:10, Android 16) + Samsung S24 FE; landscape; touch
 - **Control = point & click** (เจ้าของสั่ง 2026-10-01 แทน virtual joystick): แตะพื้น = เดิน (กดค้างลาก = บังคับต่อ),
   แตะ NPC/ป้าย = เดินไปคุย, แตะของที่ตีได้ = เดินไปตี, แตะประตู = เดินเข้า, ระหว่าง dialog แตะที่ไหนก็ได้ = next.
@@ -29,7 +34,7 @@
 project.godot            viewport 1920x1200, stretch canvas_items/expand, sensor landscape
 export_presets.cfg       preset "Android": arm64 only, non-gradle, package com.drums55.game25d
 scenes/main.tscn         root: RoomHolder + Player (persistent) + HUD
-scenes/rooms/*.tscn      IsoRoom: World (y-sort) + Spawns (Marker2D ชื่อ = spawn id)
+scenes/rooms/*.tscn      soi_brass, steam_market — IsoRoom: World (y-sort) + Spawns (Marker2D ชื่อ = spawn id)
 scenes/characters/       cutout_rig.tscn (Skeleton2D: Hip > LegL/LegR/Torso > ArmL/ArmR/Head)
 scenes/props/            prop_block, door, npc, interactable, training_dummy
 scenes/ui/               hud (ปุ่ม ATK + dialog box), dialog_box
@@ -90,6 +95,9 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   (Area2D ที่สร้างใหม่เจอ) → การตีใช้ `intersect_shape` ตอนกดตี (`Player.get_hit_bodies`) ไม่พึ่ง overlap
 - รันเกมโดยไม่ import หลัง `git pull` ที่มี `class_name` ใหม่ → "Could not find type X" (เจ้าของเจอกับ ClickMarker)
   เพราะ `.godot/global_script_class_cache.cfg` เก่า → `run.ps1`/`update.ps1` ต้อง `--headless --import` ก่อนเสมอ
+- ห้อง: ถ้า obstacle 2 ชิ้นเกือบชนกัน (ช่องห่าง < ~1px หลัง inflate) navmesh จะมี edge สั้นมาก → error
+  "Attempted to merge a navigation mesh polygon edge" (เคยเกิดกับ LungPradit ชิดรถเข็น). test_scenes ตรวจ
+  `IsoRoom.shortest_nav_edge >= 1` และ spawn ต้องห่าง StaticBody2D > 90px — วางของใหม่แล้วรัน test เสมอ
 - `adb` ไม่อ่าน `ADB_SERIAL` เอง (มันอ่าน `ANDROID_SERIAL`) — script ส่ง `-s $env:ADB_SERIAL` ให้
 - Export template มี 1.1 GB; dev_setup แตกเฉพาะไฟล์ android_* เก็บไว้
 
@@ -104,5 +112,6 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
   Android cmdline-tools (`platform-tools`, `build-tools;34.0.0`) + ตั้ง `export/android/android_sdk_path`
 
 ## สถานะ / ยังไม่ได้ทำ
-- ธีม/เรื่องย่อของเกม: ยังไม่ได้คุย (ชื่อห้อง/NPC ตอนนี้เป็น placeholder: Room 01/02, Elder)
+- ธีมตกลงแล้ว (BKK steampunk) แต่ยังไม่มีเรื่องหลัก/ตัวเอก/เป้าหมายของเกม
+- save เก่าที่ชี้ room_01/room_02 (ถูก rename) จะเริ่มใหม่ที่ซอยทองเหลืองเอง
 - ยังไม่มี: ศัตรู/HP, inventory, เสียง, เมนู/new game (ลบ save = `adb shell run-as com.drums55.game25d rm files/save_0.json`)

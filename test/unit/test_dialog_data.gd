@@ -39,13 +39,13 @@ func test_shipped_dialog_file_parses_and_ids_resolve():
 func test_dialog_runner_sets_flags_and_finishes():
 	GameState.new_game()
 	watch_signals(Dialog)
-	assert_true(Dialog.start("elder"))
+	assert_true(Dialog.start("lung_pradit"))
 	assert_true(Dialog.is_active())
 	Dialog.typing = false
-	for i in 3:
+	for i in 4:
 		Dialog.advance()
 		Dialog.typing = false
 	assert_false(Dialog.is_active())
 	assert_signal_emitted(Dialog, "finished")
-	assert_true(GameState.has_flag("met_elder"))
+	assert_true(GameState.has_flag("met_pradit"))
 	GameState.new_game()

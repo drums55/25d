@@ -1,0 +1,77 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/iso_room.gd" id="1_room"]
+[ext_resource type="PackedScene" path="res://scenes/props/prop_block.tscn" id="2_prop"]
+[ext_resource type="PackedScene" path="res://scenes/props/interactable.tscn" id="3_int"]
+[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="4_door"]
+[ext_resource type="PackedScene" path="res://scenes/props/npc.tscn" id="5_npc"]
+[ext_resource type="PackedScene" path="res://scenes/props/steam_vent.tscn" id="6_steam"]
+
+[node name="SteamMarket" type="Node2D"]
+script = ExtResource("1_room")
+room_title = "ตลาดไอน้ำ"
+grid_size = Vector2i(10, 8)
+floor_color_a = Color(0.42, 0.32, 0.24, 1)
+floor_color_b = Color(0.38, 0.28, 0.21, 1)
+wall_color = Color(0.4, 0.21, 0.17, 1)
+
+[node name="World" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Boiler" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(256, 256)
+height = 200.0
+color = Color(0.66, 0.4, 0.24, 1)
+
+[node name="SteamVent" parent="World/Boiler" instance=ExtResource("6_steam")]
+position = Vector2(0, -205)
+amount = 22
+
+[node name="Interactable" parent="World/Boiler" instance=ExtResource("3_int")]
+prompt = "ดู"
+dialog_id = "boiler"
+
+[node name="GearStall" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(-160, 336)
+footprint_cells = Vector2(1.5, 1)
+height = 70.0
+color = Color(0.78, 0.62, 0.3, 1)
+
+[node name="JeMuay" parent="World" instance=ExtResource("5_npc")]
+position = Vector2(-89.6, 299.2)
+
+[node name="Rig" parent="World/JeMuay"]
+tint = Color(0.95, 0.6, 0.75, 1)
+
+[node name="Interactable" parent="World/JeMuay"]
+dialog_id = "je_muay"
+
+[node name="Crate" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(320, 416)
+footprint_cells = Vector2(0.9, 0.9)
+height = 60.0
+color = Color(0.48, 0.35, 0.22, 1)
+
+[node name="Sign" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(64, 416)
+footprint_cells = Vector2(0.5, 0.3)
+height = 110.0
+color = Color(0.85, 0.7, 0.3, 1)
+
+[node name="Interactable" parent="World/Sign" instance=ExtResource("3_int")]
+prompt = "อ่าน"
+dialog_id = "market_sign"
+
+[node name="DoorToSoi" parent="World" instance=ExtResource("4_door")]
+position = Vector2(-233.6, 139.2)
+target_room = "res://scenes/rooms/soi_brass.tscn"
+target_spawn = "from_market"
+wall_axis = 1
+
+[node name="Spawns" type="Node2D" parent="."]
+
+[node name="default" type="Marker2D" parent="Spawns"]
+position = Vector2(64, 288)
+
+[node name="from_soi" type="Marker2D" parent="Spawns"]
+position = Vector2(-153.6, 179.2)

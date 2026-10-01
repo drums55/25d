@@ -1,17 +1,34 @@
 {
-	"elder": {
-		"if_flag": "met_elder",
+	"lung_pradit": {
+		"if_flag": "met_pradit",
 		"lines": [
-			{"speaker": "Elder", "text": "Back again? The door to the east still leads where it did."}
+			{"speaker": "ลุงประดิษฐ์", "text": "หม้อยังไม่เดือดเลยไอ้หนู ไปเดินเล่นตลาดไอน้ำก่อนก็ได้"}
 		],
-		"else": "elder_first"
+		"else": "lung_pradit_first"
 	},
-	"elder_first": [
-		{"speaker": "Elder", "text": "Ah, a traveller. This is only a placeholder world for now."},
-		{"speaker": "Elder", "text": "Try the dummy over there with the attack button, then walk through the door."},
-		{"speaker": "Elder", "text": "Your progress is saved every time you change rooms.", "set_flag": "met_elder"}
+	"lung_pradit_first": [
+		{"speaker": "ลุงประดิษฐ์", "text": "อ้าว ไอ้หนู มาใหม่เหรอ ซอยทองเหลืองยินดีต้อนรับ"},
+		{"speaker": "ลุงประดิษฐ์", "text": "หม้อก๋วยเตี๋ยวลุงต่อท่อไอน้ำเดียวกับตุ๊กตุ๊กคันนั้นแหละ ประหยัดถ่านดี"},
+		{"speaker": "ลุงประดิษฐ์", "text": "อยากลองมือก็ไปตีหุ่นทองเหลืองตรงนั้นดู มันทนกว่าที่เห็นนะ"},
+		{"speaker": "ลุงประดิษฐ์", "text": "จะไปตลาดไอน้ำก็เดินเข้าประตูท้ายซอยไป", "set_flag": "met_pradit"}
 	],
-	"sign_room02": [
-		"A weathered sign: \"Room 02 — art coming soon.\""
+	"spirit_house": {
+		"if_flag": "prayed_shrine",
+		"lines": ["ควันธูปยังลอยอยู่ เฟืองในศาลหมุนช้าๆ อย่างสงบ"],
+		"else": "spirit_house_first"
+	},
+	"spirit_house_first": [
+		"ศาลพระภูมิทองเหลือง มีเฟืองเล็กๆ หมุนอยู่ข้างใน",
+		{"speaker": "", "text": "คุณยกมือไหว้ ... ไอน้ำจางๆ พ่นออกมาจากหลังคาศาล", "set_flag": "prayed_shrine"}
+	],
+	"je_muay": [
+		{"speaker": "เจ๊หมวย", "text": "เฟืองมือสองจ้า ถูกกว่าห้างแน่นอน"},
+		{"speaker": "เจ๊หมวย", "text": "ของแท้จากโรงกลึงฝั่งธนฯ นะ ไม่ใช่ของก๊อป"}
+	],
+	"boiler": [
+		"หม้อไอน้ำของตลาด ร้อนจัด เข็มวัดแรงดันสั่นอยู่ที่ขีดแดง"
+	],
+	"market_sign": [
+		"ป้าย: \"ตลาดไอน้ำ — เปิดตั้งแต่หม้อแรกเดือด จนถึงหวูดสุดท้าย\""
 	]
 }

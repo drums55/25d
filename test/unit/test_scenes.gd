@@ -34,6 +34,13 @@ func test_rooms_contract():
 			continue
 		add_child_autofree(room)
 		assert_true(room.get_world().y_sort_enabled, "%s World is y-sorted" % p)
+		var nav := (room.get_node("Navigation") as NavigationRegion2D).navigation_polygon
+		assert_gt(nav.get_polygon_count(), 0, "%s has a navmesh" % p)
+		assert_gte(
+			IsoRoom.shortest_nav_edge(nav),
+			IsoRoom.NAV_MIN_EDGE,
+			"%s navmesh has no sliver edges" % p
+		)
 		assert_not_null(room.get_node_or_null("Spawns/default"), "%s has default spawn" % p)
 		for child in room.get_world().get_children():
 			if child.get("target_room") == null:
@@ -43,6 +50,12 @@ func test_rooms_contract():
 			var spawn: String = "Spawns/" + child.target_spawn
 			assert_not_null(target.get_node_or_null(spawn), "%s -> %s" % [p, spawn])
 			target.free()
+		# Arrival points must not sit on top of a character/prop.
+		for spawn in room.get_node("Spawns").get_children():
+			for body in room.get_world().get_children():
+				if body is StaticBody2D:
+					var d: float = spawn.global_position.distance_to(body.global_position)
+					assert_gt(d, 90.0, "%s spawn %s clear of %s" % [p, spawn.name, body.name])
 
 
 func test_main_boots_into_start_room():

@@ -4,6 +4,45 @@ All art is AI-generated; nothing here is hand-drawn. Until real art lands the
 game uses procedural placeholders (coloured polygons), so every slot below is
 optional and can be filled one at a time.
 
+## Theme / style: Bangkok street steampunk
+
+Thai street life (Bangkok sois, shophouses, street food, tuk-tuks, spirit
+houses, tangled power lines) rebuilt with steam power: brass and copper pipes,
+pressure gauges, boilers, rivets, gears, steam vents. Warm lamp/lantern light,
+humid haze. Painted look like Hades (bold shapes, strong rim light, painted
+textures), NOT pixel art, NOT 3D render.
+
+Palette anchors: brass/gold (#C9A04A), copper (#A8653D), patina teal
+(#3F7A74), shophouse mint (#5E8F86), chili red (#C0392B), soot (#2B2629).
+
+Prompt template (append the specific subject):
+
+> hand-painted 2D game asset, isometric 2:1 view from above at 30 degrees,
+> Bangkok street steampunk, brass and copper machinery, rivets, steam,
+> warm lantern light, Hades (Supergiant Games) painted style, bold readable
+> silhouette, transparent background, no text, no watermark
+
+Current placeholder objects and their names (use these names for files):
+
+| name | what |
+|---|---|
+| `soi_brass` (room) | ซอยทองเหลือง: shophouse alley, mint walls, concrete floor |
+| `steam_market` (room) | ตลาดไอน้ำ: market under brick walls, warm tiles |
+| `noodle_cart` | รถเข็นก๋วยเตี๋ยวต่อหม้อไอน้ำ (red cart, brass boiler, steam) |
+| `steam_tuktuk` | ตุ๊กตุ๊กไอน้ำ (teal body, brass boiler at back) |
+| `spirit_house` | ศาลพระภูมิทองเหลือง with turning gears inside |
+| `power_pole` | เสาไฟ with tangled cables and brass transformers |
+| `water_tank` | copper water tank on legs |
+| `stool_red`, `stool_blue` | plastic street-food stools |
+| `brass_automaton` | หุ่นทองเหลือง training dummy |
+| `boiler` | market boiler with gauges |
+| `gear_stall` | แผงขายเฟืองมือสอง |
+| `lung_pradit` (character) | ลุงประดิษฐ์: old noodle vendor / tinkerer |
+| `je_muay` (character) | เจ๊หมวย: gear seller |
+
+Fonts: `assets/fonts/Kanit-Medium.ttf` (SIL OFL, see OFL.txt) is the project
+font because Godot's default font has no Thai glyphs.
+
 ## Characters = cut-out parts (not sprite sheets)
 
 AI cannot keep a character consistent across many animation frames, so each

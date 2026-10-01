@@ -18,6 +18,10 @@ extends Node2D
 const NAV_AGENT_RADIUS := 28.0
 ## Circle collision shapes become polygons with this many sides.
 const CIRCLE_SIDES := 12
+## Navmesh edges shorter than the navigation map cell size (1 px) break edge
+## merging ("Attempted to merge a navigation mesh polygon edge..."). Happens
+## when two obstacles almost touch; move one so they overlap or leave a gap.
+const NAV_MIN_EDGE := 1.0
 
 @export var room_title := ""
 @export var grid_size := Vector2i(12, 12):
@@ -99,10 +103,30 @@ func _build_navigation() -> void:
 	var nav := NavigationPolygon.new()
 	nav.agent_radius = NAV_AGENT_RADIUS
 	NavigationServer2D.bake_from_source_geometry_data(nav, geo)
+	var min_edge := shortest_nav_edge(nav)
+	if min_edge < NAV_MIN_EDGE:
+		push_warning(
+			(
+				"IsoRoom %s: navmesh edge %.2f px < %.1f; two obstacles nearly touch"
+				% [name, min_edge, NAV_MIN_EDGE]
+			)
+		)
 	var region := NavigationRegion2D.new()
 	region.name = "Navigation"
 	region.navigation_polygon = nav
 	add_child(region)
+
+
+static func shortest_nav_edge(nav: NavigationPolygon) -> float:
+	var verts := nav.get_vertices()
+	var shortest := INF
+	for i in nav.get_polygon_count():
+		var poly := nav.get_polygon(i)
+		for k in poly.size():
+			var a := verts[poly[k]]
+			var b := verts[poly[(k + 1) % poly.size()]]
+			shortest = minf(shortest, a.distance_to(b))
+	return shortest
 
 
 ## Collision footprints (room-local) of StaticBody2D children of World.

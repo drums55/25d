@@ -28,6 +28,12 @@ const ATTACK_TIME := 0.22
 		tint = v
 		if is_inside_tree():
 			_apply_tint()
+## Placeholder weapon in the right hand (player only; NPCs hide it).
+@export var show_weapon := true:
+	set(v):
+		show_weapon = v
+		if is_inside_tree():
+			$Skeleton2D/Hip/Torso/ArmR/Weapon.visible = v
 
 var facing: int = Iso.Dir.S
 var _walk := 0.0
@@ -46,6 +52,7 @@ var _hip_rest_y := 0.0
 
 func _ready() -> void:
 	_hip_rest_y = _hip.position.y
+	$Skeleton2D/Hip/Torso/ArmR/Weapon.visible = show_weapon
 	_apply_tint()
 	apply_skin()
 

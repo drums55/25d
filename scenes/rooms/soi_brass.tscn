@@ -1,0 +1,101 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/iso_room.gd" id="1_room"]
+[ext_resource type="PackedScene" path="res://scenes/props/prop_block.tscn" id="2_prop"]
+[ext_resource type="PackedScene" path="res://scenes/props/npc.tscn" id="3_npc"]
+[ext_resource type="PackedScene" path="res://scenes/props/training_dummy.tscn" id="4_dummy"]
+[ext_resource type="PackedScene" path="res://scenes/props/door.tscn" id="5_door"]
+[ext_resource type="PackedScene" path="res://scenes/props/steam_vent.tscn" id="6_steam"]
+[ext_resource type="PackedScene" path="res://scenes/props/interactable.tscn" id="7_int"]
+
+[node name="SoiBrass" type="Node2D"]
+script = ExtResource("1_room")
+room_title = "ซอยทองเหลือง"
+floor_color_a = Color(0.36, 0.33, 0.31, 1)
+floor_color_b = Color(0.32, 0.29, 0.28, 1)
+wall_color = Color(0.27, 0.39, 0.36, 1)
+
+[node name="World" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="SpiritHouse" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(0, 96)
+footprint_cells = Vector2(0.7, 0.7)
+height = 150.0
+color = Color(0.82, 0.64, 0.24, 1)
+
+[node name="Interactable" parent="World/SpiritHouse" instance=ExtResource("7_int")]
+prompt = "ไหว้"
+dialog_id = "spirit_house"
+
+[node name="WaterTank" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(384, 384)
+height = 190.0
+color = Color(0.55, 0.38, 0.25, 1)
+
+[node name="PowerPoleR" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(595.2, 374.4)
+footprint_cells = Vector2(0.35, 0.35)
+height = 330.0
+color = Color(0.3, 0.29, 0.3, 1)
+
+[node name="PowerPoleL" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(-595.2, 374.4)
+footprint_cells = Vector2(0.35, 0.35)
+height = 330.0
+color = Color(0.3, 0.29, 0.3, 1)
+
+[node name="NoodleCart" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(-256, 320)
+footprint_cells = Vector2(1.6, 0.9)
+height = 80.0
+color = Color(0.72, 0.22, 0.16, 1)
+
+[node name="SteamVent" parent="World/NoodleCart" instance=ExtResource("6_steam")]
+position = Vector2(-20, -84)
+
+[node name="StoolA" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(-230.4, 409.6)
+footprint_cells = Vector2(0.4, 0.4)
+height = 38.0
+color = Color(0.86, 0.16, 0.16, 1)
+
+[node name="StoolB" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(-345.6, 377.6)
+footprint_cells = Vector2(0.4, 0.4)
+height = 38.0
+color = Color(0.2, 0.4, 0.85, 1)
+
+[node name="LungPradit" parent="World" instance=ExtResource("3_npc")]
+position = Vector2(-256, 240)
+
+[node name="Rig" parent="World/LungPradit"]
+tint = Color(0.95, 0.8, 0.55, 1)
+
+[node name="Interactable" parent="World/LungPradit"]
+dialog_id = "lung_pradit"
+
+[node name="SteamTukTuk" parent="World" instance=ExtResource("2_prop")]
+position = Vector2(-32, 560)
+footprint_cells = Vector2(1.8, 1)
+height = 95.0
+color = Color(0.2, 0.47, 0.46, 1)
+
+[node name="SteamVent" parent="World/SteamTukTuk" instance=ExtResource("6_steam")]
+position = Vector2(70, -100)
+
+[node name="BrassAutomaton" parent="World" instance=ExtResource("4_dummy")]
+position = Vector2(192, 416)
+
+[node name="DoorToMarket" parent="World" instance=ExtResource("5_door")]
+position = Vector2(361.6, 203.2)
+target_room = "res://scenes/rooms/steam_market.tscn"
+target_spawn = "from_soi"
+
+[node name="Spawns" type="Node2D" parent="."]
+
+[node name="default" type="Marker2D" parent="Spawns"]
+position = Vector2(0, 384)
+
+[node name="from_market" type="Marker2D" parent="Spawns"]
+position = Vector2(275.2, 249.6)

@@ -5,6 +5,7 @@ extends Node
 
 @onready var _room_holder: Node2D = $RoomHolder
 @onready var _player: Player = $Player
+@onready var _hud: Hud = $HUD
 
 
 func _ready() -> void:
@@ -31,6 +32,7 @@ func load_room(room_path: String, spawn_id: String) -> bool:
 	room.get_world().add_child(_player)
 	_player.global_position = room.get_spawn_position(spawn_id)
 	_fit_camera(room)
+	_hud.show_title(room.room_title)
 	return true
 
 
