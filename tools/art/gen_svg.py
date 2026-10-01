@@ -104,6 +104,10 @@ class Svg:
 
     def write(self, name):
         path = os.path.join(ROOT, name + ".svg")
+        if os.path.exists(os.path.join(ROOT, name + ".png")):
+            # painted PNG replaces this placeholder (.svg would win in ArtLibrary)
+            print("skip", name, "(png exists)")
+            return
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w") as f:
             f.write('<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" '
