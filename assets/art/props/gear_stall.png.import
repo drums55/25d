@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://btsii4cf1ybuj"
-path="res://.godot/imported/leg_r.svg-79617d4103036bc7a660908013efff62.ctex"
+uid="uid://d4bishf8w7853"
+path="res://.godot/imported/gear_stall.png-c7689ba8fd23247a3aa599d8d7e91958.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/characters/je_muay/leg_r.svg"
-dest_files=["res://.godot/imported/leg_r.svg-79617d4103036bc7a660908013efff62.ctex"]
+source_file="res://assets/art/props/gear_stall.png"
+dest_files=["res://.godot/imported/gear_stall.png-c7689ba8fd23247a3aa599d8d7e91958.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

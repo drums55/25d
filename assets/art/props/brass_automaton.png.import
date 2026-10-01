@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://xkh67vqmpt2l"
-path="res://.godot/imported/torso.svg-57f3fc048561a216fd0e2ffade16582b.ctex"
+uid="uid://dsyohu8r8s7oc"
+path="res://.godot/imported/brass_automaton.png-50d2b831084a25ced8b88b21f4c1a788.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/characters/lung_pradit/torso.svg"
-dest_files=["res://.godot/imported/torso.svg-57f3fc048561a216fd0e2ffade16582b.ctex"]
+source_file="res://assets/art/props/brass_automaton.png"
+dest_files=["res://.godot/imported/brass_automaton.png-50d2b831084a25ced8b88b21f4c1a788.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

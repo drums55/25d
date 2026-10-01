@@ -720,9 +720,6 @@ if __name__ == "__main__":
     gear_stall()
     crate()
     sign()
-    character("rider")
-    character("lung_pradit", skin="#D8A878", shirt=CREAM, vest="#3C5A8A", hat="cap", wrench=False,
-              trousers="#4A3B30", hair="#BDB7AA")
-    character("je_muay", skin="#F2CBA6", shirt="#D96C8C", vest="#F2E6D0", hat="bun", wrench=False,
-              trousers="#5A3A6A", hair="#1C1418", female=True)
+    # Characters are 8-direction sprite sheets now (tools/art/3d/); the cut-out
+    # generator stays only as the placeholder path for unknown names.
     brass_automaton()

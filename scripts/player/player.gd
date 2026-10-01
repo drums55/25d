@@ -23,7 +23,7 @@ var order_target: Node2D = null
 var _cooldown := 0.0
 var _move_finger := -1
 
-@onready var rig: CutoutRig = $Rig
+@onready var rig: CharacterView = $Rig
 @onready var camera: Camera2D = $Camera2D
 @onready var _interact_area: Area2D = $InteractArea
 @onready var _hitbox: Area2D = $Hitbox
@@ -188,7 +188,8 @@ func _on_attack() -> void:
 		return
 	if _cooldown > 0.0:
 		return
-	_cooldown = attack_cooldown
+	# Let a full attack animation play before the next swing.
+	_cooldown = maxf(attack_cooldown, rig.attack_duration())
 	rig.play_attack()
 	for body in get_hit_bodies():
 		body.take_hit(1, global_position)

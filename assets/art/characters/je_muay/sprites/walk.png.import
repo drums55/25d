@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c6xyoq1koek7o"
-path="res://.godot/imported/leg_l.svg-1319da96afa3e42b98381d3c1754aafc.ctex"
+uid="uid://4yv0fsklnsu4"
+path="res://.godot/imported/walk.png-dabbfbbd11b1db9fdb90e45c8b1effed.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/characters/lung_pradit/leg_l.svg"
-dest_files=["res://.godot/imported/leg_l.svg-1319da96afa3e42b98381d3c1754aafc.ctex"]
+source_file="res://assets/art/characters/je_muay/sprites/walk.png"
+dest_files=["res://.godot/imported/walk.png-dabbfbbd11b1db9fdb90e45c8b1effed.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

@@ -42,7 +42,6 @@ position = Vector2(-48, 232)
 
 [node name="Rig" parent="World/JeMuay"]
 character_name = "je_muay"
-tint = Color(0.95, 0.6, 0.75, 1)
 
 [node name="Interactable" parent="World/JeMuay"]
 dialog_id = "je_muay"

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c5113xddpjbtl"
-path="res://.godot/imported/torso.svg-474e8922133a288cec1f81b9f19f1692.ctex"
+uid="uid://epxud7bmf5j6"
+path="res://.godot/imported/idle.png-86e75793cda309ae529cb2fb16e0ffed.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/characters/rider/torso.svg"
-dest_files=["res://.godot/imported/torso.svg-474e8922133a288cec1f81b9f19f1692.ctex"]
+source_file="res://assets/art/characters/je_muay/sprites/idle.png"
+dest_files=["res://.godot/imported/idle.png-86e75793cda309ae529cb2fb16e0ffed.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

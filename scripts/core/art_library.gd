@@ -6,7 +6,10 @@ class_name ArtLibrary
 ## Files may be .svg (vector, imported by Godot) or .png; .svg wins.
 ##   assets/art/props/<prop_name>.png          origin = (W/2, H - PROP_FOOT_MARGIN)
 ##   assets/art/rooms/<room_name>.png          floor + back walls backdrop
-##   assets/art/characters/<name>/<part>.png   head, torso, arm_l, arm_r,
+##   assets/art/characters/<name>/sprites/     8-direction sprite sheets (preferred):
+##       sprites.json  {frame_size, pivot, directions, anims:{name:{frames,fps}}}
+##       <anim>.png    rows = directions in Iso.Dir order, columns = frames
+##   assets/art/characters/<name>/<part>.png   cut-out fallback: head, torso, arm_l, arm_r,
 ##                                             leg_l, leg_r (+ head_back, torso_back)
 ##   assets/art/characters/<name>/pivots.json  optional {"part": [x, y]} joint
 ##                                             point in image px; default =
@@ -23,6 +26,68 @@ const ART_SCALE := 2.0
 ## front corners / wheels / shadow are not clipped: origin = (W/2, H - margin).
 const PROP_FOOT_MARGIN := 160.0
 const PARTS := ["head", "torso", "arm_l", "arm_r", "leg_l", "leg_r", "head_back", "torso_back"]
+## Animations that loop; anything else (attack...) plays once.
+const LOOPING_ANIMS := ["idle", "walk"]
+
+
+## Reads <root>/characters/<name>/sprites/sprites.json (+ one sheet per anim).
+## Returns {} when the character has no sprite set. Result keys: "frame_size"
+## (Vector2), "pivot" (Vector2), "directions" (Array[String]),
+## "anims" {name: {frames, fps, texture}}.
+static func sprite_set(char_name: String, root := ROOT) -> Dictionary:
+	var dir := "%s/characters/%s/sprites" % [root, char_name]
+	var json_path := dir.path_join("sprites.json")
+	if not FileAccess.file_exists(json_path):
+		return {}
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(json_path))
+	if not parsed is Dictionary or not parsed.get("anims") is Dictionary:
+		push_warning("ArtLibrary: bad sprites.json for %s" % char_name)
+		return {}
+	var out := {
+		"frame_size": _vec(parsed.get("frame_size", [320, 480])),
+		"pivot": _vec(parsed.get("pivot", [160, 448])),
+		"directions": Array(parsed.get("directions", ["E", "SE", "S", "SW", "W", "NW", "N", "NE"])),
+		"anims": {},
+	}
+	for anim in parsed["anims"]:
+		var spec = parsed["anims"][anim]
+		var tex := load_texture(dir.path_join(anim + ".png"))
+		if tex == null or not spec is Dictionary:
+			push_warning("ArtLibrary: %s/%s sheet missing" % [char_name, anim])
+			continue
+		out["anims"][anim] = {
+			"frames": int(spec.get("frames", 1)),
+			"fps": float(spec.get("fps", 8)),
+			"texture": tex,
+		}
+	return out if not out["anims"].is_empty() else {}
+
+
+## SpriteFrames with one animation per (anim, direction): "<anim>_<dir index>".
+static func build_sprite_frames(sprite_set_data: Dictionary) -> SpriteFrames:
+	var frames := SpriteFrames.new()
+	frames.remove_animation("default")
+	var size: Vector2 = sprite_set_data["frame_size"]
+	var dir_count: int = sprite_set_data["directions"].size()
+	for anim in sprite_set_data["anims"]:
+		var spec: Dictionary = sprite_set_data["anims"][anim]
+		for d in dir_count:
+			var anim_name := "%s_%d" % [anim, d]
+			frames.add_animation(anim_name)
+			frames.set_animation_speed(anim_name, spec["fps"])
+			frames.set_animation_loop(anim_name, anim in LOOPING_ANIMS)
+			for f in spec["frames"]:
+				var atlas := AtlasTexture.new()
+				atlas.atlas = spec["texture"]
+				atlas.region = Rect2(Vector2(f, d) * size, size)
+				frames.add_frame(anim_name, atlas)
+	return frames
+
+
+static func _vec(v) -> Vector2:
+	if v is Array and v.size() == 2:
+		return Vector2(float(v[0]), float(v[1]))
+	return Vector2.ZERO
 
 
 ## Imported textures (res://, after Godot import) load as resources; raw PNGs

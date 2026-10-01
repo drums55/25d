@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://buphfy6n655bx"
-path="res://.godot/imported/head.svg-3f1bafd4b82f4c1c655474e8aa950c02.ctex"
+uid="uid://bpbmjbudrdf0d"
+path="res://.godot/imported/power_pole.png-7284e18e8ce1ddcf58841aa462c305aa.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/characters/rider/head.svg"
-dest_files=["res://.godot/imported/head.svg-3f1bafd4b82f4c1c655474e8aa950c02.ctex"]
+source_file="res://assets/art/props/power_pole.png"
+dest_files=["res://.godot/imported/power_pole.png-7284e18e8ce1ddcf58841aa462c305aa.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

@@ -37,7 +37,13 @@
   - sheet: แถว = 8 ทิศตามลำดับ `Iso.Dir` (E, SE, S, SW, W, NW, N, NE), คอลัมน์ = เฟรม; เฟรม 320x480 px ที่ 2x (ย่อครึ่งในเกม = `ART_SCALE`)
   - จุดเท้า (pivot) = (160, 448) ในเฟรม; anim: idle 6f@6fps, walk 8f@12fps, attack 6f@18fps (attack มีเฉพาะ rider)
   - ทิศแต่ละแถว render ตามทิศบนจอ (screen-space) ไม่ต้อง mirror
-  - **ยังไม่ได้ต่อเข้าเกม**: ต้องให้ Claude Code เปลี่ยน CutoutRig -> AnimatedSprite2D (SpriteFrames จาก sheet + json) แล้วค่อยลบ cut-out .svg เดิม
+  - **ต่อเข้าเกมแล้ว (2026-10-01)**: `CharacterView` (`scripts/player/character_view.gd`, scene `scenes/characters/character_view.tscn`)
+    = AnimatedSprite2D ที่สร้าง SpriteFrames ตอน runtime จาก `ArtLibrary.sprite_set()` + `build_sprite_frames()`
+    (AtlasTexture ต่อเฟรม, ชื่อ anim `"<anim>_<dir>"` เช่น `walk_3`, loop เฉพาะ idle/walk). API เดิมของ CutoutRig:
+    `set_facing/set_walk/play_attack/is_attacking/character_name` + `attack_duration()` (6f@18fps = 0.33s → Player ใช้
+    เป็น cooldown ขั้นต่ำ). วางเท้าบน origin ด้วย `offset = frame_size/2 - pivot` + `scale = 1/ART_SCALE` (centered)
+    ทิศเลือกแถวตรงๆ ไม่ mirror. ตัวที่ไม่มีโฟลเดอร์ `sprites/` → fallback instantiate CutoutRig (placeholder polygon)
+    Player/NPC ใช้ `character_view.tscn` แล้ว; cut-out .svg ของ rider/lung_pradit/je_muay ลบแล้ว, `gen_svg.py` ไม่สร้างตัวละครอีก
 - **Prop PNG แบบลงสีด้วยโค้ด** (2026-10-01): `tools/art/png/paint.py` (numpy+PIL+scipy: เงา/rim light/เส้นขอบ/texture พู่กัน, supersample 3x) + สคริปต์ต่อชิ้น เช่น `tools/art/png/noodle_cart.py <out.png>`. ไม่มี AI image gen — PNG พวกนี้แทน .svg ทีละชิ้น; `gen_svg.py` ข้ามชิ้นที่มี .png แล้ว
 - Brief สำหรับ Cowork (desktop) gen ภาพแล้ววางลง `G:\dev\25d\assets\art\...` โดยตรง: `assets/art/COWORK_BRIEF.md`
   (กติกาขนาด/จุดฐาน/ชื่อไฟล์ทั้งหมดอยู่ที่นั่น ถ้าเปลี่ยนกติกาใน ArtLibrary ต้องแก้ brief ด้วย)
@@ -56,7 +62,7 @@ project.godot            viewport 1920x1200, stretch canvas_items/expand, sensor
 export_presets.cfg       preset "Android": arm64 only, non-gradle, package com.drums55.game25d
 scenes/main.tscn         root: RoomHolder + Player (persistent) + HUD
 scenes/rooms/*.tscn      soi_brass, steam_market — IsoRoom: World (y-sort) + Spawns (Marker2D ชื่อ = spawn id)
-scenes/characters/       cutout_rig.tscn (Skeleton2D: Hip > LegL/LegR/Torso > ArmL/ArmR/Head)
+scenes/characters/       character_view.tscn (sprite 8 ทิศ; ใช้จริง), cutout_rig.tscn (placeholder fallback)
 scenes/props/            prop_block, door, npc, interactable, training_dummy
 scenes/ui/               hud (ปุ่ม ATK + dialog box), dialog_box
 scripts/autoload/        GameState (flags, save/load), Dialog (runner), SceneRouter (fade + room swap)
@@ -91,6 +97,8 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   save ที่ชี้ห้องที่ถูกลบ → กลับห้องเริ่มต้น
 - **Dialog**: JSON-driven, `if_flag`/`else` สำหรับ branch, `set_flag` ต่อบรรทัด. แตะกล่อง/ATK/USE = next
   (ถ้ากำลังพิมพ์ = แสดงทั้งบรรทัด)
+- **CharacterView** (ตัวจริง): ดูหัวข้อ sprite 8 ทิศด้านบน. Player แตะทิศ → `rig.set_facing(Iso.dir8)` → เปลี่ยนแถว
+  โดยคงเฟรมเดิมถ้า anim เดียวกัน (เดินหันทิศไม่กระตุก); attack ไม่ถูก walk ขัด จบแล้วกลับ state ค้างไว้
 - **Cut-out rig**: animate แบบ procedural (walk swing, idle, attack) ใน `cutout_rig.gd`; rig ออกแบบหันขวา
   หันซ้าย = `scale.x = -1`; หันหลัง (NW/N/NE) = ซ่อนหน้า / สลับ texture `*_back`. ใส่ art ด้วย `CutoutSkin`
 - **Attack**: Hitbox (Area2D, ใช้แค่เป็นที่เก็บ shape) ขยับตาม facing; ตอนตี query `intersect_shape` (mask layer 4)

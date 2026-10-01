@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
-[ext_resource type="PackedScene" path="res://scenes/characters/cutout_rig.tscn" id="2_rig"]
+[ext_resource type="PackedScene" path="res://scenes/characters/character_view.tscn" id="2_rig"]
 [ext_resource type="Script" path="res://scripts/player/click_marker.gd" id="3_marker"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_feet"]

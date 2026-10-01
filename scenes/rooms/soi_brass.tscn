@@ -73,7 +73,6 @@ position = Vector2(-256, 240)
 
 [node name="Rig" parent="World/LungPradit"]
 character_name = "lung_pradit"
-tint = Color(0.95, 0.8, 0.55, 1)
 
 [node name="Interactable" parent="World/LungPradit"]
 dialog_id = "lung_pradit"

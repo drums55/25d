@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://owbwhdlyxbri"
-path="res://.godot/imported/head.svg-428214f69c53e844ec36f91778cfb1f3.ctex"
+uid="uid://boyq1i78y70tk"
+path="res://.godot/imported/spirit_house.png-12ebef0815b7d72c35168f19ae19bac4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/characters/lung_pradit/head.svg"
-dest_files=["res://.godot/imported/head.svg-428214f69c53e844ec36f91778cfb1f3.ctex"]
+source_file="res://assets/art/props/spirit_house.png"
+dest_files=["res://.godot/imported/spirit_house.png-12ebef0815b7d72c35168f19ae19bac4.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false
