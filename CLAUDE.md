@@ -72,6 +72,11 @@
 - **CI ห้าม build APK** (quota Actions 500 MB เคยเต็มใน repo blackbox) — CI = gdformat/gdlint + GUT เท่านั้น
 - Godot Android editor บน tablet = ของแถม ไม่ใช่ทางหลัก
 
+## แผนใหญ่
+- **`docs/DESIGN.md` = แผนใหญ่ของเกม** (เสาหลัก, core loop รายวัน, เขต, ระบบเรียงลำดับ, 3 บท, milestones M0–M4).
+  เจ้าของติ 2026-10-01 ว่าเกม linear และทำมั่วไปเรื่อยๆ → ก่อนเพิ่มฟีเจอร์ต้องชี้ได้ว่าหนุนเสาหลักไหนและอยู่ milestone ไหน
+  ร่าง 1 ยังรอคำตอบข้อ 9 (ความยาว/โทน/ความแรงของการเลือก/ปริมาณต่อสู้) ก่อนเริ่ม M1
+
 ## โครงสร้าง
 ```
 project.godot            viewport 1920x1200, stretch canvas_items/expand, sensor landscape
