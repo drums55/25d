@@ -405,24 +405,26 @@ def pose_frame(arm, kind, t, weapon=False, akimbo=False, hunch=False):
         rot_bone(arm, "spine_02", Z, 5 * s)
         bob = -0.022 * abs(c)
     elif kind == "dance":
-        # รำวงลูกทุ่ง (owner: the first two tries looked like hanging from a bar with
-        # swinging feet): BOTH feet stay flat on the deck, both knees dip on the beat,
-        # hips sway side to side, and the hands do the work - each one circles
-        # out and in at shoulder height, palm forward, opposite to the other.
+        # รำวงลูกทุ่ง, 4th take (owner: "swinging from the hips while the hands and
+        # shoulders stay fixed" - the hips and the spine were counter-rotating).
+        # Now the WHOLE upper body leans side to side with the beat, the shoulders
+        # bounce, and the hands swap: one up by the face, the other down by the hip.
+        # Feet stay flat; the knees dip together twice a loop.
         ground = feet_z(arm)
-        for sx, side, ph in ((1, "l", 0.0), (-1, "r", math.pi)):
-            a = 2 * math.pi * t + ph
-            out_, up = math.cos(a), math.sin(a)
-            aim_bone(arm, "upperarm_" + side, (sx * (0.55 + 0.25 * out_), -0.35, -0.75 + 0.3 * up))
-            aim_bone(arm, "lowerarm_" + side, (sx * (0.2 + 0.35 * out_), -0.6, 0.75 + 0.15 * up))
-            aim_bone(arm, "hand_" + side, (sx * (0.35 - 0.3 * out_), 0.35, 0.85))
-        open_hands(arm)
         sway = math.sin(2 * math.pi * t)
-        dip = 0.5 - 0.5 * math.cos(4 * math.pi * t)  # two dips per loop
-        rot_bone(arm, "pelvis", Y, 4 * sway)
-        rot_bone(arm, "spine_02", Y, -12 * sway)
-        rot_bone(arm, "Head", Y, 6 * sway)
-        rot_bone(arm, "Head", X, 4)
+        dip = 0.5 - 0.5 * math.cos(4 * math.pi * t)
+        rot_bone(arm, "pelvis", Y, 5 * sway)
+        rot_bone(arm, "spine_01", Y, 5 * sway)
+        rot_bone(arm, "spine_02", Y, 6 * sway)
+        rot_bone(arm, "spine_03", Z, 12 * sway)
+        rot_bone(arm, "spine_03", X, -4 * dip)
+        rot_bone(arm, "Head", Y, -5 * sway)
+        for sx, side in ((1, "l"), (-1, "r")):
+            hi = 0.5 + 0.5 * sway * sx  # 1 = this hand up by the face
+            aim_bone(arm, "upperarm_" + side, (sx * (0.4 + 0.25 * hi), -0.35 - 0.1 * hi, -0.9 + 1.0 * hi))
+            aim_bone(arm, "lowerarm_" + side, (sx * (0.35 - 0.2 * hi), -0.85 + 0.5 * hi, 0.05 + 0.95 * hi))
+            aim_bone(arm, "hand_" + side, (sx * (0.6 - 0.4 * hi), 0.1, 0.6 + 0.4 * hi))
+        open_hands(arm)
         for side in ("l", "r"):
             rot_bone(arm, "thigh_" + side, X, -12 * dip)
             rot_bone(arm, "calf_" + side, X, 24 * dip)
