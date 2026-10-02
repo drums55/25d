@@ -27,7 +27,7 @@ func _ready() -> void:
 		return
 	var id := node_override if node_override >= 0 else GameState.location
 	place = City.node(id)
-	_build(LocationTemplates.get_template(place["type"]), id)
+	_build(LocationTemplates.for_place(place), id)
 	super._ready()
 
 
@@ -63,6 +63,19 @@ func _build(t: Dictionary, id: int) -> void:
 		it.dialog_id = m.get("dialog", "")
 		it.action = m.get("action", "")
 		it.prompt = m.get("prompt", "คุย")
+		if m.has("name"):
+			_name_tag(npc, m["name"])
+	var r := 0
+	for res in t.get("npcs", []):
+		var rn := _add_npc(
+			world, "Resident%d" % r, res["pos"], res["character"], res.get("tint", Color.WHITE)
+		)
+		var rit := rn.get_node("Interactable") as Interactable
+		rit.dialog_id = res.get("dialog", "")
+		rit.action = res.get("action", "")
+		rit.prompt = res.get("prompt", "คุย")
+		_name_tag(rn, res["name"])
+		r += 1
 	var spots: Array = t.get("customers", [])
 	var n := 0
 	for o in Orders.waiting_customers(id):
@@ -74,6 +87,7 @@ func _build(t: Dictionary, id: int) -> void:
 		cit.dialog_id = "talk_customer_waiting"
 		_name_tag(c, str(o["customer"]))
 		n += 1
+	Orders.neighbour_hints(id)
 	# wrong pin: a local who knows where the customer really lives
 	for o in Orders.misled_here(id):
 		var l := _add_npc(
@@ -101,7 +115,7 @@ func _build(t: Dictionary, id: int) -> void:
 		door.add_child(tag)
 		world.add_child(door)
 		n += 1
-	if place["type"] == "condo":
+	if place["type"] == "condo" and not GameState.has_flag("guard_friend"):
 		_add_lift_guard(world)
 	if allow_collector and _collector_shows_up(id):
 		_add_collector(world, t)
@@ -252,7 +266,7 @@ func _wall_sign(t: Dictionary) -> void:
 	label.name = "WallSign"
 	label.text = place["name"]
 	label.size = Vector2(560, 70)
-	label.position = Iso.grid_to_world(Vector2(g.x * 0.5, 0)) + Vector2(-280, -wall_height * 0.78)
+	label.position = Iso.grid_to_world(Vector2(g.x * 0.5, 0)) + Vector2(-280, -wall_height * 0.95)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 44)
 	label.add_theme_color_override("font_color", Color(1, 0.95, 0.8))

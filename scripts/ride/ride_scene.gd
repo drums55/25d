@@ -316,6 +316,10 @@ func _check_hits() -> void:
 
 
 func _apply(effect: String) -> void:
+	if effect == "dog" and GameState.has_flag("dog_friend"):
+		# fed ข้าวตัง once: every soi dog in the district knows the bike now
+		_say("หมาซอยวิ่งมาดม ... หางกระดิก (เพื่อนข้าวตัง)")
+		return
 	hits.append(effect)
 	steadiness -= float(RideTrack.SHAKE.get(effect, 0.0)) * (1.3 if track["rain"] > 0 else 1.0)
 	delay_minutes += float(RideTrack.DELAY.get(effect, 0.0))

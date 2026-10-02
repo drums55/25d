@@ -4,7 +4,7 @@ extends RefCounted
 ## dictionary (GameState.snapshot()); `meta` is what the save-slot list shows.
 ## Saves older than v5 belong to the old fixed-district game and are ignored.
 
-const VERSION := 5
+const VERSION := 6
 
 var state := {}
 var meta := {}

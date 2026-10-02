@@ -1,5 +1,5 @@
 extends Node
-## The generated city of the current run (CityGen from GameState.city_seed)
+## The district of the current run (District; the seed drives weather + orders)
 ## plus riding between places: route, time, fuel, rain and floods.
 
 signal arrived(node_id: int)
@@ -35,7 +35,7 @@ func has_city() -> bool:
 func get_city() -> Dictionary:
 	if _seed != GameState.city_seed or city.is_empty():
 		_seed = GameState.city_seed
-		city = CityGen.generate(_seed)
+		city = District.city(_seed)
 		_forecast_day = -1
 	return city
 

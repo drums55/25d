@@ -367,3 +367,28 @@ const T := {
 
 static func get_template(type: String) -> Dictionary:
 	return T.get(type, T["house"])
+
+
+## The recipe for one place: its type's template with the hand-made
+## PlaceRooms overrides on top (every extra placed, residents added).
+static func for_place(place: Dictionary) -> Dictionary:
+	var t := get_template(place["type"]).duplicate(true)
+	var room: Dictionary = PlaceRooms.ROOMS.get(place.get("key", ""), {})
+	if room.is_empty():
+		return t
+	for key in room:
+		if key == "merchant" and t.has("merchant"):
+			(t["merchant"] as Dictionary).merge(room["merchant"], true)
+		else:
+			t[key] = room[key].duplicate(true)
+	if room.has("extras"):
+		t["extra_count"] = (room["extras"] as Array).size()
+	return t
+
+
+## Every recipe in the game (type templates + hand-made rooms), for tests.
+static func all_recipes() -> Dictionary:
+	var out := T.duplicate()
+	for p in District.PLACES:
+		out[p["key"]] = for_place(p)
+	return out

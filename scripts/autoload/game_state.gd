@@ -58,7 +58,14 @@ const NAP_MINUTES := 30.0
 const NAP_REST := 15.0
 
 ## Item id -> display name for dialog items (kept from the dialog system).
-const ITEMS := {}
+const ITEMS := {
+	"moo_ping": "หมูปิ้ง 3 ไม้ (ข้าวเหนียวแถม)",
+	"lottery_69": "ลอตเตอรี่เลขท้าย 69",
+	"iced_coffee": "กาแฟเย็นตู้ปั๊ม (หวานมาก)",
+	"sauce_packs": "น้ำจิ้มไก่ 40 ซอง",
+	"queue_ticket": "บัตรคิวเขต หมายเลข 999",
+	"lost_umbrella": "ร่มลายเป็ดที่ลูกค้าลืม",
+}
 
 var flags := {}
 var inventory: Array = []

@@ -50,7 +50,7 @@ func test_every_place_builds_a_valid_room():
 			assert_not_null(room.get_world().get_node_or_null("MyBike"), "%s has the bike" % label)
 			room.free()
 			checked += 1
-	assert_gt(checked, 50)
+	assert_gt(checked, 30)
 	GameState.new_game()
 
 
@@ -81,8 +81,9 @@ func _gap(a: Rect2, b: Rect2) -> float:
 
 func test_templates_avoid_sliver_gaps():
 	var bad := Vector2(0.85, 1.15)
-	for type in LocationTemplates.T:
-		var t: Dictionary = LocationTemplates.T[type]
+	var recipes := LocationTemplates.all_recipes()
+	for type in recipes:
+		var t: Dictionary = recipes[type]
 		var items := []
 		for p in t.get("props", []) + t.get("extras", []):
 			items.append(
@@ -96,6 +97,8 @@ func test_templates_avoid_sliver_gaps():
 			items.append(["merchant", Rect2(t["merchant"]["pos"] - npc * 0.5, npc)])
 		for c in t["customers"]:
 			items.append(["customer%s" % c, Rect2(c - npc * 0.5, npc)])
+		for r in t.get("npcs", []):
+			items.append([r["name"], Rect2(r["pos"] - npc * 0.5, npc)])
 		var bike_foot := LocationRoom.BIKE_FOOT
 		items.append(["bike", Rect2(LocationRoom.bike_cell(t) - bike_foot * 0.5, bike_foot)])
 		var g := Vector2(t["grid"])

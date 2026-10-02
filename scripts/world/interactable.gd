@@ -42,6 +42,23 @@ func interact(by: Node) -> void:
 					seen = true
 			Orders.sneak_lift(seen)
 			return
+		"rumor":
+			var p := PlatformPolicy.for_day(GameState.city_seed, GameState.day + 1)
+			(
+				Dialog
+				. start_lines(
+					[
+						{"speaker": "พี่ต้อย", "text": "มาๆ นั่งก่อน วินฯ รู้ข่าวก่อนแอปเสมอ"},
+						{
+							"speaker": "พี่ต้อย",
+							"text": 'ได้ข่าวมาว่าพรุ่งนี้แอปจะประกาศ "%s"' % p["title"]
+						},
+						{"speaker": "พี่ต้อย", "text": _rumor_tail(p["id"])},
+					],
+					"rumor"
+				)
+			)
+			return
 		"refuel":
 			var cost := GameState.refuel()
 			var line := (
@@ -53,3 +70,20 @@ func interact(by: Node) -> void:
 			return
 	if not dialog_id.is_empty():
 		Dialog.start(dialog_id)
+
+
+static func _rumor_tail(id: String) -> String:
+	match id:
+		"fee_cut", "fee_up":
+			return "ค่ารอบน่ะ ลงเร็วกว่าน้ำมันขึ้นอีก ... วันนี้ตักตวงไว้ก่อน"
+		"bundle_ai":
+			return "งานพ่วงเพียบ AI มันไม่รู้ว่าคลองแสนแสบข้ามไม่ได้"
+		"selfie":
+			return "เซลฟี่ทุกสองชั่วโมง พี่ซ้อมยิ้มในหมวกกันน็อกมาสามวันแล้ว"
+		"accept_rule":
+			return "อย่าข้ามงานเยอะ ระบบมันจำ ... ระบบจำแต่เรื่องไม่ดี"
+		"surge_cut":
+			return "ฝนตกก็ได้สองบาท ซื้อถุงคลุมรองเท้ายังไม่พอเลย"
+		"mega_quest":
+			return "โบนัสใหญ่ ... งานสุดท้ายไม่มีวันเด้งหรอก เชื่อพี่"
+	return "อะไรก็ไม่รู้ ฟังแล้วเหนื่อย กินหมูปิ้งก่อนไหม"

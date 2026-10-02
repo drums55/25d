@@ -29,7 +29,8 @@ var _rain: RainOverlay
 
 func _ready() -> void:
 	add_to_group("hud")
-	_items.visible = false
+	GameState.inventory_changed.connect(_on_items)
+	_on_items(GameState.inventory)
 	_rain = RainOverlay.new()
 	_rain.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_rain)
@@ -126,6 +127,15 @@ func _on_time(_day: int, _minute: float) -> void:
 	_day_clock.queue_redraw()
 	_refresh_orders()
 	_rain.level = City.rain_now() if City.has_city() else 0
+
+
+## Funny things picked up around the district (quests are flags + items).
+func _on_items(inventory: Array) -> void:
+	var names: Array[String] = []
+	for item in inventory:
+		names.append(GameState.item_name(item))
+	_items.text = "ในกระเป๋า: " + ", ".join(names)
+	_items.visible = not names.is_empty()
 
 
 func _on_money(money: int) -> void:

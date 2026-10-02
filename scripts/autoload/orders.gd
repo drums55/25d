@@ -29,6 +29,24 @@ func _ready() -> void:
 	rng.randomize()
 	GameState.time_changed.connect(_on_time)
 	GameState.account_suspended.connect(_on_suspended)
+	Dialog.event.connect(_on_dialog_event)
+
+
+## Little rewards from the district's people (dialog line "event").
+func _on_dialog_event(name: String) -> void:
+	match name:
+		"nok_meal":
+			var flag := "nok_meal_d%d" % GameState.day
+			if GameState.has_flag(flag):
+				GameState.notice.emit("วันนี้ป้านกเลี้ยงไปแล้ว ... ป้าแอบตักลูกชิ้นเพิ่มให้ลูกนึง")
+				return
+			GameState.set_flag(flag)
+			GameState.advance_minutes(10)
+			GameState.add_fatigue(-25.0)
+			GameState.notice.emit("ก๋วยเตี๋ยวเรือชามใหญ่ฟรี ... หายเหนื่อยไปเยอะ")
+		"lobby_nap":
+			GameState.advance_minutes(15)
+			GameState.add_fatigue(-15.0)
 
 
 ## Today's platform rule + incentive (PlatformPolicy, P2).
@@ -304,6 +322,22 @@ func on_interact(npc_id: String) -> bool:
 	return false
 
 
+## Quest perk: ป้าจุ๋ม (flag aunt_jum) knows every house in the district and
+## sends a LINE the moment the rider stands at a wrong pin.
+func neighbour_hints(node_id: int) -> void:
+	if not GameState.has_flag("aunt_jum"):
+		return
+	for o in misled_here(node_id):
+		o["pin_found"] = true
+		GameState.notice.emit(
+			(
+				'ไลน์จากป้าจุ๋ม: "%s ไม่ได้อยู่นี่จ้ะ อยู่ %s ป้าเห็นเขาตากผ้าเมื่อเช้า"'
+				% [o["customer"], City.node_name(real_dropoff(o))]
+			)
+		)
+	orders_changed.emit()
+
+
 ## A local at the wrongly pinned place knows where the customer really is.
 func _ask_local(id: int) -> bool:
 	var o := get_order(id)
@@ -482,20 +516,21 @@ func _call_down_here() -> bool:
 	)
 	if waiting.is_empty():
 		return false
-	var wait := rng.randi_range(4, 12)
+	var friend := GameState.has_flag("guard_friend")
+	var wait := 1 if friend else rng.randi_range(4, 12)
 	for o in waiting:
 		o["called_down"] = true
 	GameState.advance_minutes(wait)
-	(
-		Dialog
-		. start_lines(
-			[
-				{"speaker": "รปภ.", "text": "ไรเดอร์ห้ามขึ้นนะครับ เดี๋ยวผมโทรขึ้นห้องให้"},
-				"(รอ %d นาที ... ลูกค้าเดินลงมาในชุดนอน)" % wait,
-			],
-			"call_down"
-		)
-	)
+	var lines: Array = [
+		{"speaker": "รปภ.", "text": "ไรเดอร์ห้ามขึ้นนะครับ เดี๋ยวผมโทรขึ้นห้องให้"},
+		"(รอ %d นาที ... ลูกค้าเดินลงมาในชุดนอน)" % wait,
+	]
+	if friend:
+		lines = [
+			{"speaker": "ลุงสมพงษ์", "text": "อ้าว ไอ้หนุ่มกาแฟเย็น! เดี๋ยวลุงตะโกนเรียกให้"},
+			"(ลุงตะโกนขึ้นไปชั้น 27 ... ลูกค้าลงมาในหนึ่งนาที งงว่าได้ยินได้ไง)",
+		]
+	Dialog.start_lines(lines, "call_down")
 	SceneRouter.go_to(GameState.LOCATION_SCENE, "arrival", false)
 	orders_changed.emit()
 	return true

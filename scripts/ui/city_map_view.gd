@@ -122,10 +122,10 @@ func _draw() -> void:
 			)
 		draw_string(
 			font,
-			p + Vector2(-90, 40),
-			CityGen.TYPES[n["type"]],
+			p + Vector2(-110, 40),
+			n["name"],
 			HORIZONTAL_ALIGNMENT_CENTER,
-			180,
+			220,
 			20,
 			UiKit.MUTED
 		)

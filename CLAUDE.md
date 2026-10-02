@@ -80,7 +80,7 @@ scenes/rooms/location.tscn  สถานที่เดียวที่สร�
 scenes/characters/       character_view.tscn (sprite 8 ทิศ; ใช้จริง), cutout_rig.tscn (placeholder fallback)
 scenes/props/            prop_block, npc, interactable, patrol_bot, steam_vent
 scripts/autoload/        GameState (เงิน หนี้ น้ำมัน ดาว เวลา orders save slots), Dialog, SceneRouter, Settings, City, Orders
-scripts/core/            Iso, SaveData, DialogData, ArtLibrary, PickTest, CityGen, Weather, OrderGen, RideTrack, PlatformPolicy — pure, unit-tested
+scripts/core/            Iso, SaveData, DialogData, ArtLibrary, PickTest, CityGen, District, Weather, OrderGen, RideTrack, PlatformPolicy — pure, unit-tested
 scripts/ride/            ride_scene (ช่วงขี่), ride_road (วาดถนน); scenes/ride/ride.tscn
 scripts/ui/              hud, phone, city_map_view, day_clock, rain_overlay, save_slots, settings_panel, main_menu, ui_kit, dialog_box
 tools/art/               gen_svg.py (svg เก่า), png/ (paint.py room.py props_th.py ...), 3d/ (ตัวละคร)
@@ -171,6 +171,16 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   - **อุบัติเหตุ**: ชนในช่วงขี่ → โอกาส `City.accident_chance(fatigue, rain)` = 4% + 0.4%/แต้มล้าเกิน 30 + ฝน 5% → `City.accident()`:
     คลินิก 40 นาที 300–600 บาท อาหารหก ล้า +10, เงินไม่พอ = ยืมเจ้าหนี้ (หนี้เพิ่ม); ประกันแพลตฟอร์ม "พิจารณา 14 วันทำการ" / "ไม่คุ้มครอง". ข้ามช่วงขี่ = ครึ่งโอกาส เมื่อล้า ≥ 40
   - save เพิ่ม fatigue, coffees_today, suspended, suspensions, suspension_appealed, selfie_due (ยัง v5, ค่า default ถ้าไม่มี)
+- **ย่านส่งไว ทำมือ (2026-10-02, DESIGN 10.10)** — เจ้าของ: P2 "เหมือนทำ app rider ... แบบแรกสนุกกว่า", ที่สนุก = "สำรวจห้อง แล้วบทสนทนา/ของมันฮาๆ":
+  - `City.get_city()` = `District.city(seed)` (`scripts/core/district.gd`): 10 ที่ตายตัว (มี `key`) + ถนน 15 เส้นเขียนมือ; seed ใช้แค่ฝน/ออเดอร์.
+    `CityGen.generate` ยังอยู่ (test_city ใช้) แต่เกมไม่ใช้. Save v6 (id สถานที่เปลี่ยนความหมาย → เซฟ v5 ถูกข้าม)
+  - ห้องต่อที่ = `LocationTemplates.for_place(place)` = template ของประเภท + `PlaceRooms.ROOMS[key]` (`scripts/world/place_rooms.gd`):
+    key ที่ให้แทนของประเภท, `merchant` merge (+ `name` = ป้ายชื่อ), extras วางครบทุกชิ้น, `npcs` = คนในย่าน {name,pos,character,tint,dialog,action}.
+    กติกา gap/sliver ใช้กับทุก recipe (`LocationTemplates.all_recipes()` ใน test); NPC ห้ามชิดผนัง ~0.5 ช่องเพราะ navmesh sliver (เจอที่ปั๊ม/คอนโด)
+  - เควสต์ = dialog.json ล้วน (flags + items + `if_money_at_least` + `money`) + `GameState.ITEMS`; HUD แสดง "ในกระเป๋า: ..." อีกครั้ง.
+    รางวัลที่ผูกกับระบบ: `aunt_jum` → `Orders.neighbour_hints()` เปิดหมุดผิดตอนมาถึง; `guard_friend` → ไม่มี LiftGuard + เรียกลูกค้า 1 นาที;
+    `dog_friend` → `RideScene._apply` ข้ามผล "dog"; `cat_fed` (+100); Dialog event `nok_meal` (ล้า −25 วันละครั้ง flag `nok_meal_d<day>`),
+    `lobby_nap` (ล้า −15); `Interactable.action "rumor"` = พี่ต้อยเล่านโยบายพรุ่งนี้. ทดสอบใน `test/unit/test_district.gd`
 - **ส่งไม่ทัน (เจ้าของ 2026-10-01: "ส่งช้าตลอด")**: deadline คิดจากเส้นทางจริง `OrderGen.set_deadline` = ขี่ไปจุดรับ + (รออาหาร) +
   ทางรับ→ส่ง ×1.25 + slack (อาหาร 15 / พัสดุ 90 / เอกสาร 30 นาที); อาหารร้อน <25 นาที อุ่น <50; นาฬิกาในสถานที่ช้าลง ปกติ 2 วิ/นาที
 - **สถานที่**: `scenes/rooms/location.tscn` + `LocationRoom` (extends IsoRoom) สร้างจาก `LocationTemplates.T[type]` ตอน `_ready`
@@ -256,12 +266,13 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
   Android cmdline-tools (`platform-tools`, `build-tools;34.0.0`) + ตั้ง `export/android/android_sdk_path`
 
 ## สถานะ / ยังไม่ได้ทำ
+- **ย่านส่งไว ทำมือ (2026-10-02)**: แผนที่ตายตัว 10 ที่, คนมีชื่อ 12 คน, ~60 บทพูดใหม่, เควสต์ของ 5 สาย (99 tests). รอเจ้าของลองเล่น
 - **P2 เสร็จ (2026-10-02)**: นโยบายรายวัน, โบนัสหลอก, งานพ่วง, ปิดบัญชี+อุทธรณ์, ความล้า, อุบัติเหตุ (89 tests)
 - **P1 เสร็จ (2026-10-01)**: ปักหมุดผิด, COD ไม่รับ, ยกเลิกหลังซื้อ, รปภ.คอนโด+ลิฟต์, เจ้าหนี้ตามหา, อุทธรณ์ 1 ดาว, deadline สมจริง
 - **ช่วงขี่เล่นได้ เสร็จ (2026-10-01)** — เจ้าของ: "ดีขึ้นแล้ว" หลังลดความเร็ว
 - **P0 เสร็จ (2026-10-01)**: เมนู/เซฟ 3 ช่อง+ออโต้/ตั้งค่า, เมืองสุ่ม+แผนที่+ขี่, ฝน/น้ำท่วม, แอป (งานเข้า/รับ/ข้าม/ยกเลิก/นำทาง),
   อาหาร/พัสดุ/เอกสาร, ดาว+รีวิว, เงิน/หนี้/ค่าเช่า/น้ำมัน/ปั๊ม, สลิปรายวัน, ตอนจบ 4 แบบ
-- ต่อไป (DESIGN 10.8): **P3** เนื้อหา absurd + ตอนจบ + ประเภทสถานที่เพิ่ม;
+- ต่อไป (DESIGN 10.10): แอปบางลง, คนในย่านพูดเรื่องใหม่ตามวัน, ปริศนาในฉากแทนปุ่มในแอป, ตอนจบ;
   **art กรุงเทพฯ ปัจจุบัน** (พื้น/ผนังต่อประเภท, prop: เซเว่น ตู้กดน้ำ โต๊ะสแตนเลส ป้อม รปภ. หัวจ่ายน้ำมัน ฯลฯ ด้วย paint.py)
 - ยังไม่มี: เสียง, sprite จริงของ NPC แต่ละแบบ, balance (ตัวเลขใน GameState/OrderGen ยังเดา)
 - ลบ save บนแท็บเล็ต = `adb shell run-as com.drums55.game25d rm files/save_0.json`
