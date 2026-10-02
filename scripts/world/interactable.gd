@@ -16,6 +16,9 @@ signal interacted(by: Node)
 @export var pickup_item := ""
 ## Line shown when picking up (default: the item's description).
 @export var pickup_text := ""
+## This item was seized by a collector (flag seized_<item>): taking it back
+## clears that flag instead of marking it found.
+@export var seized := false
 ## Walking out: room id + spawn there. `exit_flag` = needed first (also for
 ## `action`), otherwise `locked_dialog` plays.
 @export var exit_to := ""
@@ -66,8 +69,13 @@ func interact(by: Node) -> void:
 
 func _pick_up() -> void:
 	var item := pickup_item
-	GameState.set_flag("got_%s" % item)
+	if seized:
+		GameState.set_flag("seized_%s" % item, false)
+	else:
+		GameState.set_flag("got_%s" % item)
 	var text := pickup_text if not pickup_text.is_empty() else Puzzles.item_desc(item)
+	if seized:
+		text = "เอา%sคืนจากชั้นของยึด ... เจ๊เกียวมองแต่ไม่ว่าอะไร" % GameState.item_name(item)
 	Dialog.start_lines([{"text": text, "give_item": item}], "pickup")
 	enabled = false
 	var owner_node := get_parent()

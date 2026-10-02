@@ -217,8 +217,13 @@ func test_walkthrough_chapter_one():
 	await _ride_to("boat_garage")
 	assert_null(_thing("chang_daeng"), "hiding under the boat")
 	var robot := _room().get_world().get_node("No9") as PatrolBot
-	robot.facing = Vector2.RIGHT
-	_player.global_position = robot.global_position + Vector2(-70, 0)
+	_player.global_position = robot.global_position + Vector2(70, 0)
+	robot.tamper(_player)
+	TestHelpers.finish_dialog()
+	assert_false(GameState.has_flag("no9_fused"), "it faces the rider: caught, not fused")
+	_tap("crate")  # a kick: the robot turns to the noise
+	await wait_physics_frames(2)
+	_player.global_position = robot.global_position + Vector2(70, 0)
 	robot.tamper(_player)
 	TestHelpers.finish_dialog()
 	assert_true(GameState.has_flag("no9_fused"))
@@ -565,4 +570,4 @@ func test_collector_catch_pushes_and_talks():
 	collector.facing = Vector2.LEFT
 	_player.global_position = collector.global_position + Vector2(-140, 0)
 	await wait_physics_frames(60)
-	assert_true(Dialog.is_active() or collector.state == PatrolBot.State.CHASE)
+	assert_true(Dialog.is_active(), "caught: the collector talks")

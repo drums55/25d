@@ -8,11 +8,11 @@ radius = 26.0
 [node name="PatrolBot" type="CharacterBody2D"]
 script = ExtResource("1_bot")
 
-[node name="Cone" type="Polygon2D" parent="."]
+[node name="Zone" type="Polygon2D" parent="."]
 z_index = -1
 color = Color(1, 0.85, 0.35, 0.16)
 
-[node name="Edge" type="Line2D" parent="Cone"]
+[node name="Edge" type="Line2D" parent="Zone"]
 width = 3.0
 default_color = Color(1, 0.92, 0.6, 0.75)
 joint_mode = 2

@@ -17,7 +17,10 @@ extends RefCounted
 ##   exits    [{to, spawn, pos, label}]
 ##   bots     [{id, name, pos, patrol [cells, offsets], character, tint,
 ##              catch_dialog, talk_dialog, distract_flag?, distract_dir?,
-##              art?, steam_powered?, tamperable?, distract_mark?}]
+##              art?, tamperable?, distract_mark?, zone_range?, zone_angle?,
+##              noise_dir?, seizes?}]  the living gates (PatrolBot): robots
+##              (no character) face the rider and turn to a "noise" event
+##   seized   [cells]  where items taken "for the debt" lie (เจ๊เกียว's raft)
 ##   enter    {dialog, flag}  played once on arrival (flag marks it seen)
 ## Any entry may carry "if_flag" / "if_not_flag" / "if_flags" [all] / "if_tide"
 ## (spawn only then). Chapter 2 people/things use "if_flag": "ch2".
@@ -484,17 +487,15 @@ const ROOMS := {
 				"name": "หุ่นทวงหนี้เบอร์ 9",
 				"art": "brass_automaton",
 				"pos": Vector2(3.5, 4.6),
-				"patrol": [Vector2(-1.5, 0.0), Vector2(2.0, 0.0)],
-				"facing": Vector2(-1, -0.5),
-				"view_range": 220.0,
+				"facing": Vector2(1, 0.5),
+				# the spare-parts crate is screen-left of it: a kick turns it that way
+				"noise_dir": Vector2(-1, 0),
 				"tint": Color(1, 0.6, 0.45),
-				"steam_powered": true,
 				"tamperable": true,
 				"catch_dialog": "catch_no9",
 				"talk_dialog": "catch_no9",
 				"distract_flag": "no9_fused",
 				"distract_mark": "zz",
-				"speed": 60.0,
 				"if_not_flag": "ch2"
 			},
 		],
@@ -575,7 +576,7 @@ const ROOMS := {
 		[
 			{
 				"item": "ring",
-				"pos": Vector2(1.6, 2.6),
+				"pos": Vector2(2.8, 5.4),
 				"label": "แหวน",
 				"text": 'ล้วงโคลนหน้าประตูน้ำ ... แหวนทองเล็กๆ ด้านในสลักว่า "นก 2060"',
 				"if_flag": "lung_ring_told",
@@ -602,16 +603,16 @@ const ROOMS := {
 				"name": "หุ่นบริษัท ป้องกันภัย",
 				"art": "brass_automaton",
 				"pos": Vector2(4.0, 4.5),
-				"patrol": [Vector2(0.0, -1.9), Vector2(0.0, 0.9)],
 				"facing": Vector2(-1, 0.5),
-				"view_range": 220.0,
+				# wide enough to cover the ring in the mud, not the bench or the way in
+				"zone_range": 240.0,
+				"turns_to_noise": false,
 				"tint": Color(0.7, 0.85, 1.0),
 				"catch_dialog": "catch_company",
 				"talk_dialog": "catch_company",
 				"distract_flag": "ally_nine",
 				"distract_dir": Vector2(-1, 0),
 				"distract_mark": "~ ฟังเก้าเล่า ~",
-				"speed": 65.0,
 				"if_flag": "ch3"
 			},
 		],
@@ -624,6 +625,7 @@ const ROOMS := {
 		"wall": Color(0.55, 0.18, 0.16),
 		"spawns": {"default": Vector2(6.8, 6.0), "from_bike": Vector2(6.8, 6.0)},
 		"enter": {"dialog": "enter_kiao", "flag": "seen_kiao"},
+		"seized": [Vector2(7.6, 1.8), Vector2(8.6, 2.2), Vector2(6.6, 2.2), Vector2(7.6, 2.8)],
 		"props":
 		[
 			{

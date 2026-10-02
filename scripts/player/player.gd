@@ -238,7 +238,7 @@ func highlight_things() -> int:
 	return count
 
 
-## A patrol bot caught the rider (PatrolBot._catch): pushed away, blinking.
+## A living gate caught the rider (PatrolBot._catch): pushed away, blinking.
 func caught_by(bot: Node2D) -> void:
 	cancel_order()
 	_blink = CAUGHT_BLINK

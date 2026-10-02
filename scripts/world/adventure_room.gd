@@ -2,7 +2,9 @@ class_name AdventureRoom
 extends IsoRoom
 ## The room the rider is in (GameState.room), built from its Rooms recipe at
 ## runtime before IsoRoom bakes the navmesh: props (placeholder blocks when no
-## art), items lying around, named people, exits and patrolling collectors.
+## art), items lying around (and the ones seized for the debt, recipe
+## "seized" = spots on เจ๊เกียว's raft), named people, exits and the living
+## gates (collectors).
 ## Entries can depend on flags and the tide (Rooms.present_now).
 
 const PROP_SCENE := preload("res://scenes/props/prop_block.tscn")
@@ -49,6 +51,12 @@ func _build(r: Dictionary) -> void:
 		if Rooms.present_now(p, flags, tide):
 			_add_pickup(world, p, "Pickup%d" % i)
 		i += 1
+	i = 0
+	for cell in r.get("seized", []):
+		var item := _seized_at(i, flags)
+		if not item.is_empty():
+			_add_pickup(world, {"item": item, "pos": cell, "label": "ของยึด"}, "Seized%d" % i, true)
+		i += 1
 	for n in r.get("npcs", []):
 		if Rooms.present_now(n, flags, tide):
 			_add_npc(world, n)
@@ -91,7 +99,17 @@ func _add_prop(world: Node, p: Dictionary, node_name: String) -> void:
 	world.add_child(prop)
 
 
-func _add_pickup(world: Node, p: Dictionary, node_name: String) -> void:
+## The i-th item เจ๊เกียว's collectors took "for the debt" (flags seized_<item>).
+func _seized_at(i: int, flags: Dictionary) -> String:
+	var items: Array = []
+	for f in flags:
+		if flags[f] and str(f).begins_with("seized_"):
+			items.append(str(f).trim_prefix("seized_"))
+	items.sort()
+	return items[i] if i < items.size() else ""
+
+
+func _add_pickup(world: Node, p: Dictionary, node_name: String, seized := false) -> void:
 	var spot := MarkerSpot.new()
 	spot.name = node_name
 	spot.kind = "item"
@@ -103,6 +121,7 @@ func _add_pickup(world: Node, p: Dictionary, node_name: String) -> void:
 	it.name = "Interactable"
 	it.thing_id = p["item"]
 	it.pickup_item = p["item"]
+	it.seized = seized
 	it.pickup_text = p.get("text", "")
 	it.prompt = "เก็บ"
 	# the icon is drawn 96 px tall above the spot; a little slack around it
@@ -175,17 +194,20 @@ func _add_bot(world: Node, b: Dictionary) -> void:
 	bot.character_name = b.get("character", "")
 	bot.art_name = b.get("art", "brass_automaton")
 	bot.tint = b.get("tint", Color.WHITE)
-	bot.chases = b.get("chases", true)
+	var robot: bool = b.get("character", "") == ""
 	bot.tamperable = b.get("tamperable", false)
-	bot.steam_powered = b.get("steam_powered", false)
+	bot.tracks_player = b.get("tracks_player", robot)
+	bot.turns_to_noise = b.get("turns_to_noise", robot)
+	bot.noise_dir = b.get("noise_dir", Vector2(-1, 0))
+	bot.zone_range = b.get("zone_range", 150.0)
+	bot.zone_angle_deg = b.get("zone_angle", 200.0 if robot else 360.0)
+	bot.seizes = b.get("seizes", true)
 	bot.catch_dialog = b.get("catch_dialog", "")
 	bot.talk_dialog = b.get("talk_dialog", "")
 	bot.distract_flag = b.get("distract_flag", "")
 	bot.distract_dir = b.get("distract_dir", Vector2(1, 0))
 	bot.distract_mark = b.get("distract_mark", "~ เต้น ~")
 	bot.speed = b.get("speed", 70.0)
-	bot.chase_speed = b.get("chase_speed", 210.0)
-	bot.view_range = b.get("view_range", 300.0)
 	bot.position = Iso.grid_to_world(b["pos"])
 	var path := PackedVector2Array()
 	for cell in b.get("patrol", []):
@@ -200,6 +222,7 @@ func _name_tag(node: Node2D, text: String) -> void:
 	if text.is_empty():
 		return
 	var label := Label.new()
+	label.name = "NameTag"
 	label.text = text
 	label.position = Vector2(-140, -222)
 	label.size = Vector2(280, 40)
