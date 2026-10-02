@@ -180,6 +180,12 @@ func test_walkthrough_chapter_one():
 	assert_ne(collector.state, PatrolBot.State.OFF)
 	_tap("float_bike")
 	assert_false(GameState.ui_open, "no key in the bike yet")
+	TestHelpers.finish_dialog()
+	GameState.held_item = "float_key"
+	_tap("float_bike")
+	assert_false(GameState.has_flag("bike_ready"), "พี่หนวด won't let the bike go")
+	assert_true(GameState.has_item("float_key"))
+	TestHelpers.finish_dialog()
 	GameState.held_item = "air_remote"
 	_tap("radio")
 	assert_true(GameState.has_flag("radio_on"))
