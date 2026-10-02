@@ -15,9 +15,13 @@
     (wireless debugging: runs 'adb connect' first. A short '190:40011' = the
     Tailscale peer whose IP ends in .190 (else this PC's LAN prefix); a full
     IP or MagicDNS name works too. Remembered in tools\.adb_device)
+  powershell -ExecutionPolicy Bypass -File tools\update.ps1 -Device 100.90.8.123:40011 -Pair 37099:123456
+    (first time from this PC: Wireless debugging > "Pair device with pairing code"
+    shows its own port + a 6-digit code; -Pair <that port>:<code> pairs first)
 #>
 param(
     [string]$Device = '',
+    [string]$Pair = '',
     [switch]$NoPull,
     [switch]$NoInstall,
     [switch]$Log
@@ -100,10 +104,35 @@ try {
             }
             $Device = "$full`:$port"
         }
+        $hostPart = $Device.Substring(0, $Device.LastIndexOf(':'))
+        if ($Pair) {
+            $pairPort = $Pair.Split(':')[0]
+            $pairCode = $Pair.Split(':')[1]
+            Step "adb pair $hostPart`:$pairPort"
+            $out = Invoke-Native { & $adb pair "$hostPart`:$pairPort" $pairCode 2>&1 } | Out-String
+            Write-Host $out.Trim()
+            if ($out -notmatch 'Successfully paired') { throw "adb pair failed: the pairing port and code change every time that dialog opens" }
+        }
         Step "adb connect $Device"
         $out = Invoke-Native { & $adb connect $Device 2>&1 } | Out-String
         Write-Host $out.Trim()
-        if ($out -notmatch 'connected') { throw "adb connect $Device failed (Wireless debugging on? same Wi-Fi or Tailscale up on both? the port changes each time it is toggled)" }
+        if ($out -notmatch 'connected') {
+            # say where it breaks: the network (Tailscale/Wi-Fi) or adb itself
+            $devPort = [int]$Device.Substring($Device.LastIndexOf(':') + 1)
+            $ping = Test-Connection -ComputerName $hostPart -Count 2 -Quiet -ErrorAction SilentlyContinue
+            $tcp = Test-NetConnection -ComputerName $hostPart -Port $devPort -WarningAction SilentlyContinue
+            Write-Host ("ping {0}: {1}   tcp port {2}: {3}" -f $hostPart, $ping, $devPort, $tcp.TcpTestSucceeded) -ForegroundColor Yellow
+            if (-not $tcp.TcpTestSucceeded) {
+                if (-not $ping) {
+                    Write-Host "The tablet is not reachable at all: is Tailscale ON (connected) on the tablet and on this PC?" -ForegroundColor Yellow
+                } else {
+                    Write-Host "The tablet answers but nothing listens on that port: Wireless debugging is off or the port changed (read it again on the tablet)." -ForegroundColor Yellow
+                }
+            } else {
+                Write-Host "The port is open but adb refused: this PC is not paired yet -> add -Pair <pairing port>:<code>." -ForegroundColor Yellow
+            }
+            throw "adb connect $Device failed"
+        }
         Set-Content -Path $DeviceFile -Value $Device -Encoding ASCII
         $env:ADB_SERIAL = $Device
     }
