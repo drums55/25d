@@ -9,6 +9,8 @@ const TEXT_SPEEDS := {"ช้า": 25.0, "ปกติ": 45.0, "เร็ว": 9
 var text_speed := "ปกติ"
 var volume := 0.8
 var show_hints := true
+## Skip the canal ride between places (arrive at once).
+var skip_ride := false
 
 
 func _ready() -> void:
@@ -26,6 +28,7 @@ func load_settings(path := PATH) -> void:
 	text_speed = str(cfg.get_value("game", "text_speed", text_speed))
 	volume = float(cfg.get_value("audio", "volume", volume))
 	show_hints = bool(cfg.get_value("game", "show_hints", show_hints))
+	skip_ride = bool(cfg.get_value("game", "skip_ride", skip_ride))
 	_apply()
 
 
@@ -33,6 +36,7 @@ func save_settings(path := PATH) -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("game", "text_speed", text_speed)
 	cfg.set_value("game", "show_hints", show_hints)
+	cfg.set_value("game", "skip_ride", skip_ride)
 	cfg.set_value("audio", "volume", volume)
 	cfg.save(path)
 	_apply()

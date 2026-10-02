@@ -16,13 +16,14 @@ signal interacted(by: Node)
 @export var pickup_item := ""
 ## Line shown when picking up (default: the item's description).
 @export var pickup_text := ""
-## Walking out: room id + spawn there. `exit_flag` = needed first, otherwise
-## `locked_dialog` plays.
+## Walking out: room id + spawn there. `exit_flag` = needed first (also for
+## `action`), otherwise `locked_dialog` plays.
 @export var exit_to := ""
 @export var exit_spawn := "default"
 @export var exit_flag := ""
 @export var locked_dialog := ""
-## Built-in behaviour instead of the dialog (none yet; kept for later rooms).
+## Built-in behaviour instead of the dialog: "travel" (the floating bike:
+## pick where to ride).
 @export var action := ""
 @export var enabled := true
 ## Tap area relative to this node's origin (feet), covers the visual above it.
@@ -49,11 +50,14 @@ func interact(by: Node) -> void:
 	if not pickup_item.is_empty():
 		_pick_up()
 		return
+	if not exit_flag.is_empty() and not GameState.has_flag(exit_flag):
+		if not locked_dialog.is_empty():
+			Dialog.start(locked_dialog)
+		return
+	if action == "travel":
+		get_tree().call_group("main", "open_travel")
+		return
 	if not exit_to.is_empty():
-		if not exit_flag.is_empty() and not GameState.has_flag(exit_flag):
-			if not locked_dialog.is_empty():
-				Dialog.start(locked_dialog)
-			return
 		get_tree().call_group("main", "go_room", exit_to, exit_spawn)
 		return
 	if not dialog_id.is_empty():

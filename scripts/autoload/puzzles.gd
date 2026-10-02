@@ -6,7 +6,8 @@ extends Node
 ##   "items":  {"<id>": {"name", "desc", "color"}},
 ##   "combos": [{"a", "b", "result", "lines": [...]}],      # a + b -> result
 ##   "uses":   [{"item", "target", "lines": [...], "consume": bool,
-##               "if_flag"?, "if_not_flag"?}],               # item on a thing
+##               "if_flag"?, "if_not_flag"?, "if_tide"?}],   # item on a thing
+##   "hints":  [{"if_not_flag"?, "if_flag"?, "text"}]         # first that holds
 ##   "fail":   {"<target or item id>" | "combine" | "*": [line, ...]}
 ## }
 ##
@@ -55,7 +56,9 @@ static func find_combo(d: Dictionary, a: String, b: String) -> Dictionary:
 
 
 ## The use of `item` on `target` whose conditions hold, or {}.
-static func find_use(d: Dictionary, item: String, target: String, flags: Dictionary) -> Dictionary:
+static func find_use(
+	d: Dictionary, item: String, target: String, flags: Dictionary, tide := ""
+) -> Dictionary:
 	for u in d.get("uses", []):
 		if u["item"] != item or u["target"] != target:
 			continue
@@ -64,6 +67,8 @@ static func find_use(d: Dictionary, item: String, target: String, flags: Diction
 		if not need.is_empty() and not flags.get(need, false):
 			continue
 		if not never.is_empty() and flags.get(never, false):
+			continue
+		if u.has("if_tide") and u["if_tide"] != tide:
 			continue
 		return u
 	return {}
@@ -92,7 +97,7 @@ func combine(a: String, b: String) -> bool:
 
 ## Item on a thing in the room (Interactable.thing_id). True when it worked.
 func use(item: String, target: String) -> bool:
-	var u := find_use(data, item, target, GameState.flags)
+	var u := find_use(data, item, target, GameState.flags, GameState.tide)
 	if u.is_empty():
 		_fail([target, item])
 		return false
@@ -115,3 +120,34 @@ func _fail(keys: Array) -> void:
 	if line is String:
 		line = {"speaker": "ไรเดอร์", "text": line}
 	Dialog.start_lines([line], "fail")
+
+
+## The first hint whose flags hold (DESIGN 11.5: ป้าจุ๋ม on the phone once she
+## is a friend, otherwise the rider thinking out loud).
+static func hint_text(d: Dictionary, flags: Dictionary) -> String:
+	for h in d.get("hints", []):
+		var need := str(h.get("if_flag", ""))
+		var never := str(h.get("if_not_flag", ""))
+		if not need.is_empty() and not flags.get(need, false):
+			continue
+		if not never.is_empty() and flags.get(never, false):
+			continue
+		return str(h["text"])
+	return ""
+
+
+func hint() -> void:
+	var text := hint_text(data, GameState.flags)
+	if GameState.has_flag("jum_friend"):
+		(
+			Dialog
+			. start_lines(
+				[
+					{"speaker": "ป้าจุ๋ม (โทรมา)", "text": "ว่าไงลูก ติดอะไรอยู่ ป้ารู้หมดแหละ"},
+					{"speaker": "ป้าจุ๋ม (โทรมา)", "text": text},
+				],
+				"hint"
+			)
+		)
+	else:
+		Dialog.start_lines([{"speaker": "ไรเดอร์ (คิดในใจ)", "text": text}], "hint")

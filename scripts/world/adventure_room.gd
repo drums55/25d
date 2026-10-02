@@ -3,6 +3,7 @@ extends IsoRoom
 ## The room the rider is in (GameState.room), built from its Rooms recipe at
 ## runtime before IsoRoom bakes the navmesh: props (placeholder blocks when no
 ## art), items lying around, named people, exits and patrolling collectors.
+## Entries can depend on flags and the tide (Rooms.present_now).
 
 const PROP_SCENE := preload("res://scenes/props/prop_block.tscn")
 const NPC_SCENE := preload("res://scenes/props/npc.tscn")
@@ -33,26 +34,27 @@ func _build(r: Dictionary) -> void:
 	room_title = r.get("title", room_id)
 	var world := get_world()
 	var flags := GameState.flags
+	var tide := GameState.tide
 	var i := 0
 	for p in r.get("props", []):
-		if Rooms.present(p, flags):
+		if Rooms.present_now(p, flags, tide):
 			_add_prop(world, p, "Prop%d" % i)
 		i += 1
 	i = 0
 	for p in r.get("pickups", []):
-		if Rooms.present(p, flags):
+		if Rooms.present_now(p, flags, tide):
 			_add_pickup(world, p, "Pickup%d" % i)
 		i += 1
 	for n in r.get("npcs", []):
-		if Rooms.present(n, flags):
+		if Rooms.present_now(n, flags, tide):
 			_add_npc(world, n)
 	i = 0
 	for e in r.get("exits", []):
-		if Rooms.present(e, flags):
+		if Rooms.present_now(e, flags, tide):
 			_add_exit(world, e, "Exit%d" % i)
 		i += 1
 	for b in r.get("bots", []):
-		if Rooms.present(b, flags):
+		if Rooms.present_now(b, flags, tide):
 			_add_bot(world, b)
 	var spawns := get_node("Spawns")
 	var cells: Dictionary = r.get("spawns", {})
@@ -80,6 +82,7 @@ func _add_prop(world: Node, p: Dictionary, node_name: String) -> void:
 	it.exit_spawn = p.get("exit_spawn", "default")
 	it.exit_flag = p.get("exit_flag", "")
 	it.locked_dialog = p.get("locked_dialog", "")
+	it.action = p.get("action", "")
 	prop.add_child(it)
 	world.add_child(prop)
 
@@ -139,6 +142,7 @@ func _add_bot(world: Node, b: Dictionary) -> void:
 	bot.name = b["id"].to_pascal_case()
 	bot.bot_id = b["id"]
 	bot.character_name = b.get("character", "")
+	bot.art_name = b.get("art", "brass_automaton")
 	bot.tint = b.get("tint", Color.WHITE)
 	bot.chases = b.get("chases", true)
 	bot.tamperable = b.get("tamperable", false)
@@ -147,6 +151,7 @@ func _add_bot(world: Node, b: Dictionary) -> void:
 	bot.talk_dialog = b.get("talk_dialog", "")
 	bot.distract_flag = b.get("distract_flag", "")
 	bot.distract_dir = b.get("distract_dir", Vector2(1, 0))
+	bot.distract_mark = b.get("distract_mark", "~ เต้น ~")
 	bot.speed = b.get("speed", 70.0)
 	bot.chase_speed = b.get("chase_speed", 210.0)
 	bot.view_range = b.get("view_range", 300.0)

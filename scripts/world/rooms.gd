@@ -5,15 +5,19 @@ extends RefCounted
 ##
 ## Recipe keys:
 ##   title, grid, floor [a, b], wall, spawns {id: cell}
-##   props    [{id, art?, pos, foot, h, color?, dialog?, prompt?,
+##   props    [{id, art?, pos, foot, h, color?, dialog?, prompt?, action?,
 ##              exit_to?, exit_spawn?, exit_flag?, locked_dialog?}]
+##            action "travel" = the floating bike (opens the trip menu)
 ##            `id` = thing id for item uses; no art = placeholder block
 ##   pickups  [{item, pos, label, text?}]  gone once "got_<item>" is set
 ##   npcs     [{id, name, pos, character, tint?, dialog}]
 ##   exits    [{to, spawn, pos, label}]
 ##   bots     [{id, name, pos, patrol [cells, offsets], character, tint,
-##              catch_dialog, talk_dialog, distract_flag?, distract_dir?}]
-## Any entry may carry "if_flag" / "if_not_flag" (spawn only then).
+##              catch_dialog, talk_dialog, distract_flag?, distract_dir?,
+##              art?, steam_powered?, tamperable?, distract_mark?}]
+##   enter    {dialog, flag}  played once on arrival (flag marks it seen)
+## Any entry may carry "if_flag" / "if_not_flag" / "if_tide" (spawn only then).
+## Places the bike can ride to are in TRAVEL (spawn "from_bike" there).
 ## A painted backdrop drops in as assets/art/rooms/<room id>.png.
 ## Gap rule as before: nothing 0.85-1.15 cells from a wall or another solid
 ## thing (navmesh slivers) — test_rooms checks every recipe.
@@ -42,6 +46,7 @@ const ROOMS := {
 			},
 			{
 				"id": "wardrobe",
+				"art": "wardrobe",
 				"pos": Vector2(5.0, 0.5),
 				"foot": Vector2(1.2, 0.6),
 				"h": 200.0,
@@ -58,6 +63,7 @@ const ROOMS := {
 			},
 			{
 				"id": "floor_gap",
+				"art": "floor_gap",
 				"pos": Vector2(4.6, 3.6),
 				"foot": Vector2(1.0, 0.5),
 				"h": 4.0,
@@ -101,7 +107,7 @@ const ROOMS := {
 		{
 			"default": Vector2(1.6, 2.6),
 			"from_home": Vector2(1.6, 2.6),
-			"from_boat": Vector2(8.0, 5.6)
+			"from_bike": Vector2(8.0, 5.6)
 		},
 		"props":
 		[
@@ -112,8 +118,7 @@ const ROOMS := {
 				"foot": Vector2(1.4, 0.7),
 				"h": 90.0,
 				"prompt": "รถลอยน้ำ",
-				"exit_to": "noodle_boat",
-				"exit_spawn": "from_pier",
+				"action": "travel",
 				"exit_flag": "bike_ready",
 				"locked_dialog": "look_bike_locked"
 			},
@@ -135,6 +140,7 @@ const ROOMS := {
 			},
 			{
 				"id": "radio",
+				"art": "steam_radio",
 				"pos": Vector2(1.6, 6.0),
 				"foot": Vector2(0.6, 0.5),
 				"h": 40.0,
@@ -189,7 +195,7 @@ const ROOMS := {
 		"grid": Vector2i(10, 7),
 		"floor": [Color(0.6, 0.45, 0.3), Color(0.56, 0.42, 0.28)],
 		"wall": Color(0.85, 0.45, 0.2),
-		"spawns": {"default": Vector2(6.8, 6.3), "from_pier": Vector2(6.8, 6.3)},
+		"spawns": {"default": Vector2(6.8, 6.3), "from_bike": Vector2(6.8, 6.3)},
 		"props":
 		[
 			{
@@ -237,9 +243,8 @@ const ROOMS := {
 				"pos": Vector2(8.6, 5.9),
 				"foot": Vector2(1.4, 0.7),
 				"h": 90.0,
-				"prompt": "กลับท่าเรือ",
-				"exit_to": "pier",
-				"exit_spawn": "from_boat"
+				"prompt": "รถลอยน้ำ",
+				"action": "travel"
 			},
 		],
 		"npcs":
@@ -262,6 +267,287 @@ const ROOMS := {
 			},
 		],
 	},
+	"stilts":
+	{
+		"title": "ชุมชนยกเสา · ทางเดินไม้เหนือน้ำ",
+		"grid": Vector2i(12, 9),
+		"floor": [Color(0.5, 0.4, 0.3), Color(0.46, 0.37, 0.28)],
+		"wall": Color(0.36, 0.55, 0.58),
+		"spawns": {"default": Vector2(8.0, 5.6), "from_bike": Vector2(8.0, 5.6)},
+		"props":
+		[
+			{
+				"id": "water_tank",
+				"art": "water_tank",
+				"pos": Vector2(1.2, 1.2),
+				"foot": Vector2(1.0, 1.0),
+				"h": 190.0,
+				"dialog": "look_stilt_tank"
+			},
+			{
+				"id": "spirit_house",
+				"art": "spirit_house",
+				"pos": Vector2(3.6, 0.6),
+				"foot": Vector2(0.7, 0.7),
+				"h": 160.0,
+				"dialog": "look_spirit_2090"
+			},
+			{
+				"id": "plant",
+				"art": "plant_pots",
+				"pos": Vector2(6.0, 0.5),
+				"foot": Vector2(0.6, 0.6),
+				"h": 60.0
+			},
+			{
+				"id": "stilt_gate",
+				"art": "house_gate",
+				"pos": Vector2(8.5, 0.5),
+				"foot": Vector2(1.2, 0.6),
+				"h": 50.0,
+				"dialog": "look_stilt_gate"
+			},
+			{
+				"id": "tire_planter",
+				"art": "tire_planter",
+				"pos": Vector2(11.0, 2.2),
+				"foot": Vector2(0.7, 0.7),
+				"h": 60.0,
+				"dialog": "look_tire_planter"
+			},
+			{
+				"id": "float_bike",
+				"art": "steam_bike",
+				"pos": Vector2(10.0, 7.0),
+				"foot": Vector2(1.4, 0.7),
+				"h": 90.0,
+				"prompt": "รถลอยน้ำ",
+				"action": "travel"
+			},
+		],
+		"npcs":
+		[
+			{
+				"id": "jum",
+				"name": "ป้าจุ๋ม",
+				"pos": Vector2(5.0, 3.6),
+				"character": JE,
+				"tint": Color(1, 0.8, 0.95),
+				"dialog": "talk_jum"
+			},
+			{
+				"id": "keng",
+				"name": "น้องเก่ง",
+				"pos": Vector2(2.4, 6.0),
+				"character": JE,
+				"tint": Color(0.8, 0.9, 1),
+				"dialog": "talk_keng"
+			},
+		],
+	},
+	"boat_garage":
+	{
+		"title": "อู่เรือช่างแดง · ใต้ทางด่วน",
+		"grid": Vector2i(12, 9),
+		"floor": [Color(0.4, 0.4, 0.42), Color(0.36, 0.36, 0.38)],
+		"wall": Color(0.45, 0.47, 0.5),
+		"spawns": {"default": Vector2(8.0, 5.6), "from_bike": Vector2(8.0, 5.6)},
+		"props":
+		[
+			{
+				"id": "upturned_boat",
+				"art": "upturned_boat",
+				"pos": Vector2(5.0, 2.6),
+				"foot": Vector2(2.2, 0.8),
+				"h": 90.0,
+				"dialog": "look_upturned_boat",
+				"prompt": "เรือคว่ำ"
+			},
+			{
+				"id": "garage_bench",
+				"art": "tool_bench",
+				"pos": Vector2(9.0, 0.6),
+				"foot": Vector2(1.5, 1.0),
+				"h": 70.0,
+				"dialog": "look_garage_bench"
+			},
+			{
+				"id": "tires",
+				"art": "tire_stack",
+				"pos": Vector2(0.8, 4.5),
+				"foot": Vector2(0.6, 0.6),
+				"h": 60.0
+			},
+			{
+				"id": "crate",
+				"art": "crate",
+				"pos": Vector2(1.0, 7.0),
+				"foot": Vector2(0.9, 0.9),
+				"h": 60.0
+			},
+			{
+				"id": "float_bike",
+				"art": "steam_bike",
+				"pos": Vector2(10.0, 7.0),
+				"foot": Vector2(1.4, 0.7),
+				"h": 90.0,
+				"prompt": "รถลอยน้ำ",
+				"action": "travel"
+			},
+		],
+		"pickups": [{"item": "tape", "pos": Vector2(9.0, 2.0), "label": "เทปพันสายไฟ"}],
+		"npcs":
+		[
+			{
+				"id": "chang_daeng",
+				"name": "ช่างแดง",
+				"pos": Vector2(7.0, 3.8),
+				"character": LUNG,
+				"tint": Color(1, 0.8, 0.7),
+				"dialog": "talk_chang_daeng",
+				"if_flag": "no9_fused"
+			},
+		],
+		"bots":
+		[
+			{
+				"id": "no9",
+				"name": "หุ่นทวงหนี้เบอร์ 9",
+				"art": "brass_automaton",
+				"pos": Vector2(3.5, 4.6),
+				"patrol": [Vector2(-1.5, 0.0), Vector2(2.0, 0.0)],
+				"facing": Vector2(-1, -0.5),
+				"view_range": 220.0,
+				"tint": Color(1, 0.6, 0.45),
+				"steam_powered": true,
+				"tamperable": true,
+				"catch_dialog": "catch_no9",
+				"talk_dialog": "catch_no9",
+				"distract_flag": "no9_fused",
+				"distract_mark": "zz",
+				"speed": 60.0
+			},
+		],
+	},
+	"old_gate":
+	{
+		"title": "ใต้สะพาน · ประตูระบายน้ำเก่า",
+		"grid": Vector2i(12, 8),
+		"floor": [Color(0.42, 0.44, 0.42), Color(0.38, 0.4, 0.38)],
+		"wall": Color(0.3, 0.36, 0.4),
+		"spawns":
+		{
+			"default": Vector2(8.0, 5.0),
+			"from_bike": Vector2(8.0, 5.0),
+			"from_station": Vector2(6.0, 2.6)
+		},
+		"props":
+		[
+			{
+				"id": "sluice_gate",
+				"art": "sluice_gate",
+				"pos": Vector2(6.0, 0.6),
+				"foot": Vector2(2.0, 0.6),
+				"h": 300.0,
+				"dialog": "look_gate_low",
+				"if_tide": "low"
+			},
+			{
+				"id": "sluice_gate",
+				"art": "sluice_flooded",
+				"pos": Vector2(6.0, 0.6),
+				"foot": Vector2(2.0, 0.6),
+				"h": 100.0,
+				"dialog": "look_gate_high",
+				"if_tide": "high"
+			},
+			{
+				"id": "tide_gauge",
+				"art": "tide_gauge",
+				"pos": Vector2(9.6, 0.5),
+				"foot": Vector2(0.3, 0.3),
+				"h": 300.0,
+				"dialog": "look_tide_gauge"
+			},
+			{
+				"id": "bench",
+				"art": "wait_bench",
+				"pos": Vector2(3.0, 1.0),
+				"foot": Vector2(1.2, 0.4),
+				"h": 50.0,
+				"dialog": "wait_tide",
+				"prompt": "นั่งรอ"
+			},
+			{
+				"id": "float_bike",
+				"art": "steam_bike",
+				"pos": Vector2(10.0, 6.2),
+				"foot": Vector2(1.4, 0.7),
+				"h": 90.0,
+				"prompt": "รถลอยน้ำ",
+				"action": "travel"
+			},
+		],
+		"exits":
+		[
+			{
+				"to": "station",
+				"spawn": "default",
+				"pos": Vector2(6.0, 1.6),
+				"label": "เข้าไป",
+				"if_flag": "gate_open",
+				"if_tide": "low"
+			},
+		],
+	},
+	"station":
+	{
+		"title": "บ้านเลขที่ 0 · สถานีสูบน้ำใต้ซอย",
+		"grid": Vector2i(10, 8),
+		"floor": [Color(0.24, 0.26, 0.27), Color(0.21, 0.23, 0.24)],
+		"wall": Color(0.18, 0.28, 0.3),
+		"spawns": {"default": Vector2(5.5, 5.0)},
+		"enter": {"dialog": "enter_station", "flag": "seen_station"},
+		"props":
+		[
+			{
+				"id": "pump",
+				"art": "pump_engine",
+				"pos": Vector2(3.0, 0.6),
+				"foot": Vector2(1.8, 1.0),
+				"h": 240.0,
+				"dialog": "look_pump"
+			},
+			{
+				"id": "zero_plate",
+				"art": "house_zero_plate",
+				"pos": Vector2(5.6, 0.3),
+				"foot": Vector2(0.5, 0.3),
+				"h": 170.0,
+				"dialog": "look_zero_plate",
+				"prompt": "ป้าย"
+			},
+			{
+				"id": "station_valve",
+				"art": "steam_valve",
+				"pos": Vector2(8.0, 0.5),
+				"foot": Vector2(0.5, 0.5),
+				"h": 120.0,
+				"dialog": "look_station_valve"
+			},
+		],
+		"exits":
+		[{"to": "old_gate", "spawn": "from_station", "pos": Vector2(9.2, 4.0), "label": "ออก"}],
+	},
+}
+
+## Where the floating bike can go: room id -> {name, flag needed}.
+const TRAVEL := {
+	"pier": {"name": "ท่าเรือหน้าซอย", "flag": ""},
+	"noodle_boat": {"name": "เรือก๋วยเตี๋ยวป้านก", "flag": ""},
+	"stilts": {"name": "ชุมชนยกเสา (ป้าจุ๋ม)", "flag": "know_stilts"},
+	"boat_garage": {"name": "อู่เรือช่างแดง", "flag": "know_garage"},
+	"old_gate": {"name": "ประตูระบายน้ำเก่าใต้สะพาน", "flag": "know_gate"},
 }
 
 
@@ -284,3 +570,11 @@ static func present(entry: Dictionary, flags: Dictionary) -> bool:
 	if entry.has("item") and flags.get("got_%s" % entry["item"], false):
 		return false
 	return true
+
+
+## present() + the tide condition.
+static func present_now(entry: Dictionary, flags: Dictionary, tide: String) -> bool:
+	var need_tide := str(entry.get("if_tide", ""))
+	if not need_tide.is_empty() and need_tide != tide:
+		return false
+	return present(entry, flags)

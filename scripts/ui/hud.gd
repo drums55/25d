@@ -24,6 +24,8 @@ var _menu_button: Button
 var _menu: PanelContainer
 var _menu_body: VBoxContainer
 var _overlay: PanelContainer
+var _tide_label: Label
+var _riding := false
 
 @onready var _title: Label = %RoomTitle
 @onready var _notice: Label = %Notice
@@ -33,6 +35,15 @@ func _ready() -> void:
 	add_to_group("hud")
 	_build_bag()
 	_build_menu_button()
+	_tide_label = UiKit.label("", 26, Color(0.6, 0.85, 1.0))
+	_tide_label.position = Vector2(40, 30)
+	_tide_label.size = Vector2(400, 40)
+	_tide_label.add_theme_color_override("font_outline_color", Color(0.05, 0.08, 0.1))
+	_tide_label.add_theme_constant_override("outline_size", 8)
+	_tide_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_tide_label)
+	GameState.tide_changed.connect(func(_t): _refresh_tide())
+	_refresh_tide()
 	GameState.notice.connect(_on_notice)
 	GameState.inventory_changed.connect(func(_inv): _refresh_bag())
 	GameState.held_changed.connect(func(_item): _refresh_bag())
@@ -82,7 +93,7 @@ func _refresh_bag() -> void:
 	_held_label.text = (
 		"ถือ %s — แตะคนหรือของเพื่อใช้ · แตะของในกระเป๋าเพื่อผสม" % Puzzles.item_name(held)
 	)
-	_bag.visible = not GameState.inventory.is_empty() and not Dialog.is_active()
+	_bag.visible = not GameState.inventory.is_empty() and not Dialog.is_active() and not _riding
 	# keep the bar centred on the bottom edge as it grows
 	_bag.reset_size()
 	var sz := _bag.get_combined_minimum_size()
@@ -125,6 +136,19 @@ func tap_item(item: String) -> void:
 		Puzzles.combine(held, item)
 
 
+func _refresh_tide() -> void:
+	_tide_label.text = "น้ำขึ้น" if GameState.tide == "high" else "น้ำลง"
+
+
+## On the canal (BoatRide): no bag, no menu.
+func set_riding(on: bool) -> void:
+	_riding = on
+	_menu_button.visible = not on
+	_tide_label.visible = not on
+	GameState.held_item = ""
+	_refresh_bag()
+
+
 ## True when a screen point is on a HUD control (the world must ignore it).
 func blocks_point(screen_pos: Vector2) -> bool:
 	for c in [_bag, _menu_button, _menu, _overlay]:
@@ -155,6 +179,9 @@ func toggle_menu() -> void:
 	v.add_theme_constant_override("separation", 12)
 	var bar := HBoxContainer.new()
 	bar.add_theme_constant_override("separation", 8)
+	var hint_btn := UiKit.button("คำใบ้", _hint, 28, 70)
+	hint_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar.add_child(hint_btn)
 	for page in [["บันทึก", "save"], ["โหลด", "load"], ["ตั้งค่า", "settings"]]:
 		var b := UiKit.button(page[0], _menu_page.bind(page[1]), 28, 70)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -170,6 +197,11 @@ func toggle_menu() -> void:
 	_menu.add_child(v)
 	add_child(_menu)
 	_menu_page("save")
+
+
+func _hint() -> void:
+	close_menu()
+	Puzzles.hint()
 
 
 func _menu_page(page: String) -> void:
@@ -227,6 +259,35 @@ func show_overlay(title: String, body: String, buttons: Array) -> void:
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(btn)
 	v.add_child(row)
+	_overlay.add_child(v)
+	add_child(_overlay)
+
+
+## A list of choices (the bike's trip menu). `choices` = [[text, callable], ...];
+## a "ไม่ไปแล้ว" button closes it.
+func show_choices(title: String, choices: Array) -> void:
+	hide_overlay()
+	GameState.ui_open = true
+	_overlay = PanelContainer.new()
+	_overlay.add_theme_stylebox_override(
+		"panel", UiKit.panel_style(UiKit.PANEL, 24, UiKit.ACCENT_DARK)
+	)
+	_overlay.anchor_left = 0.5
+	_overlay.anchor_top = 0.5
+	_overlay.anchor_right = 0.5
+	_overlay.anchor_bottom = 0.5
+	_overlay.offset_left = -480
+	_overlay.offset_right = 480
+	_overlay.offset_top = -420
+	_overlay.offset_bottom = 420
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 14)
+	v.add_child(UiKit.label(title, 44, UiKit.ACCENT))
+	for c in choices:
+		v.add_child(UiKit.button(c[0], c[1], 32, 90))
+	if choices.is_empty():
+		v.add_child(UiKit.label("ยังไม่รู้จักที่ไหนให้ไป", 28, UiKit.MUTED))
+	v.add_child(UiKit.button("ไม่ไปแล้ว", hide_overlay, 28, 80))
 	_overlay.add_child(v)
 	add_child(_overlay)
 

@@ -31,6 +31,12 @@ func refresh() -> void:
 	hints.add_theme_font_size_override("font_size", 28)
 	hints.toggled.connect(_set_hints)
 	add_child(hints)
+	var skip := CheckButton.new()
+	skip.text = "ข้ามช่วงขับเรือ (ถึงที่หมายทันที)"
+	skip.button_pressed = Settings.skip_ride
+	skip.add_theme_font_size_override("font_size", 28)
+	skip.toggled.connect(_set_skip)
+	add_child(skip)
 
 
 func _choices(keys: Array, current: String, cb: Callable) -> HBoxContainer:
@@ -58,4 +64,9 @@ func _set_volume(v: float) -> void:
 
 func _set_hints(on: bool) -> void:
 	Settings.show_hints = on
+	Settings.save_settings()
+
+
+func _set_skip(on: bool) -> void:
+	Settings.skip_ride = on
 	Settings.save_settings()

@@ -138,6 +138,21 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
 - **A1 slice (บทเปิด)**: ห้องเช่า (ไม้แขวนเสื้อ+หมากฝรั่ง = ไม้ตกของ → ร่องพื้น → กุญแจรถลอยน้ำ; รีโมท; จดหมายไม่ลงชื่อ) →
   ท่าเรือ (พี่หนวดคนทวงหนี้เดินตรวจ, ถ่านจากรีโมท → วิทยุ → `radio_on` → พี่หนวดเต้น (`PatrolBot.distract_flag`); กุญแจ → รถ → `bike_ready`)
   → เรือป้านก (ป้านกหูไม่ดี → ใช้สมุดหนี้เขียน → กล่องทองเหลือง `got_box` → การ์ดจบตอนทดลองใน Main; ลุงโต๊ะสามฝากน้ำจิ้มไก่ = plot ย่อย)
+- **A2 (2026-10-02) บท 1 ครบ**: ห้องเพิ่ม stilts (ป้าจุ๋ม, น้องเก่ง), boat_garage (ช่างแดงใต้เรือคว่ำ + หุ่นทวงหนี้เบอร์ 9),
+  old_gate (ประตูระบายน้ำ: โผล่เฉพาะน้ำลง), station (บ้านเลขที่ 0 — ใส่กล่องในช่องใต้ป้าย = `chapter1_done` → การ์ดจบบท 1 ใน Main).
+  - **รถลอยน้ำ** = prop `action: "travel"` (+exit_flag bike_ready) → `Main.open_travel()` → `Hud.show_choices` รายการ `Rooms.TRAVEL`
+    (ปลดล็อกด้วย flag `know_<...>`) → `Main.travel(dest)` → `BoatRide` (`scripts/ride/boat_ride.gd` + pure `BoatTrack`; 3 เลนในคลอง
+    เรือหางยาว ลัง โอ่ง ถังขยะ ผักตบชวา(ช้า) หุ่นบนแพ — ชน = แค่สะดุด + มุก ไม่มีบทลงโทษ) → `Main.arrive(dest)` = `go_room(dest, "from_bike")`.
+    ทุกห้องที่ไปได้ต้องมี spawn `from_bike`. ตั้งค่า "ข้ามช่วงขับเรือ" (`Settings.skip_ride`, test ตั้ง true เอง)
+  - **น้ำขึ้นลง**: `GameState.tide` เริ่ม "high"; entry ในห้อง/use มี `if_tide`; ม้านั่ง (dialog line `event: "wait_tide"`) สลับน้ำแล้ว
+    Main โหลดห้องใหม่หลัง dialog จบ. HUD มุมซ้ายบนบอก น้ำขึ้น/น้ำลง
+  - ห้องมี `enter: {dialog, flag}` = ฉากตอนเข้าห้องครั้งแรก (Main.load_room)
+  - **คำใบ้**: puzzles.json `hints` (อันแรกที่ flag ผ่าน) → เมนู > "คำใบ้"; เป็นป้าจุ๋มโทรมาเมื่อ `jum_friend` ไม่งั้นไรเดอร์คิดในใจ
+  - **กดค้าง 0.45 วิ** (ไม่ลาก) = `Player.highlight_things()` วาง `HotspotPing` รอบของที่แตะได้ทุกชิ้น
+  - PatrolBot ที่ถูกดึงฟิวส์ตั้ง flag `<bot_id>_fused` (ถาวร) — ใช้คู่ `distract_flag` ให้หลับข้ามวัน/ข้ามการโหลดห้อง
+  - art ใหม่ `tools/art/png/props_2090.py`: steam_radio, wardrobe, floor_gap, upturned_boat, sluice_gate, sluice_flooded, tide_gauge,
+    wait_bench, house_zero_plate, pump_engine
+  - **ระวัง spawn ในกรวยสายตา**: หุ่นเบอร์ 9 เคยเห็นผู้เล่นทันทีที่ลงรถ → วาง patrol ให้ไกล spawn + `facing`/`view_range` ใน recipe
 - **PatrolBot** (A0): ไล่ถ้า `chases` (ไม่มีเงื่อนไขถือของแล้ว), จับได้ = `catch_dialog` + ผลัก, `distract_flag`/`distract_dir`/`distract_mark`
   = หยุดถาวรเมื่อ flag ถูกตั้ง (เช็คตอน `_ready` + `GameState.flag_changed`)
 - Gotcha: script ที่รันด้วย `godot -s` (shot/tool) ห้ามอ้าง class ที่อ้าง autoload ตอน compile (เช่น `Rooms` → `GameState` → `Puzzles`)
@@ -211,9 +226,9 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
   Android cmdline-tools (`platform-tools`, `build-tools;34.0.0`) + ตั้ง `export/android/android_sdk_path`
 
 ## สถานะ / ยังไม่ได้ทำ
-- **A0 + A1 เสร็จ (2026-10-02)**: ถอดระบบจำลองอาชีพ, GameState/เซฟ v7 ใหม่, กระเป๋า/ใช้ของ/ผสมของ, 3 ห้อง (ห้องเช่า ท่าเรือ เรือป้านก),
-  ปริศนาบทเปิดจนได้กล่องทองเหลือง + การ์ดจบตอนทดลอง (55 tests). ภาพยังเป็น prop เดิม + กล่อง placeholder (ตู้เสื้อผ้า ร่องพื้น วิทยุ)
-- ต่อไป A2 (DESIGN 11.8): บท 1 ครบ 5–6 ห้อง, น้ำขึ้นลง, ขับเรือ (เอา RideTrack จาก git), ไปถึงบ้านเลขที่ 0, คำใบ้ (โทรหาป้าจุ๋ม),
-  กดค้าง = จุดที่แตะได้เรืองแสง; art ซอยจมน้ำ (บ้านยกเสา พื้นน้ำ เรือ วิทยุ ตู้เสื้อผ้า) ด้วย paint.py
+- **A0 + A1 + A2 เสร็จ (2026-10-02)**: เกมผจญภัยบท 1 เล่นจบได้ 7 ห้อง (ห้องเช่า ท่าเรือ เรือป้านก ชุมชนยกเสา อู่เรือ ประตูน้ำ
+  บ้านเลขที่ 0), กระเป๋า/ใช้/ผสม, ขับเรือ, น้ำขึ้นลง, คำใบ้, กดค้างเห็นจุดแตะ (58 tests รวม walkthrough บท 1 ทั้งบท)
+- ต่อไป A3 (DESIGN 11.8): บท 2 + plot ย่อย (ลุงโต๊ะสาม×ป้านก, ลอตเตอรี่ป้าจุ๋ม, หุ่นเบอร์ 9 เลือกข้าง, เจ๊เกียว), backdrop วาดทั้งห้อง,
+  ไอคอนของในกระเป๋า
 - ยังไม่มี: เสียง, sprite จริงของ NPC แต่ละแบบ, ไอคอนของในกระเป๋า (ตอนนี้เป็นปุ่มสีตามของ + ชื่อ)
 - ลบ save บนแท็บเล็ต = `adb shell run-as com.drums55.game25d rm files/save_0.json`

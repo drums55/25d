@@ -24,7 +24,7 @@ var inventory: Array = []
 var chapter := 1
 var day := 1
 ## "low" / "high" — some ways in only exist at low tide (DESIGN 11.5).
-var tide := "low"
+var tide := "high"
 ## Room id (Rooms.ROOMS key) the rider is in, and the spawn used to get there.
 var room := START_ROOM
 var spawn := "default"
@@ -89,7 +89,7 @@ func new_game() -> void:
 	inventory = START_ITEMS.duplicate()
 	chapter = 1
 	day = 1
-	tide = "low"
+	tide = "high"
 	room = START_ROOM
 	spawn = "default"
 	input_locked = false
@@ -116,7 +116,7 @@ func restore(d: Dictionary) -> void:
 	inventory = d.get("inventory", [])
 	chapter = int(d.get("chapter", 1))
 	day = int(d.get("day", 1))
-	tide = str(d.get("tide", "low"))
+	tide = str(d.get("tide", "high"))
 	room = str(d.get("room", START_ROOM))
 	spawn = str(d.get("spawn", "default"))
 	inventory_changed.emit(inventory)

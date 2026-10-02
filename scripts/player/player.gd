@@ -16,6 +16,9 @@ enum Order { NONE, MOVE, INTERACT, TAMPER }
 const TAMPER_RANGE := 80.0
 ## Seconds of blinking after a patrol bot caught the rider.
 const CAUGHT_BLINK := 0.8
+## Hold a finger this long without dragging = show every tappable thing.
+const LONG_PRESS_MS := 450
+const LONG_PRESS_SLOP := 30.0
 
 @export var speed := 460.0
 
@@ -23,6 +26,8 @@ var facing: int = Iso.Dir.S
 var order := Order.NONE
 var order_target: Node2D = null
 var _move_finger := -1
+var _press_ms := -1
+var _press_pos := Vector2.ZERO
 var _blink := 0.0
 
 @onready var rig: CharacterView = $Rig
@@ -108,13 +113,19 @@ func _unhandled_input(event: InputEvent) -> void:
 			if hud and hud.blocks_point(touch.position):
 				return
 			_move_finger = touch.index
+			_press_ms = Time.get_ticks_msec()
+			_press_pos = touch.position
 			click_at(_to_world(touch.position))
 			if order != Order.MOVE:
 				_move_finger = -1
-		elif touch.index == _move_finger:
-			_move_finger = -1
+		else:
+			_press_ms = -1
+			if touch.index == _move_finger:
+				_move_finger = -1
 		return
 	var drag := event as InputEventScreenDrag
+	if drag and drag.position.distance_to(_press_pos) > LONG_PRESS_SLOP:
+		_press_ms = -1
 	if drag and drag.index == _move_finger and order == Order.MOVE:
 		_agent.target_position = _to_world(drag.position)
 		_marker.show_at(_agent.target_position)
@@ -127,6 +138,11 @@ func _physics_process(delta: float) -> void:
 		if _blink == 0.0:
 			rig.modulate.a = 1.0
 	var busy := GameState.input_locked or GameState.ui_open or Dialog.is_active()
+	if _press_ms >= 0 and Time.get_ticks_msec() - _press_ms > LONG_PRESS_MS:
+		_press_ms = -1
+		if not busy:
+			cancel_order()
+			highlight_things()
 	var keys := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var dir := Vector2.ZERO
 	if busy:
@@ -199,6 +215,19 @@ func _face(dir: Vector2) -> void:
 
 func _to_world(screen_pos: Vector2) -> Vector2:
 	return get_canvas_transform().affine_inverse() * screen_pos
+
+
+## Long press: ping every tappable thing in the room (no pixel hunting).
+func highlight_things() -> int:
+	var count := 0
+	for n in get_tree().get_nodes_in_group("pickable"):
+		if not n is Node2D or not n.is_visible_in_tree() or n == self:
+			continue
+		var ping := HotspotPing.new()
+		get_parent().add_child(ping)
+		ping.global_position = (n as Node2D).global_position
+		count += 1
+	return count
 
 
 ## A patrol bot caught the rider (PatrolBot._catch): pushed away, blinking.

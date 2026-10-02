@@ -294,7 +294,8 @@ func _switch_off(by_player: bool) -> void:
 		if art:
 			tween.parallel().tween_property(art, "modulate", grey, 0.4)
 		switched_off.emit()
-		GameState.notice.emit("ดึงฟิวส์หุ่นออก ... หลับไปทั้งวัน")
+		GameState.set_flag("%s_fused" % bot_id)
+		GameState.notice.emit("ดึงฟิวส์หุ่นออก ... หลับปุ๋ย")
 	else:
 		_body.rotation = 0.2
 		if art:
