@@ -144,22 +144,37 @@ func _page_hint() -> void:
 	_right.add_child(UiKit.hand_label("คำใบ้", 46, UiKit.RED_INK))
 	var who := "ป้าจุ๋มโทรมาบอกว่า ..." if friend else "จดไว้กันลืม ..."
 	_right.add_child(UiKit.hand_label(who, 30, UiKit.INK_FADED))
-	var levels := Puzzles.hint_levels(Puzzles.data, GameState.flags)
-	if levels.is_empty():
-		return
-	var key := str(levels[0])
-	var shown := clampi(int(revealed.get(key, 1)), 1, levels.size())
-	for i in shown:
-		var color := UiKit.RED_INK if i == levels.size() - 1 and i > 0 else UiKit.INK
-		var text := UiKit.hand_label(("· " if i > 0 else "") + str(levels[i]), 36, color)
-		text.custom_minimum_size = Vector2(RIGHT.size.x, 0)
-		_right.add_child(text)
-	if shown < levels.size():
-		var more := "ใบ้อีก (เฉลยเลย)" if shown == levels.size() - 1 else "ใบ้อีก ..."
-		var b := UiKit.hand_button(more, _reveal_more.bind(key), 34, UiKit.INK_FADED)
-		b.name = "MoreHint"
-		b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-		_right.add_child(b)
+	# every open thread, each with its own "ใบ้อีก" (owner 2026-10-02: one hint at
+	# a time left them stuck on the thing the hint was not about)
+	var threads := Puzzles.open_hints(Puzzles.data, GameState.flags)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(RIGHT.size.x, RIGHT.size.y - 120)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_right.add_child(scroll)
+	var col := VBoxContainer.new()
+	col.name = "Threads"
+	col.add_theme_constant_override("separation", 6)
+	col.custom_minimum_size = Vector2(RIGHT.size.x - 20, 0)
+	scroll.add_child(col)
+	var n := 0
+	for levels in threads:
+		if n > 0:
+			col.add_child(UiKit.hand_label("~", 26, UiKit.INK_FADED))
+		n += 1
+		var key := str(levels[0])
+		var shown := clampi(int(revealed.get(key, 1)), 1, levels.size())
+		for i in shown:
+			var color := UiKit.RED_INK if i == levels.size() - 1 and i > 0 else UiKit.INK
+			var size := 36 if threads.size() == 1 else 30
+			var text := UiKit.hand_label(("· " if i > 0 else "") + str(levels[i]), size, color)
+			text.custom_minimum_size = Vector2(RIGHT.size.x - 20, 0)
+			col.add_child(text)
+		if shown < levels.size():
+			var more := "ใบ้อีก (เฉลยเลย)" if shown == levels.size() - 1 else "ใบ้อีก ..."
+			var b := UiKit.hand_button(more, _reveal_more.bind(key), 30, UiKit.INK_FADED)
+			b.name = "MoreHint" if n == 1 else "MoreHint%d" % n
+			b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+			col.add_child(b)
 
 
 func _reveal_more(key: String) -> void:

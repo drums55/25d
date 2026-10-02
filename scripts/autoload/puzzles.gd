@@ -130,6 +130,16 @@ func _fail(keys: Array) -> void:
 ## The levels of the first hint whose flags hold: a nudge, then clearer, then
 ## the answer (a plain string = one level).
 static func hint_levels(d: Dictionary, flags: Dictionary) -> Array:
+	var all := open_hints(d, flags)
+	return all[0] if not all.is_empty() else []
+
+
+## Every hint whose flags hold, in story order: [[level, ...], ...]. The book
+## writes them all (owner 2026-10-02: "hint มีแค่เรื่องเดียวต่อครั้ง ก็ไปต่อไม่ได้" -
+## stuck on the bell while the one hint talked about something else).
+## A hint takes if_flag / if_flags (all) / if_not_flag.
+static func open_hints(d: Dictionary, flags: Dictionary) -> Array:
+	var out: Array = []
 	for h in d.get("hints", []):
 		var need := str(h.get("if_flag", ""))
 		var never := str(h.get("if_not_flag", ""))
@@ -137,9 +147,15 @@ static func hint_levels(d: Dictionary, flags: Dictionary) -> Array:
 			continue
 		if not never.is_empty() and flags.get(never, false):
 			continue
+		var ok := true
+		for f in h.get("if_flags", []):
+			if not flags.get(f, false):
+				ok = false
+		if not ok:
+			continue
 		var t = h["text"]
-		return t if t is Array else [str(t)]
-	return []
+		out.append(t if t is Array else [str(t)])
+	return out
 
 
 static func hint_text(d: Dictionary, flags: Dictionary, level := 0) -> String:

@@ -101,20 +101,29 @@ func test_notebook_menu_pages_and_close():
 		assert_eq(book.page, p[1])
 	book.open_page("hint")
 	var texts: Array = []
-	for c in book._right.get_children():
-		if c is Label:
-			texts.append((c as Label).text)
+	for c in book._right.find_children("*", "Label", true, false):
+		texts.append((c as Label).text)
 	assert_has(texts, Puzzles.hint_text(Puzzles.data, GameState.flags), "the nudge is written in")
 	var answer := Puzzles.hint_text(Puzzles.data, GameState.flags, 2)
 	assert_does_not_have(texts, "· " + answer, "the answer waits until asked")
 	for i in 2:
-		(book._right.get_node("MoreHint") as Button).pressed.emit()
+		(book._right.find_child("MoreHint", true, false) as Button).pressed.emit()
 	texts.clear()
-	for c in book._right.get_children():
-		if c is Label:
-			texts.append((c as Label).text)
+	for c in book._right.find_children("*", "Label", true, false):
+		texts.append((c as Label).text)
 	assert_has(texts, "· " + answer, "two more taps = the answer")
-	assert_null(book._right.get_node_or_null("MoreHint"))
+	assert_null(book._right.find_child("MoreHint", true, false), "that thread is fully told")
+	# every open thread is written, not just the first (owner 2026-10-02)
+	GameState.set_flag("ch3")
+	GameState.set_flag("got_megaphone")
+	book.open_page("hint")
+	var open := Puzzles.open_hints(Puzzles.data, GameState.flags)
+	assert_gt(open.size(), 1, "several threads open in chapter 3")
+	texts.clear()
+	for c in book._right.find_children("*", "Label", true, false):
+		texts.append((c as Label).text)
+	for levels in open:
+		assert_has(texts, str(levels[0]), "thread written: %s" % levels[0])
 	MenuBook.revealed.clear()
 	book.close()
 	await wait_physics_frames(1)

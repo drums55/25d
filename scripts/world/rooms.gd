@@ -1089,7 +1089,7 @@ const ROOMS := {
 				"pos": Vector2(3.0, 2.6),
 				"foot": Vector2(1.2, 1.2),
 				"h": 600.0,
-				"dialog": "look_bell_tower",
+				"dialog": "look_bell_tower_ch3",
 				"prompt": "หอระฆัง"
 			},
 			{

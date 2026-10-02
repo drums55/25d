@@ -138,20 +138,37 @@ def make_overlay(body, keys_over, under_key, offset=0.014):
     return ob
 
 
-def body_section(body, z, band=0.02):
-    """Half-extents (x, front y, back y) of the rest-pose body around height z."""
+ARM_BONES = ("upperarm", "lowerarm", "hand", "index", "middle", "ring", "pinky", "thumb")
+_TORSO_CACHE = {}
+
+
+def torso_verts(body):
+    """World-space vertices of the body minus the arms (cached per body)."""
+    key = body.name
+    if key not in _TORSO_CACHE:
+        mw = body.matrix_world
+        _TORSO_CACHE[key] = [mw @ v.co for v in body.data.vertices
+                             if not (dominant_bone(body, v) or "").startswith(ARM_BONES)]
+    return _TORSO_CACHE[key]
+
+
+def body_section(body, z, band=0.02, torso_only=False):
+    """Half-extents (x, front y, back y) of the rest-pose body around height z.
+    torso_only leaves the arms out (a vest hugs the chest, not the arms)."""
     xs, ys = [], []
     mw = body.matrix_world
-    for v in body.data.vertices:
-        w = mw @ v.co
+    pts = torso_verts(body) if torso_only else [mw @ v.co for v in body.data.vertices]
+    for w in pts:
         if abs(w.z - z) < band and abs(w.x) < 0.3:
             xs.append(abs(w.x)); ys.append(w.y)
     return (max(xs), min(ys), max(ys)) if xs else (0.15, -0.12, 0.12)
 
 
-def garment(B, body, name, key, bone, z0, z1, arc=150, pad=0.025, flare=0.0, ink=0.007):
-    """Curved cloth panel wrapping the front of the body between heights z0..z1
-    (z1 top). Shape follows the body section at each ring; flare widens the hem."""
+def garment(B, body, name, key, bone, z0, z1, arc=150, pad=0.025, flare=0.0, ink=0.007,
+            center=-90.0, torso_only=False):
+    """Curved cloth panel wrapping the body between heights z0..z1 (z1 top),
+    `arc` degrees wide around `center` (-90 = the front, 90 = the back). Shape
+    follows the body section at each ring; flare widens the hem."""
     import bmesh as _bm
     me = bpy.data.meshes.new(name)
     bm = _bm.new()
@@ -161,13 +178,13 @@ def garment(B, body, name, key, bone, z0, z1, arc=150, pad=0.025, flare=0.0, ink
     for i in range(rings + 1):
         t = i / rings
         z = z1 + (z0 - z1) * t
-        hx, fy, by = body_section(body, z)
+        hx, fy, by = body_section(body, z, torso_only=torso_only)
         cy = (fy + by) / 2
         rx = hx + pad + flare * t
         ry = (by - fy) / 2 + pad + flare * t * 0.6
         row = []
         for j in range(seg + 1):
-            a = math.radians(-90 - arc / 2 + arc * j / seg)
+            a = math.radians(center - arc / 2 + arc * j / seg)
             row.append(bm.verts.new((math.cos(a) * rx, cy + math.sin(a) * ry, z)))
         grid.append(row)
     for i in range(rings):
@@ -178,6 +195,18 @@ def garment(B, body, name, key, bone, z0, z1, arc=150, pad=0.025, flare=0.0, ink
     obj = B.link(name, me)
     sol = obj.modifiers.new("thick", "SOLIDIFY"); sol.thickness = 0.008; sol.offset = 0
     return B.finish_obj(obj, key, bone, ink)
+
+
+def vest(B, body, arm, key, z0=1.0):
+    """A sleeveless vest (เสื้อวิน / เสื้อกั๊ก): a front and a back panel on the
+    torso only (arm holes between them) and a yoke over the shoulders up to
+    the collar (owner 2026-10-02: "กั๊กทุกคนใส่ไม่ถึงไหล่" - it used to be one
+    band around the chest that also wrapped the arms)."""
+    armz = bone_world(arm, "upperarm_l").z
+    top = bone_world(arm, "clavicle_l", tail=True).z
+    garment(B, body, "VestFront", key, "spine_02", z0, armz - 0.03, arc=110, pad=0.03, center=-90, torso_only=True)
+    garment(B, body, "VestBack", key, "spine_02", z0, armz - 0.03, arc=150, pad=0.03, center=90, torso_only=True)
+    garment(B, body, "VestYoke", key, "spine_03", armz - 0.045, top + 0.015, arc=360, pad=0.022, torso_only=True)
 
 
 def full_face_helmet(B, c, r):
@@ -764,7 +793,7 @@ def npc_accessories(name, B, arm, head, top, neck, hc):
             B.torus("Hoop", head + Vector((sx * 0.075, 0.0, 0.06)), 0.026, 0.005, "gold", "Head", rot=(0, math.radians(90), 0), ink=0.0)
     elif name == "lung_mor_nam":
         # a field vest full of pockets, a woven palm-leaf hat, reading glasses and a red pen
-        garment(B, BODY, "Vest", "vest", "spine_02", 1.0, 1.36, arc=200, pad=0.03)
+        vest(B, BODY, arm, "vest")
         B.cyl("Hat", hc + Vector((0, 0.0, 0.07)), 0.2, 0.012, "hat", "Head", r2=0.19, ink=0.004)
         B.cyl("HatTop", hc + Vector((0, 0.0, 0.1)), 0.11, 0.07, "hat", "Head", r2=0.07, ink=0.004)
         for sx in (1, -1):
@@ -774,7 +803,7 @@ def npc_accessories(name, B, arm, head, top, neck, hc):
         B.cyl("Pen", Vector((0.07, fy - 0.03, neck.z - 0.2)), 0.008, 0.12, "pen", "spine_03", ink=0.003)
     elif name == "ple":
         # the orange rank vest with her number, a whistle on a cord
-        garment(B, BODY, "Vest", "vest", "spine_02", 1.0, 1.36, arc=200, pad=0.03)
+        vest(B, BODY, arm, "vest")
         hx, fy, by = body_section(BODY, neck.z - 0.2)
         B.box("Badge", Vector((0.0, fy - 0.035, neck.z - 0.22)), (0.09, 0.012, 0.09), "badge", "spine_03", bevel=0.006, ink=0.004)
         B.torus("Cord", neck + Vector((0, -0.01, -0.03)), 0.07, 0.005, "whistle", "spine_03", scale=(1.0, 1.0, 0.8), ink=0.0)
@@ -790,7 +819,7 @@ def npc_accessories(name, B, arm, head, top, neck, hc):
                  scale=(1.0, 1.0, 0.8), rot=(math.pi, 0, 0), cut=0.2, ink=0.006)
     elif name == "beam":
         # company vest over a white shirt, a lanyard with the badge, and the smile that never stops
-        garment(B, BODY, "Vest", "vest", "spine_02", 1.0, 1.36, arc=200, pad=0.03)
+        vest(B, BODY, arm, "vest")
         hx, fy, by = body_section(BODY, neck.z - 0.2)
         B.torus("Lanyard", neck + Vector((0, -0.01, -0.03)), 0.075, 0.006, "lanyard", "spine_03", scale=(1.0, 1.0, 1.6), ink=0.0)
         B.box("Badge", Vector((0.0, fy - 0.03, neck.z - 0.26)), (0.07, 0.012, 0.09), "card", "spine_03", bevel=0.006, ink=0.004)
