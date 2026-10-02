@@ -57,7 +57,8 @@
     `CharacterView.set_pose(anim)` ค้างท่า (loop, ชนะ walk; ตั้งก่อน _ready ได้). BoatRide ใช้ `ride` ที่ `RIDER_SEAT`,
     PatrolBot ที่ถูก distract เล่น `distract_pose` (default "dance") ถ้าตัวนั้นมี. ท่าใหม่ = เพิ่ม kind ใน `pose_frame` + ใส่ชื่อใน `LOOPING_ANIMS`
   - ท่าพิเศษเพิ่ม (2026-10-02): jum `shout` (โทรโข่งติดกระดูก Head + มือเท้าสะเอว), pa_nok/lung_table3 `wai` (งานแต่ง: พวงมาลัย + มงคลแฝด),
-    nuad `dance` แก้ใหม่ (เจ้าของ: "เหมือนโหนบาร์ ขาลอย") = แบมือรำวง ศอกต่ำ + ย่อเข่าทีละข้าง + `feet_z()` ล็อกเท้าติดพื้น.
+    nuad `dance` แก้ครั้งที่ 3 (เจ้าของ: "เหมือนโหนบาร์ ขาลอย" แล้ว "มือล็อก เท้าแกว่ง") = เท้าติดพื้นทั้งสองข้าง (`feet_z()`), ย่อเข่าพร้อมกัน 2 ครั้ง/รอบ,
+    ส่ายสะโพกน้อยๆ, มือแบรำเป็นวงสวนกัน (ห้ามยกเข่าทีละข้าง = ดูเท้าแกว่ง).
     `EXTRA_ANIMS` ใน char_q.py; ของที่โผล่เฉพาะท่าตั้งชื่อ `Only<anim>_...` (ซ่อนท่าอื่น) / `Not<anim>_...` (ซ่อนเฉพาะท่านั้น).
     render ท่าเดียว: `ONLY=<anim>` แล้ว merge `anims` เข้า sprites.json เดิม. ห้อง: npc `"poses": {flag: anim}` → `AdventureRoom._apply_poses`
     (สดๆ ตอน flag เปลี่ยน). งานแต่ง = ลุงโต๊ะสามมี 2 entry (ที่โต๊ะสาม `if_not_flag ally_nok` / ข้างป้านก `if_flag ally_nok`)

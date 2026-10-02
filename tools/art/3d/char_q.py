@@ -405,22 +405,28 @@ def pose_frame(arm, kind, t, weapon=False, akimbo=False, hunch=False):
         rot_bone(arm, "spine_02", Z, 5 * s)
         bob = -0.022 * abs(c)
     elif kind == "dance":
-        # รำวงลูกทุ่ง: elbows out, forearms up, wrists flicking back; the weight
-        # steps from foot to foot (one knee bends at a time), feet stay on the deck
+        # รำวงลูกทุ่ง (owner: the first two tries looked like hanging from a bar with
+        # swinging feet): BOTH feet stay flat on the deck, both knees dip on the beat,
+        # hips sway side to side, and the hands do the work - each one circles
+        # out and in at shoulder height, palm forward, opposite to the other.
         ground = feet_z(arm)
         for sx, side, ph in ((1, "l", 0.0), (-1, "r", math.pi)):
-            w = math.sin(2 * math.pi * t + ph)
-            aim_bone(arm, "upperarm_" + side, (sx * 0.5, -0.3 - 0.3 * w, -0.8))
-            aim_bone(arm, "lowerarm_" + side, (sx * 0.3, -0.7 - 0.2 * w, 0.65))
-            aim_bone(arm, "hand_" + side, (sx * 0.25, 0.45, 0.85))
+            a = 2 * math.pi * t + ph
+            out_, up = math.cos(a), math.sin(a)
+            aim_bone(arm, "upperarm_" + side, (sx * (0.55 + 0.25 * out_), -0.35, -0.75 + 0.3 * up))
+            aim_bone(arm, "lowerarm_" + side, (sx * (0.2 + 0.35 * out_), -0.6, 0.75 + 0.15 * up))
+            aim_bone(arm, "hand_" + side, (sx * (0.35 - 0.3 * out_), 0.35, 0.85))
         open_hands(arm)
-        rot_bone(arm, "pelvis", Y, 7 * s)
-        rot_bone(arm, "spine_02", Y, -9 * s)
-        rot_bone(arm, "spine_02", Z, 6 * s)
-        rot_bone(arm, "Head", Y, 7 * s)
-        for side, k in (("l", max(0.0, s)), ("r", max(0.0, -s))):
-            rot_bone(arm, "thigh_" + side, X, -22 * k)
-            rot_bone(arm, "calf_" + side, X, 40 * k)
+        sway = math.sin(2 * math.pi * t)
+        dip = 0.5 - 0.5 * math.cos(4 * math.pi * t)  # two dips per loop
+        rot_bone(arm, "pelvis", Y, 4 * sway)
+        rot_bone(arm, "spine_02", Y, -12 * sway)
+        rot_bone(arm, "Head", Y, 6 * sway)
+        rot_bone(arm, "Head", X, 4)
+        for side in ("l", "r"):
+            rot_bone(arm, "thigh_" + side, X, -12 * dip)
+            rot_bone(arm, "calf_" + side, X, 24 * dip)
+            rot_bone(arm, "foot_" + side, X, -12 * dip)
         bob = ground - feet_z(arm)
     elif kind == "cheer":
         # ไรเดอร์ห้าดาว: jumping with both arms up (wrench and all)
