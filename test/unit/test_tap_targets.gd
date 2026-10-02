@@ -2,9 +2,14 @@ extends GutTest
 ## Every tappable thing in every room must actually be tappable (owner
 ## 2026-10-02: "หยิบรีโมทยากมาก เพราะจะไปโดนเตียงตลอด"): items lying around,
 ## exits and people at their visual centre; props somewhere on their art.
-## Checked with the chapter-1 and chapter-2 flag sets so every variant spawns.
+## Checked with the chapter-1, -2 and -3 flag sets so every variant spawns.
 
 const CH2_FLAGS := ["ch2", "got_debt_list", "nok_love", "no9_fused", "gate_open"]
+## Chapter 3 at night: the ring in the mud and the company robot, then เก้า at the gate.
+const CH3_FLAGS := [
+	"ch2", "got_debt_list", "nok_love", "no9_fused", "gate_open", "ch3", "lung_ring_told"
+]
+const CH3_LATE := ["ch2", "got_debt_list", "nok_love", "no9_fused", "gate_open", "ch3", "ally_nine"]
 ## A prop is fine when at least this share of its opaque art picks it.
 const MIN_PROP_SHARE := 0.35
 
@@ -78,7 +83,7 @@ func _audit(room: AdventureRoom) -> Array:
 
 func test_everything_is_tappable():
 	var bad: Array = []
-	for flags in [[], CH2_FLAGS]:
+	for flags in [[], CH2_FLAGS, CH3_FLAGS, CH3_LATE]:
 		for tide in ["high", "low"]:
 			for id in Rooms.ROOMS:
 				var room := _room(id, flags, tide)

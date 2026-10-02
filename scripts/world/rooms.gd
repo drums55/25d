@@ -201,7 +201,7 @@ const ROOMS := {
 				"pos": Vector2(5.6, 4.5),
 				"character": LUNG,
 				"tint": Color(0.8, 0.5, 0.45),
-				"dialog": "talk_nuad_ch2",
+				"dialog": "talk_nuad_ch3",
 				"if_flag": "ch2"
 			},
 		],
@@ -274,7 +274,7 @@ const ROOMS := {
 				"pos": Vector2(4.5, 2.0),
 				"character": JE,
 				"tint": Color(1, 0.9, 0.85),
-				"dialog": "talk_pa_nok"
+				"dialog": "talk_pa_nok_ch3"
 			},
 			{
 				"id": "lung_table3",
@@ -282,7 +282,7 @@ const ROOMS := {
 				"pos": Vector2(3.0, 4.8),
 				"character": LUNG,
 				"tint": Color(1, 0.92, 0.8),
-				"dialog": "talk_lung_table3"
+				"dialog": "talk_lung_ch3"
 			},
 		],
 	},
@@ -353,7 +353,7 @@ const ROOMS := {
 				"pos": Vector2(5.0, 3.6),
 				"character": JE,
 				"tint": Color(1, 0.8, 0.95),
-				"dialog": "talk_jum"
+				"dialog": "talk_jum_ch3"
 			},
 			{
 				"id": "keng",
@@ -361,7 +361,7 @@ const ROOMS := {
 				"pos": Vector2(2.4, 6.0),
 				"character": JE,
 				"tint": Color(0.8, 0.9, 1),
-				"dialog": "talk_keng"
+				"dialog": "talk_keng_ch3"
 			},
 		],
 	},
@@ -426,9 +426,10 @@ const ROOMS := {
 				"pos": Vector2(3.5, 4.6),
 				"foot": Vector2(0.6, 0.6),
 				"h": 150.0,
-				"dialog": "talk_nine",
+				"dialog": "talk_nine_ch3",
 				"prompt": "หุ่นเบอร์ 9",
-				"if_flag": "ch2"
+				"if_flag": "ch2",
+				"if_not_flag": "ally_nine"
 			},
 		],
 		"npcs":
@@ -439,7 +440,7 @@ const ROOMS := {
 				"pos": Vector2(7.0, 3.8),
 				"character": LUNG,
 				"tint": Color(1, 0.8, 0.7),
-				"dialog": "talk_chang_daeng",
+				"dialog": "talk_chang_daeng_ch3",
 				"if_flag": "no9_fused"
 			},
 		],
@@ -535,6 +536,52 @@ const ROOMS := {
 				"if_tide": "low"
 			},
 		],
+		# chapter 3: ลุงโต๊ะสาม's ring in the mud, guarded by the company's robot
+		# until เก้า comes to talk it to sleep
+		"pickups":
+		[
+			{
+				"item": "ring",
+				"pos": Vector2(1.6, 2.6),
+				"label": "แหวน",
+				"text": 'ล้วงโคลนหน้าประตูน้ำ ... แหวนทองเล็กๆ ด้านในสลักว่า "นก 2060"',
+				"if_flag": "lung_ring_told",
+				"if_tide": "low"
+			},
+		],
+		"extra_props":
+		[
+			{
+				"id": "nine_gate",
+				"art": "brass_automaton",
+				"pos": Vector2(2.8, 5.2),
+				"foot": Vector2(0.6, 0.6),
+				"h": 150.0,
+				"dialog": "talk_nine_gate",
+				"prompt": "เก้า",
+				"if_flag": "ally_nine"
+			},
+		],
+		"bots":
+		[
+			{
+				"id": "company_bot",
+				"name": "หุ่นบริษัท ป้องกันภัย",
+				"art": "brass_automaton",
+				"pos": Vector2(4.0, 4.5),
+				"patrol": [Vector2(0.0, -1.9), Vector2(0.0, 0.9)],
+				"facing": Vector2(-1, 0.5),
+				"view_range": 220.0,
+				"tint": Color(0.7, 0.85, 1.0),
+				"catch_dialog": "catch_company",
+				"talk_dialog": "catch_company",
+				"distract_flag": "ally_nine",
+				"distract_dir": Vector2(-1, 0),
+				"distract_mark": "~ ฟังเก้าเล่า ~",
+				"speed": 65.0,
+				"if_flag": "ch3"
+			},
+		],
 	},
 	"kiao_raft":
 	{
@@ -613,7 +660,7 @@ const ROOMS := {
 				"pos": Vector2(5.0, 2.0),
 				"character": JE,
 				"tint": Color(1, 0.85, 0.5),
-				"dialog": "talk_kiao"
+				"dialog": "talk_kiao_ch3"
 			},
 		],
 	},
@@ -663,7 +710,7 @@ const ROOMS := {
 				"pos": Vector2(5.5, 3.0),
 				"character": JE,
 				"tint": Color(0.75, 0.8, 0.95),
-				"dialog": "talk_wan",
+				"dialog": "talk_wan_ch3",
 				"if_flags": ["ch2", "got_debt_list", "nok_love"]
 			},
 		],

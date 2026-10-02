@@ -326,6 +326,121 @@ func test_walkthrough_chapter_two():
 	assert_true(GameState.ui_open, "chapter card is up")
 
 
+## Everything up to the end of chapter 2, then the chapter-3 card's button.
+func _start_chapter_three() -> void:
+	for f in [
+		"got_float_key",
+		"radio_on",
+		"bike_ready",
+		"got_box",
+		"know_stilts",
+		"jum_friend",
+		"know_garage",
+		"know_gate",
+		"know_kiao",
+		"no9_fused",
+		"got_broken_crank",
+		"crank_fixed",
+		"gate_open",
+		"seen_station",
+		"chapter1_done",
+		"ch2",
+		"seen_kiao",
+		"met_kiao",
+		"no9_named",
+		"got_debt_list",
+		"jum_saved",
+		"nok_glasses",
+		"got_love_letter",
+		"nok_love",
+		"chapter2_done"
+	]:
+		GameState.set_flag(f)
+	for item in ["brass_box", "crank", "debt_list"]:
+		GameState.give_item(item)
+	GameState.chapter = 2
+	TestHelpers.finish_dialog()
+	_hud.hide_overlay()
+	_main.start_chapter(3)
+	await wait_seconds(0.8)
+	TestHelpers.finish_dialog()
+	assert_eq(GameState.chapter, 3)
+	assert_true(GameState.has_flag("ch3_started"), "chapter 3 intro played")
+	assert_eq(_room().modulate, _main.NIGHT_TINT, "chapter 3 is at night")
+
+
+func test_walkthrough_chapter_three_best_ending():
+	await _start_chapter_three()
+	# พี่หนวด's debt megaphone wakes the soi, through ป้าจุ๋ม
+	await _go("pier", "from_home")
+	_tap("nuad")
+	assert_true(GameState.has_item("megaphone"))
+	await _ride_to("stilts")
+	_tap("keng")
+	assert_false(GameState.has_flag("ally_keng"), "not before the soi is up")
+	GameState.held_item = "megaphone"
+	_tap("jum")
+	assert_true(GameState.has_flag("ally_jum"))
+	_tap("keng")
+	assert_true(GameState.has_flag("ally_keng"))
+	# เก้า picks a side; ช่างแดง gets his crank back
+	await _ride_to("boat_garage")
+	_tap("no9_awake")
+	assert_true(GameState.has_flag("ally_nine"))
+	GameState.held_item = "crank"
+	_tap("chang_daeng")
+	assert_true(GameState.has_flag("ally_daeng"))
+	# เจ๊เกียว is on the list too
+	await _ride_to("kiao_raft")
+	GameState.held_item = "debt_list"
+	_tap("kiao")
+	assert_true(GameState.has_flag("ally_kiao"))
+	# ลุงโต๊ะสาม's ring in the mud at the old gate
+	await _ride_to("noodle_boat")
+	_tap("lung_table3")
+	assert_true(GameState.has_flag("lung_ring_told"))
+	await _ride_to("old_gate")
+	assert_null(_thing("ring"), "the mud is under water at high tide")
+	_tap("bench")
+	await wait_seconds(0.8)
+	assert_eq(GameState.tide, "low")
+	var bot := _room().get_world().get_node_or_null("CompanyBot") as PatrolBot
+	assert_not_null(bot, "the company robot guards the gate")
+	assert_not_null(_thing("nine_gate"), "เก้า keeps it talking")
+	_tap("ring")
+	assert_true(GameState.has_item("ring"))
+	await _ride_to("noodle_boat")
+	GameState.held_item = "ring"
+	_tap("lung_table3")
+	assert_true(GameState.has_flag("ally_nok"))
+	assert_eq(Endings.allies(GameState.flags).size(), Endings.ALLIES.size())
+	# the key in the box, into the pump at บ้านเลขที่ 0
+	await _ride_to("old_gate")
+	_tap("exit_station")
+	await wait_seconds(0.8)
+	assert_eq(_room().room_id, "station")
+	GameState.held_item = "brass_box"
+	_tap("pump")
+	await wait_physics_frames(2)
+	assert_true(GameState.ui_open, "the valve card is up")
+	_main._open_valve()
+	assert_true(GameState.has_flag("ending_five_stars"))
+
+
+func test_chapter_three_sell_the_box():
+	await _start_chapter_three()
+	await _go("pier", "from_home")
+	await _ride_to("kiao_raft")
+	_tap("kiao")
+	GameState.held_item = "brass_box"
+	_tap("kiao")
+	await wait_physics_frames(2)
+	assert_true(GameState.ui_open, "the offer card is up")
+	_main.end_game("sold")
+	assert_true(GameState.has_flag("ending_sold"))
+	assert_true(GameState.ui_open, "ending card")
+
+
 func test_hints_follow_the_story():
 	var flags := {}
 	assert_string_contains(Puzzles.hint_text(Puzzles.data, flags), "กุญแจ")

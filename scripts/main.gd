@@ -25,16 +25,20 @@ const CHAPTERS := {
 		(
 			"หนี้ของทั้งซอยถูกซื้อโดยบริษัทที่คุมเครื่องสูบน้ำ ซอยส่งไวคือแก้มลิงลับ"
 			+ " และกุญแจในกล่องคือทางเดียวที่จะเปลี่ยนทิศน้ำ ... ถ้ากล้าให้ซอยจมหนึ่งคืน\n\n"
-			+ "(บทที่ 3 ยังไม่ได้สร้าง — ขอบคุณที่เล่นถึงตรงนี้)"
+			+ "บทที่ 3: คืนตีสาม"
 		),
-		0,
+		3,
 	],
 }
 ## Spoken when a chapter starts.
-const CHAPTER_INTROS := {2: "intro_ch2"}
+const CHAPTER_INTROS := {2: "intro_ch2", 3: "intro_ch3"}
+## Chapter 3 happens at night.
+const NIGHT_TINT := Color(0.62, 0.66, 0.92)
 
 var _card_pending := ""
 var _reload_after_dialog := false
+## "sell" / "valve": the big choice card waiting for the dialog to end.
+var _choice_after_dialog := ""
 var _dialog_after_load := ""
 
 @onready var _room_holder: Node2D = $RoomHolder
@@ -131,6 +135,7 @@ func load_room(room_path: String, spawn_id: String) -> bool:
 		node.free()
 		return false
 	_hud.set_riding(false)
+	room.modulate = NIGHT_TINT if GameState.chapter >= 3 else Color.WHITE
 	_room_holder.add_child(room)
 	room.get_world().add_child(_player)
 	_player.global_position = room.get_spawn_position(spawn_id)
@@ -160,12 +165,24 @@ func _on_dialog_event(event_name: String) -> void:
 		# other way round once the dialog ends
 		GameState.set_tide("low" if GameState.tide == "high" else "high")
 		_reload_after_dialog = true
+	elif event_name == "offer_sell":
+		_choice_after_dialog = "sell"
+	elif event_name == "open_valve":
+		_choice_after_dialog = "valve"
 
 
 func _on_dialog_finished(_id: String) -> void:
 	if _reload_after_dialog:
 		_reload_after_dialog = false
 		go_room(GameState.room, "default")
+	if not _choice_after_dialog.is_empty():
+		var choice := _choice_after_dialog
+		_choice_after_dialog = ""
+		if choice == "sell":
+			_offer_sell()
+		else:
+			_offer_valve()
+		return
 	if _card_pending.is_empty():
 		return
 	var flag := _card_pending
@@ -182,6 +199,57 @@ func _show_card(flag: String) -> void:
 	else:
 		buttons.push_front(["เดินเล่นต่อ", _hud.hide_overlay])
 	_hud.show_overlay(c[0], c[1], buttons)
+
+
+## เจ๊เกียว relays the company's offer: the box for the debt.
+func _offer_sell() -> void:
+	(
+		_hud
+		. show_overlay(
+			"ขายกล่องให้บริษัท?",
+			(
+				"บริษัทป้องกันภัยยื่นข้อเสนอผ่านเจ๊เกียว: ส่งกล่องทองเหลืองคืน แลกกับหนี้ทั้งหมดของคุณ\n"
+				+ "ซอยจะเป็นแก้มลิงต่อไป ... แต่คุณจะไม่ต้องกลัวหุ่นทวงหนี้อีกเลย"
+			),
+			[["ขาย (จบเกม)", end_game.bind("sold")], ["ไม่ขาย", _hud.hide_overlay]]
+		)
+	)
+
+
+## The master valve: who is ready, then open it or wait.
+func _offer_valve() -> void:
+	var have := Endings.allies(GameState.flags)
+	var lines: Array[String] = []
+	for f in Endings.ALLIES:
+		lines.append(("✓ " if have.has(f) else "· ") + str(Endings.ALLIES[f]))
+	var body := (
+		"เปิดวาล์วหลักตอนตีสาม น้ำจะไหลผ่านซอยก่อนหนึ่งคืน\nคนที่พร้อมช่วยตอนนี้ %d/%d:\n%s"
+		% [have.size(), Endings.ALLIES.size(), "\n".join(lines)]
+	)
+	_hud.show_overlay(
+		"เปิดวาล์ว?",
+		body,
+		[["เปิดเลย (จบเกม)", _open_valve], ["ยังก่อน ไปหาคนช่วย", _hud.hide_overlay]]
+	)
+
+
+func _open_valve() -> void:
+	end_game(Endings.for_valve(Endings.allies(GameState.flags).size()))
+
+
+## The end of the story: the ending card, then a new game or the title.
+func end_game(ending: String) -> void:
+	GameState.set_flag("ending_" + ending)
+	GameState.save_game(0)
+	var t: Array = Endings.TEXT[ending]
+	_hud.show_overlay(t[0], t[1], [["เล่นใหม่", _new_game], ["หน้าแรก", go_title]])
+
+
+func _new_game() -> void:
+	_hud.hide_overlay()
+	GameState.new_game()
+	_dialog_after_load = "intro"
+	go_room("home", "default")
 
 
 func go_title() -> void:

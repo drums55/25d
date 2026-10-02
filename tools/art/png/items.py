@@ -170,9 +170,38 @@ def love_letter(c):
             c.flat(RED), outline=0)
 
 
+def megaphone(c):
+    p = c.p
+    x0, y0 = p(-0.3, 0.0, 70)
+    x1, y1 = p(0.35, 0.0, 70)
+    s = c.ss
+    cone = [(x0, y0 - 18 * s), (x1, y1 - 56 * s), (x1, y1 + 56 * s), (x0, y0 + 18 * s)]
+    c.paint(c.mask_poly(cone), c.flat(RED), outline=1.0)
+    c.disc(x1, y1, 22 * s, 56 * s, hexc("#F4E9D8"), outline=1.0, dome=False)
+    c.disc(x1, y1, 12 * s, 34 * s, hexc("#3A2E2A"), dome=False)
+    c.box(-0.42, -0.06, -0.28, 0.06, 50, 90, IRON, rim=0.6)
+    c.pipe([p(-0.12, 0.0, 66), p(-0.14, 0.0, 30), p(-0.04, 0.0, 26)], 9, INK)
+    c.text("ดอก", p(-0.05, -0.12, 70), p(0.2, -0.12, 70), 12, YELLOW)
+
+
+def ring(c):
+    p = c.p
+    x, y = p(0.0, 0.0, 60)
+    s = c.ss
+    pts = []
+    for k in range(25):
+        a = 2 * math.pi * k / 24
+        pts.append((x + math.cos(a) * 52 * s, y + math.sin(a) * 40 * s))
+    c.stroke(pts, 14, YELLOW)
+    c.stroke(pts[14:20], 5, hexc("#FFF2B0"), 0.8)
+    c.disc(x, y - 44 * s, 16 * s, 14 * s, hexc("#9FE3F0"), spec=1.0)
+    for dx, dy in ((-30, 30), (20, 34), (40, 10)):
+        c.disc(x + dx * s, y + dy * s, 8 * s, 5 * s, hexc("#5B4636"), dome=False)
+
+
 ITEMS = {f.__name__: f for f in (debt_book, gum, hanger, hook, float_key, air_remote, letter,
                                  sauce_packs, brass_box, broken_crank, tape, crank, memory_chip,
-                                 debt_list, reading_glasses, love_letter)}
+                                 debt_list, reading_glasses, love_letter, megaphone, ring)}
 
 
 def render(name, out):
