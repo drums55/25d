@@ -514,10 +514,15 @@ func _start_chapter_three() -> void:
 		"got_love_letter",
 		"evidence_pipe",
 		"nok_love",
-		"chapter2_done"
+		"chapter2_done",
+		"know_hall",
+		"know_temple",
+		"know_market",
+		"bell_fixed",
+		"met_la_or"
 	]:
 		GameState.set_flag(f)
-	for item in ["brass_box", "crank", "debt_list"]:
+	for item in ["brass_box", "crank", "debt_list", "debt_book"]:
 		GameState.give_item(item)
 	GameState.chapter = 2
 	TestHelpers.finish_dialog()
@@ -574,8 +579,7 @@ func test_walkthrough_chapter_three_best_ending():
 	GameState.held_item = "ring"
 	_tap("lung_table3")
 	assert_true(GameState.has_flag("ally_nok"))
-	assert_eq(Endings.allies(GameState.flags).size(), Endings.ALLIES.size())
-	# the key in the box, into the pump at บ้านเลขที่ 0
+	# the valve before the plan is complete: คุณนายวรรณ counts, nothing opens
 	await _ride_to("old_gate")
 	_tap("exit_station")
 	await wait_seconds(0.8)
@@ -583,16 +587,88 @@ func test_walkthrough_chapter_three_best_ending():
 	GameState.held_item = "brass_box"
 	_tap("pump")
 	await wait_physics_frames(2)
+	assert_true(GameState.ui_open, "the not-ready card is up")
+	assert_false(GameState.has_flag("valve_opened"))
+	assert_true(GameState.has_item("brass_box"), "the key stays in the box")
+	_hud.hide_overlay()
+	_tap("exit_old_gate")
+	await wait_seconds(0.8)
+	assert_eq(_room().room_id, "old_gate")
+	# ปลุก (2): table three is free, น้องบอย makes it a sign, the bell may ring
+	await _ride_to("noodle_boat")
+	_tap("table_top")
+	assert_true(GameState.has_item("table_top"))
+	await _ride_to("temple")
+	_tap("luang_pee")
+	assert_true(GameState.has_flag("monk_sign_told"))
+	_tap("boy")
+	GameState.held_item = "table_top"
+	_tap("boy")
+	assert_true(GameState.has_item("sign_permit"))
+	GameState.held_item = "sign_permit"
+	_tap("bell_tower")
+	assert_true(GameState.has_flag("ally_monk"))
+	# พา (1): the bell woke the boat rank; พี่เปิ้ล's vest for her son
+	await _ride_to("boat_rank")
+	_tap("ple")
+	assert_true(GameState.has_flag("ally_ple"))
+	assert_true(GameState.has_item("vest"))
+	# ที่ไป (2): the guard post is the last living gate
+	await _ride_to("guard_post")
+	assert_not_null(_room().get_world().get_node_or_null("GuardA"), "robots guard the post")
+	GameState.held_item = "vest"
+	_tap("ton")
+	assert_true(GameState.has_flag("disguised"))
+	await wait_seconds(0.5)
+	assert_null(_room().get_world().get_node_or_null("GuardA"), "in uniform, no robot minds")
+	_tap("survey_kiosk")
+	assert_true(GameState.has_item("star_card"))
+	GameState.held_item = "debt_list"
+	_tap("beam")
+	assert_false(GameState.has_flag("ally_beam"), "five-star customers only")
+	GameState.held_item = "star_card"
+	_tap("beam")
+	GameState.held_item = "debt_list"
+	_tap("beam")
+	assert_true(GameState.has_flag("ally_beam"))
+	# พา (2): the drone had the evidence all along
+	await _ride_to("pier")
+	_tap("berm")
+	assert_true(GameState.has_flag("berm_offered"))
+	_tap("drone")
+	assert_true(GameState.has_item("drone_card"))
+	GameState.held_item = "drone_card"
+	_tap("berm")
+	assert_true(GameState.has_flag("ally_berm"))
+	# เวลา: the board the company obeys, in ลุงหมอน้ำ's hand but not by him
+	await _ride_to("hall")
+	GameState.held_item = "debt_book"
+	_tap("forecast_board")
+	assert_false(GameState.has_flag("forecast_rigged"), "ask ลุง first")
+	_tap("lung_mor_nam")
+	GameState.held_item = "debt_book"
+	_tap("forecast_board")
+	assert_true(GameState.has_flag("forecast_rigged"))
+	assert_true(Endings.ready(GameState.flags))
+	# the key in the box, into the pump at บ้านเลขที่ 0: the convoy, the dawn
+	await _ride_to("old_gate")
+	_tap("exit_station")
+	await wait_seconds(0.8)
+	GameState.held_item = "brass_box"
+	_tap("pump")
+	await wait_physics_frames(2)
 	assert_true(GameState.ui_open, "the valve card is up")
 	_main._open_valve()
+	assert_true(GameState.has_flag("valve_opened"))
 	assert_true(GameState.has_flag("ending_five_stars"))
 	await wait_seconds(0.8)
 	assert_eq(_room().room_id, "noodle_boat", "the wedding boat at dawn")
 	assert_not_null(_thing("nuad"), "the whole soi came")
 	assert_true(_player.rig.get_node("Sprite").animation.begins_with("cheer"))
+	assert_eq(Endings.epilogues(GameState.flags).size(), Endings.EPILOGUES.size())
 
 
-func test_chapter_three_sell_the_box():
+func test_chapter_three_the_box_is_not_for_sale():
 	await _start_chapter_three()
 	await _go("pier", "from_home")
 	await _ride_to("kiao_raft")
@@ -600,20 +676,48 @@ func test_chapter_three_sell_the_box():
 	GameState.held_item = "brass_box"
 	_tap("kiao")
 	await wait_physics_frames(2)
-	assert_true(GameState.ui_open, "the offer card is up")
-	_main.end_game("sold")
-	assert_true(GameState.has_flag("ending_sold"))
+	assert_false(GameState.ui_open, "no offer card: the hand will not let go")
+	assert_true(GameState.has_flag("sale_refused"))
+	assert_true(GameState.has_item("brass_box"))
+	assert_false(GameState.has_flag("ending_sold"))
+
+
+func test_the_convoy_ride_follows_the_rider_and_a_hit_gets_someone_wet():
+	await _start_chapter_three()
+	for f in [
+		"ally_jum", "ally_monk", "ally_ple", "ally_berm", "ally_nok", "ally_beam", "ally_keng"
+	]:
+		GameState.set_flag(f)
+	GameState.set_flag("forecast_rigged")
+	BoatRide.skip_all = false
+	await _go("station", "default")
+	_main._open_valve()
 	await wait_seconds(0.8)
-	assert_eq(_room().room_id, "home", "the ending is staged at home")
-	assert_true(
-		_player.rig.get_node("Sprite").animation.begins_with("phone"), "staring at the phone"
-	)
-	await wait_seconds(_main.ENDING_HOLD + 0.5)
-	assert_false(GameState.ui_open, "nothing covers the ending until a tap")
+	var ride: BoatRide = get_tree().get_first_node_in_group("ride")
+	assert_not_null(ride)
+	assert_true(ride.convoy)
+	assert_true(ride.play, "the one ride that is steered")
+	assert_eq(ride._boats.size(), 7, "six required boats + น้องเก่ง")
+	assert_gt(float(ride.track["length"]), BoatTrack.SPEED * 50.0, "a long way")
 	var tap := InputEventScreenTouch.new()
 	tap.pressed = true
-	_main._unhandled_input(tap)
-	assert_true(GameState.ui_open, "then the ending card")
+	ride._unhandled_input(tap)
+	assert_false(ride.done, "no skipping the convoy")
+	# (the tap steered a lane instead) back to the middle, straight at a crate
+	ride.target_lane = 0
+	ride.lane = 0.0
+	ride.track["obstacles"] = [{"kind": "crate", "x": 3.0, "lane": 0}]
+	for i in 60:
+		ride.step(0.05)
+	assert_has(ride.hits, "bump")
+	assert_true(GameState.has_flag("wet_nok"), "the first boat in line stumbled")
+	ride.travelled = ride.track["length"]
+	ride.step(0.05)
+	await wait_seconds(0.8)
+	assert_true(GameState.has_flag("ending_five_stars"), "arriving = the ending")
+	assert_eq(_room().room_id, "noodle_boat")
+	var cards := Endings.epilogues(GameState.flags)
+	assert_string_contains(str(cards[8]["text"]), "เอียงกลางขบวน", "ป้านก's card is the wet one")
 
 
 func test_room_updates_when_a_flag_changes_while_inside():

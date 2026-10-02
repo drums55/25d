@@ -47,28 +47,20 @@ const ENDING_SCENES := {
 		"tint": DAWN_TINT,
 		"caption": "เช้าแรกที่ซอยส่งไวโผล่พ้นน้ำ"
 	},
-	"wet":
-	{
-		"room": "stilts",
-		"pose": "shrug",
-		"tint": DAWN_TINT,
-		"caption": "เช้าวันต่อมา ... เปียกแต่รอด"
-	},
-	"sunk":
-	{"room": "stilts", "pose": "sit_sad", "tint": NIGHT_TINT, "caption": "บนหลังคา จนถึงเช้า"},
-	"sold": {"room": "home", "pose": "phone", "tint": NIGHT_TINT, "caption": "ห้าดาว จากบริษัท"},
 }
+const ENDING_STINGS := {"five_stars": "sting_good"}
 ## Seconds the ending tableau plays (after the fade) before anything is written on it.
-const ENDING_STINGS := {
-	"five_stars": "sting_good", "wet": "sting_chapter", "sunk": "sting_sad", "sold": "sting_sad"
-}
 const ENDING_HOLD := 3.0
+## The convoy ride (DESIGN 12.8): from the station to the wedding boat.
+const CONVOY_DEST := "noodle_boat"
 
 var _card_pending := ""
 var _reload_after_dialog := false
 var _kept_position := Vector2.ZERO
-## "sell" / "valve": the big choice card waiting for the dialog to end.
+## "valve": the valve card waiting for the dialog to end.
 var _choice_after_dialog := ""
+## True while the convoy ride is on: arriving = the ending.
+var _convoy := false
 var _dialog_after_load := ""
 ## The ending being staged ("" while playing).
 var _ending := ""
@@ -152,8 +144,13 @@ func travel(dest: String, play := false) -> void:
 	SceneRouter.go_to(BOAT_SCENE, "")
 
 
-## End of a ride (or a skipped one): into the destination room.
+## End of a ride (or a skipped one): into the destination room. After the
+## convoy, that is the ending.
 func arrive(dest: String, _bumps := 0) -> void:
+	if _convoy:
+		_convoy = false
+		end_game(Endings.ENDING)
+		return
 	go_room(dest, "from_bike")
 
 
@@ -237,8 +234,6 @@ func _on_dialog_event(event_name: String) -> void:
 	elif event_name == "reload_room":
 		# the room changes after this scene (the wedding moves ลุงโต๊ะสาม)
 		_reload_after_dialog = true
-	elif event_name == "offer_sell":
-		_choice_after_dialog = "sell"
 	elif event_name == "open_valve":
 		_choice_after_dialog = "valve"
 
@@ -248,12 +243,8 @@ func _on_dialog_finished(_id: String) -> void:
 		_reload_after_dialog = false
 		_refresh_now()
 	if not _choice_after_dialog.is_empty():
-		var choice := _choice_after_dialog
 		_choice_after_dialog = ""
-		if choice == "sell":
-			_offer_sell()
-		else:
-			_offer_valve()
+		_offer_valve()
 		return
 	if _card_pending.is_empty():
 		return
@@ -274,40 +265,55 @@ func _show_card(flag: String) -> void:
 	_hud.show_overlay(c[0], c[1], buttons)
 
 
-## เจ๊เกียว relays the company's offer: the box for the debt.
-func _offer_sell() -> void:
-	(
-		_hud
-		. show_overlay(
-			"ขายกล่องให้บริษัท?",
-			(
-				"บริษัทป้องกันภัยยื่นข้อเสนอผ่านเจ๊เกียว: ส่งกล่องทองเหลืองคืน แลกกับหนี้ทั้งหมดของคุณ\n"
-				+ "ซอยจะเป็นแก้มลิงต่อไป ... แต่คุณจะไม่ต้องกลัวหุ่นทวงหนี้อีกเลย"
-			),
-			[["ขาย (จบเกม)", end_game.bind("sold")], ["ไม่ขาย", _hud.hide_overlay]]
-		)
-	)
-
-
-## The master valve: who is ready, then open it or wait.
+## The master valve (DESIGN 12.8): the plan must be complete, else คุณนายวรรณ
+## counts what is missing; complete = turn it and lead the convoy out.
 func _offer_valve() -> void:
-	var have := Endings.allies(GameState.flags)
-	var lines: Array[String] = []
-	for f in Endings.ALLIES:
-		lines.append(("✓ " if have.has(f) else "· ") + str(Endings.ALLIES[f]))
-	var body := (
-		"เปิดวาล์วหลักตอนตีสาม น้ำจะไหลผ่านซอยก่อนหนึ่งคืน\nคนที่พร้อมช่วยตอนนี้ %d/%d:\n%s"
-		% [have.size(), Endings.ALLIES.size(), "\n".join(lines)]
-	)
+	var flags := GameState.flags
+	if not Endings.ready(flags):
+		_hud.show_overlay(
+			"ซอยยังไม่พร้อม",
+			(
+				"คุณนายวรรณนับให้:\n%s\n\nเอากุญแจออกก่อน ... ไปตามให้ครบแล้วค่อยกลับมา"
+				% Endings.checklist(flags)
+			),
+			[["ไปตามให้ครบก่อน", _hud.hide_overlay]]
+		)
+		return
 	_hud.show_overlay(
-		"เปิดวาล์ว?",
-		body,
-		[["เปิดเลย (จบเกม)", _open_valve], ["ยังก่อน ไปหาคนช่วย", _hud.hide_overlay]]
+		"เปิดวาล์ว",
+		(
+			(
+				"%s\n\nครบแล้ว ทั้งซอยอยู่บนเรือ หุ่นบริษัทรอตีสี่\n"
+				+ "บิดครึ่งรอบ แล้วรีบขึ้นเรือเตอร์ไซค์นำขบวนออกคลองใหญ่ก่อนน้ำมา"
+			)
+			% Endings.checklist(flags)
+		),
+		[["บิดเลย", _open_valve], ["ยังก่อน", _hud.hide_overlay]]
 	)
 
 
+## Turn it: the water turns, and the whole soi follows the rider down the
+## big canal (BoatRide convoy; hits = someone gets wet, never the ending).
 func _open_valve() -> void:
-	end_game(Endings.for_valve(Endings.allies(GameState.flags).size()))
+	_hud.hide_overlay()
+	GameState.set_flag("valve_opened")
+	GameState.save_game(0)
+	_convoy = true
+	Audio.sfx("bike_start")
+	if BoatRide.skip_all:
+		arrive(CONVOY_DEST)
+		return
+	var seed := hash(["convoy", GameState.flags.size()])
+	BoatRide.pending = {
+		"dest": CONVOY_DEST,
+		"name": "ขบวนเรือตีสาม",
+		"track": BoatTrack.generate(seed, BoatRide.CONVOY_TIME),
+		"play": true,
+		"convoy": true,
+		"seed": seed,
+		"tint": NIGHT_TINT,
+	}
+	SceneRouter.go_to(BOAT_SCENE, "")
 
 
 ## The end of the story: the ending card, then a new game or the title.
@@ -348,7 +354,29 @@ func show_ending_card() -> void:
 		return
 	_ending_waiting = false
 	var t: Array = Endings.TEXT[_ending]
-	_hud.show_overlay(t[0], t[1], [["เล่นใหม่", _new_game], ["หน้าแรก", go_title]])
+	_hud.show_overlay(t[0], t[1], [["บทส่งท้าย ▶", _show_epilogue.bind(0)], ["หน้าแรก", go_title]])
+
+
+## The epilogue cards, one per character (DESIGN 12.8 — the part of the
+## ending that depends on the side plots and on who fell in the canal).
+func _show_epilogue(i: int) -> void:
+	var cards := Endings.epilogues(GameState.flags)
+	if i >= cards.size():
+		_hud.show_overlay(
+			"จบ",
+			"บ้านเลขที่ 0\n\nขอบคุณที่เป็นแก้มลิง",
+			[["เล่นใหม่", _new_game], ["หน้าแรก", go_title]]
+		)
+		return
+	var c: Dictionary = cards[i]
+	var last := i == cards.size() - 1
+	_hud.show_portrait_card(
+		str(c["who"]),
+		str(c["name"]),
+		str(c["text"]),
+		[["จบ" if last else "ต่อไป ▶", _show_epilogue.bind(i + 1)]],
+		"%d / %d" % [i + 1, cards.size()]
+	)
 
 
 func _unhandled_input(event: InputEvent) -> void:

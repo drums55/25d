@@ -230,8 +230,28 @@ def sign_stack(out):
     c.finish(out)
 
 
+# --- ตอนจบ (DESIGN 12.8): the other "five stars" --------------------------------------
+def five_star_sign(out):
+    """ป้ายไม้เขียนมือที่ท่าเรือ "ไรเดอร์ห้าดาว ★★★★★ — ป้าจุ๋มให้": a plank on a bamboo post."""
+    c = Canvas(360, 520, seed=407)
+    p = c.p
+    c.ground_shadow(0.4, 0.3)
+    c.cylinder(0.0, 0.0, 0.035, 0, 200, hexc("#B8A06A"))
+    c.box(-0.34, -0.03, 0.34, 0.03, 190, 345, WOOD_L, rim=0.7, outline=1.6)
+    c.text("ไรเดอร์ห้าดาว", p(-0.31, 0.031, 312), p(0.31, 0.031, 312), 17, RED_P)
+    for k in range(5):
+        x = -0.24 + k * 0.12
+        z = 266 if k < 4 else 258  # the fifth one is drawn crooked, on purpose, ป้า says
+        c.disc(*p(x, 0.032, z), 11 * c.ss, 11 * c.ss, YELLOW, outline=0.9, dome=False)
+        c.disc(*p(x, 0.032, z), 5 * c.ss, 5 * c.ss, hexc("#F7E08A"), outline=0.0, dome=False)
+    c.text("ป้าจุ๋มให้", p(-0.31, 0.031, 226), p(0.31, 0.031, 226), 12, INK)
+    for x in (-0.3, 0.3):
+        c.disc(*p(x, 0.034, 338), 3 * c.ss, 3 * c.ss, IRON, outline=0.5, dome=False)
+    c.finish(out)
+
+
 PROPS = {f.__name__: f for f in (guard_booth, barrier_arm, survey_kiosk, company_atm, brochure_stand, shelter_sign,
-                                 parcel_pile, poodle_float, condo_window, live_boat, drone, sign_stack)}
+                                 parcel_pile, poodle_float, condo_window, live_boat, drone, sign_stack, five_star_sign)}
 
 if __name__ == "__main__":
     name = sys.argv[1]

@@ -189,7 +189,7 @@ const ROOMS := {
 				"pos": Vector2(9.8, 5.3),
 				"foot": Vector2(0.3, 0.3),
 				"h": 300.0,
-				"dialog": "look_drone",
+				"dialog": "look_drone_ch3",
 				"prompt": "โดรน",
 				"if_flag": "ch2"
 			},
@@ -234,7 +234,7 @@ const ROOMS := {
 				"name": "พี่เบิ้ม จอมบุญ (ไลฟ์อยู่)",
 				"pos": Vector2(3.0, 5.0),
 				"character": "berm",
-				"dialog": "talk_berm",
+				"dialog": "talk_berm_ch3",
 				"if_flag": "ch2"
 			},
 		],
@@ -289,6 +289,17 @@ const ROOMS := {
 				"h": 90.0,
 				"dialog": "look_boat_jar"
 			},
+			# the morning after (DESIGN 12.8): the other kind of five stars
+			{
+				"id": "five_star_sign",
+				"art": "five_star_sign",
+				"pos": Vector2(0.4, 0.3),
+				"foot": Vector2(0.3, 0.3),
+				"h": 330.0,
+				"dialog": "look_five_star_sign",
+				"prompt": "ป้ายไม้",
+				"if_flag": "ending_five_stars"
+			},
 			{
 				"id": "float_bike",
 				"art": "boat_bike",
@@ -300,7 +311,19 @@ const ROOMS := {
 			},
 		],
 		"pickups":
-		[{"item": "charcoal", "pos": Vector2(2.6, 2.6), "label": "ถ่านไม้", "if_flag": "ch2"}],
+		[
+			{"item": "charcoal", "pos": Vector2(2.6, 2.6), "label": "ถ่านไม้", "if_flag": "ch2"},
+			# chapter 3: ลุงโต๊ะสาม left table three for the first time in thirty years
+			{
+				"item": "table_top",
+				"pos": Vector2(3.0, 4.8),
+				"label": "หน้าโต๊ะสาม",
+				"text":
+				"โต๊ะสามว่างเป็นครั้งแรกในสามสิบปี ... ตะปูเป็นสนิมหมด หน้าโต๊ะยกออกมาได้ทั้งแผ่น",
+				"if_flags": ["ch3", "ally_nok"],
+				"if_not_flag": "ally_monk"
+			},
+		],
 		"npcs":
 		[
 			{
@@ -344,6 +367,30 @@ const ROOMS := {
 				"pos": Vector2(2.4, 5.0),
 				"character": "keng",
 				"dialog": "talk_keng_ch3",
+				"if_flag": "ending_five_stars"
+			},
+			{
+				"id": "luang_pee",
+				"name": "หลวงพี่น้ำ",
+				"pos": Vector2(1.0, 4.6),
+				"character": "luang_pee",
+				"dialog": "talk_luang_pee_ch3",
+				"if_flag": "ending_five_stars"
+			},
+			{
+				"id": "ple",
+				"name": "พี่เปิ้ล",
+				"pos": Vector2(9.1, 1.8),
+				"character": "ple",
+				"dialog": "talk_ple_ch3",
+				"if_flag": "ending_five_stars"
+			},
+			{
+				"id": "berm",
+				"name": "พี่เบิ้ม (ไลฟ์อยู่)",
+				"pos": Vector2(1.0, 6.2),
+				"character": "berm",
+				"dialog": "talk_berm_ch3",
 				"if_flag": "ending_five_stars"
 			},
 			# the wedding: ลุงโต๊ะสาม finally leaves table three to stand by ป้านก
@@ -815,7 +862,7 @@ const ROOMS := {
 				"pos": Vector2(2.0, 0.15),
 				"foot": Vector2(0.5, 0.3),
 				"h": 300.0,
-				"dialog": "look_forecast_board",
+				"dialog": "look_forecast_board_ch3",
 				"prompt": "ป้ายพยากรณ์"
 			},
 			{
@@ -876,7 +923,7 @@ const ROOMS := {
 				"name": "ลุงหมอน้ำ",
 				"pos": Vector2(3.2, 3.2),
 				"character": "lung_mor_nam",
-				"dialog": "talk_mor_nam"
+				"dialog": "talk_mor_nam_ch3"
 			},
 		],
 	},
@@ -1074,14 +1121,14 @@ const ROOMS := {
 				"name": "หลวงพี่น้ำ",
 				"pos": Vector2(5.4, 3.8),
 				"character": "luang_pee",
-				"dialog": "talk_luang_pee"
+				"dialog": "talk_luang_pee_ch3"
 			},
 			{
 				"id": "boy",
 				"name": "น้องบอย (ฝ่ายป้าย)",
 				"pos": Vector2(6.0, 5.0),
 				"character": "boy",
-				"dialog": "talk_boy",
+				"dialog": "talk_boy_ch3",
 				"if_flag": "ch2"
 			},
 		],
@@ -1162,7 +1209,7 @@ const ROOMS := {
 				"name": "พี่เปิ้ล (วินเรือ เบอร์ 1)",
 				"pos": Vector2(4.2, 2.4),
 				"character": "ple",
-				"dialog": "talk_ple"
+				"dialog": "talk_ple_ch3"
 			},
 		],
 	},
@@ -1285,7 +1332,8 @@ const ROOMS := {
 				"foot": Vector2(0.6, 0.6),
 				"h": 150.0,
 				"dialog": "look_company_bots",
-				"prompt": "หุ่นบริษัท"
+				"prompt": "หุ่นบริษัท",
+				"if_not_flag": "ch3"
 			},
 			{
 				"id": "company_bot_b",
@@ -1294,7 +1342,29 @@ const ROOMS := {
 				"foot": Vector2(0.6, 0.6),
 				"h": 150.0,
 				"dialog": "look_company_bots",
-				"prompt": "หุ่นบริษัท"
+				"prompt": "หุ่นบริษัท",
+				"if_not_flag": "ch3"
+			},
+			# chapter 3, in น้องต้น's uniform: the same two back at their posts, saluting
+			{
+				"id": "company_bot_a",
+				"art": "brass_automaton",
+				"pos": Vector2(1.6, 1.0),
+				"foot": Vector2(0.6, 0.6),
+				"h": 150.0,
+				"dialog": "look_company_bots_salute",
+				"prompt": "หุ่นบริษัท",
+				"if_flags": ["ch3", "disguised"]
+			},
+			{
+				"id": "company_bot_b",
+				"art": "brass_automaton",
+				"pos": Vector2(8.2, 0.6),
+				"foot": Vector2(0.6, 0.6),
+				"h": 150.0,
+				"dialog": "look_company_bots_salute",
+				"prompt": "หุ่นบริษัท",
+				"if_flags": ["ch3", "disguised"]
 			},
 			{
 				"id": "survey_kiosk",
@@ -1302,7 +1372,7 @@ const ROOMS := {
 				"pos": Vector2(9.3, 2.4),
 				"foot": Vector2(0.4, 0.4),
 				"h": 290.0,
-				"dialog": "look_survey_kiosk",
+				"dialog": "look_survey_kiosk_ch3",
 				"prompt": "ตู้แบบสอบถาม"
 			},
 			{
@@ -1338,14 +1408,58 @@ const ROOMS := {
 				"name": "คุณบีม (ลูกค้าสัมพันธ์)",
 				"pos": Vector2(5.2, 2.8),
 				"character": "beam",
-				"dialog": "talk_beam"
+				"dialog": "talk_beam_ch3"
 			},
 			{
 				"id": "ton",
 				"name": "น้องต้น (ยาม)",
 				"pos": Vector2(2.6, 2.2),
 				"character": "ton",
-				"dialog": "talk_ton"
+				"dialog": "talk_ton",
+				"if_not_flag": "ch3"
+			},
+			# chapter 3: alone on the night shift, out of the booth, out of the robots' reach
+			{
+				"id": "ton",
+				"name": "น้องต้น (ยาม)",
+				"pos": Vector2(2.2, 5.0),
+				"character": "ton",
+				"dialog": "talk_ton_ch3",
+				"if_flag": "ch3",
+				"if_not_flag": "ton_home"
+			},
+		],
+		# the last living gate (DESIGN 12.8): company robots that check the
+		# uniform, not the face; น้องต้น's spare uniform gets past them
+		"bots":
+		[
+			{
+				"id": "guard_a",
+				"name": "หุ่นบริษัท ป้องกันภัย",
+				"art": "brass_automaton",
+				"pos": Vector2(3.6, 2.4),
+				"facing": Vector2(0, 1),
+				"zone_range": 190.0,
+				"turns_to_noise": false,
+				"tint": Color(0.7, 0.85, 1.0),
+				"catch_dialog": "catch_guard_bots",
+				"talk_dialog": "catch_guard_bots",
+				"if_flag": "ch3",
+				"if_not_flag": "disguised"
+			},
+			{
+				"id": "guard_b",
+				"name": "หุ่นบริษัท ป้องกันภัย",
+				"art": "brass_automaton",
+				"pos": Vector2(6.8, 2.4),
+				"facing": Vector2(0, 1),
+				"zone_range": 190.0,
+				"turns_to_noise": false,
+				"tint": Color(0.7, 0.85, 1.0),
+				"catch_dialog": "catch_guard_bots",
+				"talk_dialog": "catch_guard_bots",
+				"if_flag": "ch3",
+				"if_not_flag": "disguised"
 			},
 		],
 	},

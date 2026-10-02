@@ -253,6 +253,72 @@ func show_overlay(title: String, body: String, buttons: Array) -> void:
 	_settle_note()
 
 
+## An epilogue card: the character (their sprite, or "prop:<art>") on the
+## left of the note, a tin-sign name, the text, and the buttons.
+func show_portrait_card(
+	who: String, who_name: String, body: String, buttons: Array, corner := ""
+) -> void:
+	var v := _open_note(Vector2(1240, 0))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 30)
+	v.add_child(row)
+	row.add_child(_portrait(who))
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 16)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(col)
+	var head := Label.new()
+	head.text = who_name
+	head.add_theme_font_override("font", UiKit.FONT_SIGN)
+	head.add_theme_font_size_override("font_size", 40)
+	head.add_theme_color_override("font_color", UiKit.SIGN_TEXT)
+	head.add_theme_stylebox_override("normal", UiKit.nine("sign", 30, Vector4(34, 18, 34, 16)))
+	head.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	col.add_child(head)
+	var text := UiKit.hand_label(body, 31, UiKit.INK)
+	text.custom_minimum_size = Vector2(760, 0)
+	text.add_theme_constant_override("line_spacing", 6)
+	col.add_child(text)
+	if not corner.is_empty():
+		var n := UiKit.hand_label(corner, 24, UiKit.INK_FADED)
+		n.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		col.add_child(n)
+	var btns := HBoxContainer.new()
+	btns.add_theme_constant_override("separation", 28)
+	btns.alignment = BoxContainer.ALIGNMENT_CENTER
+	for b in buttons:
+		var btn := UiKit.sign_button(b[0], b[1], 34, 100)
+		btn.custom_minimum_size.x = 380
+		btns.add_child(btn)
+	v.add_child(btns)
+	_settle_note()
+
+
+## The picture on an epilogue card: a CharacterView standing on the paper,
+## or a prop's painting for the ones without a sheet (เก้า, the cat).
+func _portrait(who: String) -> Control:
+	var holder := Control.new()
+	holder.custom_minimum_size = Vector2(300, 340)
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if who.begins_with("prop:"):
+		var tex := ArtLibrary.prop(who.trim_prefix("prop:"))
+		if tex:
+			var pic := TextureRect.new()
+			pic.texture = tex
+			pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			pic.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			holder.add_child(pic)
+		return holder
+	var view := (load("res://scenes/characters/character_view.tscn") as PackedScene).instantiate()
+	view.character_name = who
+	view.position = Vector2(150, 320)
+	view.scale = Vector2.ONE * 1.5
+	holder.add_child(view)
+	view.set_facing(Iso.Dir.S)
+	return holder
+
+
 ## A list of choices (the bike's trip menu) as pier signs on a note; the
 ## "ไม่ไปแล้ว" scribble closes it. `choices` = [[text, callable], ...].
 func show_choices(title: String, choices: Array) -> void:

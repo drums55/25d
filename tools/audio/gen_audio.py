@@ -702,6 +702,37 @@ def sfx_bike_start():  # pull-start cough, then putts
     return norm(out, 0.8)
 
 
+def sfx_bell():  # the temple bell: one strike, long ring (the convoy keeps time by it)
+    out = np.zeros(secs(2.8))
+    place(out, gong(f=392.0, dur=2.8), 0)
+    place(out, 0.45 * gong(f=392.0 * 2.76, dur=1.1), 0)
+    t = t_axis(0.03)
+    place(out, 0.5 * filt(noise(0.03), "high", 3000) * np.exp(-t / 0.006), 0)
+    return norm(out, 0.8)
+
+
+def sfx_firecracker():  # a string of firecrackers from the bell tower
+    out = np.zeros(secs(1.4))
+    at = 0.0
+    for k in range(11):
+        d = 0.06
+        t = t_axis(d)
+        bang = filt(noise(d), "band", (700, 7000)) * np.exp(-t / 0.009)
+        bang += 0.6 * np.sin(2 * np.pi * 140 * t) * np.exp(-t / 0.012)
+        place(out, bang * RNG.uniform(0.6, 1.0), secs(at))
+        at += RNG.uniform(0.06, 0.14)
+    return norm(out, 0.85)
+
+
+def sfx_splash():  # someone goes into the canal
+    dur = 0.7
+    t = t_axis(dur)
+    out = filt(noise(dur), "band", (300, 5000)) * np.minimum(1, t / 0.03) * np.exp(-t / 0.16)
+    out += 0.8 * np.sin(2 * np.pi * (260 - 180 * np.minimum(1, t / 0.12)) * t) * np.exp(-t / 0.08)
+    out += 0.3 * filt(noise(dur), "low", 400) * np.exp(-(t - 0.25) ** 2 / 0.01)
+    return norm(out, 0.8)
+
+
 TRACKS = {
     "music/title": (music_title, 3),
     "music/day": (music_day, 3),
@@ -731,6 +762,9 @@ TRACKS = {
     "sfx/tide": (sfx_tide, 4),
     "sfx/bump": (sfx_bump, 4),
     "sfx/bike_start": (sfx_bike_start, 4),
+    "sfx/bell": (sfx_bell, 4),
+    "sfx/firecracker": (sfx_firecracker, 4),
+    "sfx/splash": (sfx_splash, 4),
 }
 
 

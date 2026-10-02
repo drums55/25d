@@ -21,6 +21,11 @@ const CH3_LATE := [
 	"ally_nine",
 	"ally_nok",
 	"ally_jum",
+	"ally_monk",
+	"boy_permit",
+	"ally_ple",
+	"disguised",
+	"ton_home",
 	"ending_five_stars"
 ]
 ## A prop is fine when at least this share of its opaque art picks it.

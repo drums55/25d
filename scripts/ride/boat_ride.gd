@@ -7,7 +7,15 @@ extends Node2D
 ## rider; a tap anywhere skips it. `pending.play` = the steerable runner
 ## (tap above / below the bike, W/S on PC, to change lane; hyacinth slows),
 ## kept for story set pieces. At the end Main.arrive() loads the room.
+##
+## `pending.convoy` (DESIGN 12.8 "ขบวนเรือตีสาม"): the one playable ride, not
+## skippable. Every boat the rider got on side follows (Endings.convoy, the
+## characters sitting aboard), the temple bell and firecrackers go all the
+## way, a wall of water chases from the left edge. A hit = the next boat in
+## the line stumbles and someone falls in: flag wet_<id> (their epilogue
+## card changes), never the ending.
 
+const CHARACTER_SCENE := preload("res://scenes/characters/character_view.tscn")
 const VIEW_AHEAD := 24.0
 const VIEW_BEHIND := 8.0
 const LANE_MOVE := 3.5
@@ -21,6 +29,17 @@ const RIDER_SEAT := Vector2(-6, -30)
 ## Cutscene length (s) and when the gag line shows.
 const CUT_TIME := 3.4
 const GAG_AT := 0.7
+## The convoy: length (s), boat spacing (canal units), how far behind the
+## rider the lane change reaches each boat (s per boat), the bell's beat.
+const CONVOY_TIME := 60.0
+const CONVOY_GAP := 1.6
+const CONVOY_LAG := 0.4
+const BELL_EVERY := 2.6
+const FIRECRACKER_EVERY := 4.3
+## The water wall rests this far behind the last boat, and closes to this
+## share of it while the convoy is stopped or slowed.
+const WALL_MARGIN := 2.0
+const WALL_CLOSE := 0.55
 ## One of these drifts past on each trip: obstacle kind, x, lane, line.
 ## Lane 0 = right in the bike's way (it bumps / slows, which is the joke).
 const GAGS := [
@@ -53,6 +72,7 @@ static var skip_all := false
 
 var dest := ""
 var play := false
+var convoy := false
 var gag_line := ""
 var track := {}
 var travelled := 0.0
@@ -69,11 +89,17 @@ var _decor: Array[Node2D] = []
 var _rng := RandomNumberGenerator.new()
 var _world: Node2D
 var _canal: Node2D
+var _wave: Node2D
 var _rider: Node2D
 var _cam: Camera2D
 var _ui: CanvasLayer
 var _progress: ProgressBar
 var _toast: Label
+var _boats: Array[Node2D] = []
+var _lane_log: Array = []
+var _next_bell := 0.0
+var _next_cracker := FIRECRACKER_EVERY * 0.5
+var _wall_x := -12.0
 
 
 func _ready() -> void:
@@ -83,6 +109,7 @@ func _ready() -> void:
 		return
 	dest = pending["dest"]
 	play = bool(pending.get("play", false))
+	convoy = bool(pending.get("convoy", false))
 	track = pending["track"] if play else cutscene_track(int(pending.get("seed", 0)))
 	modulate = pending.get("tint", Color.WHITE)
 	_rng.seed = hash([dest, "lines"])
@@ -93,8 +120,16 @@ func _ready() -> void:
 	_world = Node2D.new()
 	_world.y_sort_enabled = true
 	add_child(_world)
+	if convoy:
+		# the wall of water rides over everything it has reached
+		_wave = Node2D.new()
+		_wave.z_index = 10
+		_wave.draw.connect(_draw_wall)
+		add_child(_wave)
 	_build_rider()
 	_build_decor()
+	if convoy:
+		_build_convoy()
 	_cam = Camera2D.new()
 	_cam.position = Iso.grid_to_world(Vector2(4.0, 0.0)) + Vector2(0, -120)
 	add_child(_cam)
@@ -132,7 +167,7 @@ func _build_rider() -> void:
 	var bike := _sprite("boat_bike")
 	if bike:
 		_rider.add_child(bike)
-	var who := (load("res://scenes/characters/character_view.tscn") as PackedScene).instantiate()
+	var who := CHARACTER_SCENE.instantiate()
 	who.character_name = "rider"
 	who.position = RIDER_SEAT
 	_rider.add_child(who)
@@ -157,6 +192,30 @@ func _build_decor() -> void:
 			s.set_meta("wrap", n * DECOR_GAP)
 			_world.add_child(s)
 			_decor.append(s)
+
+
+## The boats that follow the rider, front to back, with their people aboard.
+func _build_convoy() -> void:
+	var i := 0
+	for b in Endings.convoy(GameState.flags):
+		var boat := Node2D.new()
+		boat.name = "Boat_%s" % b["id"]
+		boat.set_meta("id", b["id"])
+		boat.set_meta("name", b["name"])
+		boat.set_meta("back", CONVOY_GAP * (i + 1))
+		var hull := _sprite(str(b["boat"]), 0.9)
+		if hull:
+			boat.add_child(hull)
+		var who := CHARACTER_SCENE.instantiate()
+		who.character_name = str(b["who"])
+		who.position = Vector2(0, -26)
+		boat.add_child(who)
+		who.set_facing(Iso.Dir.SE)
+		if not str(b["pose"]).is_empty():
+			who.set_pose(str(b["pose"]))
+		_world.add_child(boat)
+		_boats.append(boat)
+		i += 1
 
 
 func _build_ui(place: String) -> void:
@@ -191,12 +250,18 @@ func _build_ui(place: String) -> void:
 		var screen := get_viewport().get_visible_rect().size
 		skip.position = screen - skip.get_minimum_size() - Vector2(60, 40)
 		return
-	box.add_child(UiKit.label("ขี่เรือเตอร์ไซค์ไป %s" % place, 30, UiKit.ACCENT))
+	var title := (
+		"ขบวนเรือตีสาม · นำทั้งซอยออกคลองใหญ่" if convoy else "ขี่เรือเตอร์ไซค์ไป %s" % place
+	)
+	box.add_child(UiKit.label(title, 30, UiKit.ACCENT))
 	_progress = ProgressBar.new()
 	_progress.custom_minimum_size = Vector2(600, 26)
 	_progress.show_percentage = false
 	box.add_child(_progress)
-	box.add_child(UiKit.label("แตะเหนือรถ = เลนซ้าย · แตะใต้รถ = เลนขวา", 24, UiKit.MUTED))
+	var help := "แตะเหนือรถ = เลนซ้าย · แตะใต้รถ = เลนขวา"
+	if convoy:
+		help += " · ชนอะไร = เรือลำหลังสะดุด คนตกน้ำ"
+	box.add_child(UiKit.label(help, 24, UiKit.MUTED))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -240,6 +305,8 @@ func step(delta: float) -> void:
 	if not play and not gag_line.is_empty() and t < GAG_AT and t + delta >= GAG_AT:
 		_say(gag_line)
 	t += delta
+	if convoy:
+		_convoy_step(delta)
 	lane = move_toward(lane, float(target_lane), LANE_MOVE * delta)
 	var speed: float = float(track["speed"]) * clampf(t / RAMP, 0.2, 1.0)
 	if _stopped > 0.0:
@@ -270,9 +337,50 @@ func _check_hits() -> void:
 			_slow = 1.5
 		else:
 			_stopped = BUMP_STOP
-		if play:
+		if convoy and not _boats.is_empty():
+			_someone_falls_in()
+		elif play:
 			var pool: Array = LINES[effect]
 			_say(pool[_rng.randi() % pool.size()])
+
+
+## The bell keeps time, firecrackers from the bell tower, the water wall
+## creeps up when the convoy stalls and falls back when it moves.
+func _convoy_step(delta: float) -> void:
+	_lane_log.append([t, lane])
+	while _lane_log.size() > 2 and float(_lane_log[1][0]) < t - CONVOY_LAG * (_boats.size() + 1):
+		_lane_log.pop_front()
+	if t >= _next_bell:
+		_next_bell = t + BELL_EVERY
+		Audio.sfx("bell", 0.04)
+	if t >= _next_cracker:
+		_next_cracker = t + FIRECRACKER_EVERY
+		Audio.sfx("firecracker", 0.1)
+	var rest := -(CONVOY_GAP * (_boats.size() + 1) + WALL_MARGIN)
+	var chase := rest if _stopped <= 0.0 and _slow <= 0.0 else rest * WALL_CLOSE
+	_wall_x = move_toward(_wall_x, chase, delta * 2.5)
+
+
+## The lane the rider held `ago` seconds back (the boats steer late).
+func _lane_ago(ago: float) -> float:
+	var want := t - ago
+	for i in range(_lane_log.size() - 1, -1, -1):
+		if float(_lane_log[i][0]) <= want:
+			return float(_lane_log[i][1])
+	return lane if _lane_log.is_empty() else float(_lane_log[0][1])
+
+
+## A hit: the next boat in line stumbles and its person is wet for good.
+func _someone_falls_in() -> void:
+	var boat: Node2D = _boats[(hits.size() - 1) % _boats.size()]
+	var id := str(boat.get_meta("id"))
+	GameState.set_flag("wet_%s" % id)
+	Audio.sfx("splash", 0.1)
+	_say("%s สะดุด ... ตกน้ำ! (ขึ้นมาแล้ว เปียก)" % boat.get_meta("name"))
+	var tw := boat.create_tween()
+	tw.tween_property(boat, "rotation_degrees", -14.0, 0.12)
+	tw.tween_property(boat, "rotation_degrees", 10.0, 0.18)
+	tw.tween_property(boat, "rotation_degrees", 0.0, 0.3)
 
 
 func _say(text: String) -> void:
@@ -313,6 +421,11 @@ func _layout() -> void:
 		var node: Node2D = _nodes[i]
 		node.position = _at(pos.x + BoatTrack.kind_len(o["kind"]) * 0.5, pos.y)
 		node.position.y += sin(t * 2.0 + i) * 3.0
+	for i in _boats.size():
+		var boat := _boats[i]
+		var back: float = boat.get_meta("back")
+		var bl := _lane_ago(CONVOY_LAG * (i + 1))
+		boat.position = _at(travelled - back, bl) + Vector2(0, sin(t * 3.0 + i) * 3.0)
 	for d in _decor:
 		var x: float = d.get_meta("x")
 		while x - travelled < -VIEW_BEHIND:
@@ -358,6 +471,8 @@ func _draw_canal() -> void:
 	_quad(x0, x1, -WATER_HALF - BANK, -WATER_HALF, Color(0.42, 0.33, 0.24))
 	_quad(x0, x1, WATER_HALF, WATER_HALF + BANK, Color(0.42, 0.33, 0.24))
 	_quad(x0, x1, -WATER_HALF, WATER_HALF, Color(0.24, 0.45, 0.5))
+	if _wave:
+		_wave.queue_redraw()
 	# drifting ripples
 	var step := 1.6
 	var start := floorf(x0 / step) * step
@@ -371,3 +486,36 @@ func _draw_canal() -> void:
 			_canal.draw_line(a, b, Color(0.6, 0.85, 0.88, 0.35), 3.0)
 		x += step
 		i += 1
+
+
+## The wall of water the valve sent, chasing from the left edge: everything
+## behind the crest is under pale water, the crest itself a tall ribbon of
+## foam with spray, drawn over the boats it has caught up with.
+func _draw_wall() -> void:
+	var wx := travelled + _wall_x
+	var x0 := travelled - VIEW_BEHIND - 12.0
+	var far := WATER_HALF + BANK + 6.0
+	_wave.draw_colored_polygon(
+		PackedVector2Array([_at(x0, -far), _at(wx, -far), _at(wx, far), _at(x0, far)]),
+		Color(0.62, 0.82, 0.92, 0.82)
+	)
+	var top := PackedVector2Array()
+	var foot := PackedVector2Array()
+	var n := 22
+	for k in n + 1:
+		var g := -far + (far * 2.0) * k / n
+		var h := 170.0 + 40.0 * sin(t * 3.5 + k * 1.3) + 18.0 * sin(t * 7.0 - k * 2.1)
+		foot.append(_at(wx, g))
+		top.append(_at(wx - 0.5, g) + Vector2(0, -h))
+	var crest := PackedVector2Array()
+	crest.append_array(top)
+	var back := foot.duplicate()
+	back.reverse()
+	crest.append_array(back)
+	_wave.draw_colored_polygon(crest, Color(0.78, 0.92, 0.98, 0.92))
+	_wave.draw_polyline(top, Color(1, 1, 1, 0.95), 7.0)
+	for k in range(0, n + 1, 2):
+		var a: Vector2 = top[k]
+		var r := 9.0 + 5.0 * absf(sin(t * 5.0 + k))
+		_wave.draw_circle(a + Vector2(0, -r - 6.0), r, Color(1, 1, 1, 0.85))
+		_wave.draw_line(a, a + Vector2(14, -r * 4.0), Color(1, 1, 1, 0.5), 3.0)

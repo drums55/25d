@@ -354,9 +354,63 @@ def water_marks(c):
     c.text("2090", p(0.08, 0.0, 9), p(0.26, 0.0, 9), 5, RED)
 
 
+# --- chapter-3 stretch (DESIGN 12.8) ------------------------------------------------
+def table_top(c):
+    """หน้าโต๊ะสามของป้านก: a teak board, two elbow dents, a "3" burnt in the corner."""
+    p = c.p
+    c.box(-0.32, -0.22, 0.32, 0.22, 0, 12, hexc("#8B5A2B"), rim=0.5, outline=1.4)
+    for k in range(5):
+        c.stroke([p(-0.3, -0.16 + k * 0.08, 12.5), p(0.3, -0.16 + k * 0.08, 12.5)], 1.0, hexc("#6B4420"), 0.35)
+    c.disc(*p(-0.12, 0.04, 12.6), 7 * c.ss, 5 * c.ss, hexc("#6B4420"), outline=0.4, dome=False)
+    c.disc(*p(0.12, 0.04, 12.6), 7 * c.ss, 5 * c.ss, hexc("#6B4420"), outline=0.4, dome=False)
+    c.text("3", p(0.18, -0.2, 13), p(0.3, -0.2, 13), 12, hexc("#3A2412"))
+
+
+def sign_permit(c):
+    """ป้ายอนุญาตตีระฆัง ระยะที่ 19: the table top painted district blue, a stamp."""
+    p = c.p
+    c.box(-0.32, -0.22, 0.32, 0.22, 0, 12, hexc("#8B5A2B"), rim=0.5, outline=1.4)
+    c.box(-0.3, -0.2, 0.3, 0.2, 12, 14, hexc("#2E5E9E"), rim=0.3)
+    c.text("อนุญาต", p(-0.26, 0.0, 15), p(0.26, 0.0, 15), 11, hexc("#FFFFFF"))
+    c.text("ระยะที่ 19", p(-0.22, 0.12, 15), p(0.22, 0.12, 15), 7, hexc("#FFFFFF"))
+    c.disc(*p(0.2, -0.12, 15), 7 * c.ss, 7 * c.ss, RED, outline=0.6, dome=False)
+
+
+def vest(c):
+    """เสื้อวินเบอร์ 1 ของพี่เปิ้ล: a faded orange vest, number on the back."""
+    p = c.p
+    c.box(-0.22, -0.12, 0.22, 0.12, 0, 56, hexc("#E8803A"), rim=0.4, outline=1.4)
+    c.box(-0.22, -0.12, -0.1, 0.12, 56, 76, hexc("#E8803A"), rim=0.3, outline=1.2)
+    c.box(0.1, -0.12, 0.22, 0.12, 56, 76, hexc("#E8803A"), rim=0.3, outline=1.2)
+    c.stroke([p(-0.1, 0.0, 76), p(-0.02, 0.0, 60), p(0.02, 0.0, 60), p(0.1, 0.0, 76)], 1.6, hexc("#9E4A12"))
+    c.disc(*p(0.0, 0.0, 30), 11 * c.ss, 11 * c.ss, PAPER, outline=0.8, dome=False)
+    c.text("1", p(-0.06, 0.0, 34), p(0.06, 0.0, 34), 10, INK)
+
+
+def drone_card(c):
+    """เมมโมรี่การ์ดโดรนพี่เบิ้ม: tiny black card, gold contacts, a note in pen."""
+    p = c.p
+    c.box(-0.16, -0.22, 0.16, 0.22, 0, 5, hexc("#222326"), rim=0.5, outline=1.2)
+    for k in range(5):
+        c.box(-0.12 + k * 0.055, 0.12, -0.08 + k * 0.055, 0.2, 5, 6, hexc("#D9B24A"), rim=0.2, outline=0.4)
+    c.box(-0.13, -0.18, 0.13, 0.02, 5, 6, PAPER, rim=0.1, outline=0.5)
+    c.text("ตีสาม", p(-0.12, -0.08, 7), p(0.12, -0.08, 7), 7, INK)
+
+
+def star_card(c):
+    """บัตรลูกค้าระดับห้าดาว: a white card, five yellow stars, smudged ink."""
+    p = c.p
+    c.box(-0.3, -0.18, 0.3, 0.18, 0, 4, PAPER, rim=0.2, outline=1.2)
+    for k in range(5):
+        c.disc(*p(-0.2 + k * 0.1, -0.04, 5), 7 * c.ss, 7 * c.ss, YELLOW, outline=0.7, dome=False)
+    c.text("ห้าดาว", p(-0.2, 0.09, 6), p(0.2, 0.09, 6), 8, hexc("#2E5E9E"))
+    c.stroke([p(-0.24, 0.14, 5), p(0.1, 0.14, 5)], 1.0, INK, 0.4)
+
+
 ITEMS = {f.__name__: f for f in (debt_book, gum, hanger, hook, float_key, air_remote, letter,
                                  sauce_packs, brass_box, broken_crank, tape, crank, memory_chip,
-                                 debt_list, reading_glasses, love_letter, megaphone, ring, platu, firecracker, sauce_empty, curler, goldfish, amulet, parking_ticket, survey_form, brochure, son_note, adapter, lottery_ticket, blank_sign, charcoal, rubbing_kit, water_marks)}
+                                 debt_list, reading_glasses, love_letter, megaphone, ring, platu, firecracker, sauce_empty, curler, goldfish, amulet, parking_ticket, survey_form, brochure, son_note, adapter, lottery_ticket, blank_sign, charcoal, rubbing_kit, water_marks,
+                                 table_top, sign_permit, vest, drone_card, star_card)}
 
 
 def render(name, out):

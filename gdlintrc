@@ -1,5 +1,6 @@
 max-line-length: 100
 max-file-lines: 600
+max-public-methods: 40
 excluded_directories: !!set
   .git: null
   .godot: null

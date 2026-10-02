@@ -214,6 +214,18 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   Main ตั้ง `_choice_after_dialog` แล้วเปิดการ์ดหลัง dialog จบ. `end_game(id)` = flag `ending_<id>` + ออโต้เซฟ + การ์ด (เล่นใหม่/หน้าแรก).
   ตอนจบ: sold / sunk (<3) / wet (3–5) / five_stars (ครบ 6). dialog บท 3 ใช้หัว chain ใหม่ `talk_x_ch3` → else หัวเดิม (rooms.gd ชี้หัวใหม่).
   test: `test_walkthrough_chapter_three_best_ending`, `test_chapter_three_sell_the_box`, `test_endings.gd`, tap audit มีชุด flag บท 3
+- **B3 บท 3 ตอนจบเดียว (2026-10-02, DESIGN 12.8)**: `Endings` (pure) = `PLAN` 4 ส่วน ปลุก (ally_jum, ally_monk) · พา (ally_ple, ally_berm) · ที่ไป (ally_nok, ally_beam) · เวลา (forecast_rigged)
+  ทุก flag บังคับ (`missing/ready/checklist`), `HELPERS` (keng/nine/daeng/kiao) ไม่บังคับแต่ขึ้นการ์ด; **ตัด sold/sunk/wet ออกหมด** กล่อง→เจ๊เกียว = มุกมือไม่ปล่อย (`sale_refused`) ไม่มีการ์ดเลือก.
+  กล่อง→เครื่องสูบ (event `open_valve`) → `Main._offer_valve`: ขาด = การ์ด "ซอยยังไม่พร้อม" + checklist / ครบ = "บิดเลย" → `_open_valve` → `valve_opened` + **ขบวนเรือตีสาม**
+  (`BoatRide.pending.convoy`, 60 วิ บังคับเรือ ข้ามไม่ได้, เรือตาม = `Endings.convoy(flags)` 6 ลำบังคับ + keng/kiao/daeng ถ้าชวนได้ ตัวละครนั่งจริง,
+  ระฆัง/ประทัดทุก 2.6/4.3 วิ, กำแพงน้ำไล่หลัง `_draw_wall` ขยับเข้าเมื่อชน, ชน = เรือลำถัดไปในแถวสะดุด → flag `wet_<id>` + splash) → `Main.arrive` เห็น `_convoy` → `end_game("five_stars")`
+  → ฉากงานแต่งตอนรุ่งเช้า (เพิ่มหลวงพี่/พี่เปิ้ล/พี่เบิ้ม + ป้ายไม้ `five_star_sign`) → การ์ดตอนจบ → **การ์ดส่งท้ายรายคน 18 ใบ** (`Endings.EPILOGUES` variants ตาม ally_*/wet_*/ton_home/boy_permit/met_la_or/cat_lured;
+  `Hud.show_portrait_card` = โน้ตมี CharacterView หรือ `prop:<art>` ซ้าย ป้ายชื่อสังกะสี ข้อความลายมือ) → "จบ" → เล่นใหม่/หน้าแรก
+  - สายใหม่บท 3: หน้าโต๊ะสาม (pickup หลัง ally_nok) → น้องบอยที่วัด = `sign_permit` (`boy_permit`) → ตอกที่หอระฆัง = `ally_monk` (หลวงพี่ทำตามป้ายราชการ) → พี่เปิ้ล (คนขับวินตื่นเพราะระฆัง) ให้ `vest` = `ally_ple`
+    → ป้อมยาม: หุ่น 2 ตัวเป็น PatrolBot `guard_a/b` (if_not_flag disguised) ตรวจ "ชุด" → เสื้อวิน→น้องต้น (ยืนนอกตู้ที่ (2.2,5.0)) = `disguised` + `ton_home` → ตู้แบบสอบถาม = `star_card` → บีม = `beam_listens` → รายชื่อ→บีม = `ally_beam`
+    → โดรนที่ท่าเรือ = `drone_card` → พี่เบิ้ม (`berm_offered`) = `ally_berm` → ลุงหมอน้ำ `know_board_rule` → สมุดหนี้→ป้ายพยากรณ์ = `forecast_rigged` (ลอกลายมือลุงเขียน "ตีสี่")
+  - hint บท 3 ไล่ตามสาย (gate ด้วย monk_sign_told/boy_permit/ally_monk/ally_ple/disguised/berm_offered/know_board_rule); เสียงใหม่ bell/firecracker/splash; ไอคอน 5 ชิ้น (items.py)
+  - test: `test_endings.gd` (plan/helpers/epilogues/convoy), walkthrough บท 3 เดินครบสาย + วาล์วปฏิเสธตอนขาด, `test_chapter_three_the_box_is_not_for_sale`, `test_the_convoy_ride_...`; gdlintrc `max-public-methods: 40`
 - **คำใบ้ห้ามใบ้ล่วงหน้า (เจ้าของ 2026-10-02: "hint ป้านกเขียนตั้งแต่ยังไม่เจอป้านก = ใบ้เกิน")**: hint ทุกข้อใน puzzles.json ต้องมี `if_flag` เป็น flag ที่แปลว่า
   ผู้เล่นเจอสิ่งนั้นแล้ว (`met_<npc>` ตั้งใน talk_*_first, `met_gate_bot` ใน catch dialog, หรือ flag ของขั้นก่อนหน้า) — hint แรกที่เงื่อนไขผ่านคือที่โชว์ จึงเรียงตามลำดับเล่น
 - **B1 บท 1 ยืด (2026-10-02)**: ห้องใหม่ hall/roof_market/temple/boat_rank/cat_roof (`props_b1.py` 21 prop, `rooms_2090.py`, items.py +8 ของ), ตัวละครใหม่ lung_mor_nam/ple/luang_pee
@@ -371,7 +383,7 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
   Android cmdline-tools (`platform-tools`, `build-tools;34.0.0`) + ตั้ง `export/android/android_sdk_path`
 
 ## สถานะ / ยังไม่ได้ทำ
-- **A0–A4 เสร็จ (2026-10-02)**: เกมเล่นจบได้ 3 บท ตอนจบ 4 แบบ, plot ย่อย 3 สาย; **B1+B2 (2026-10-02)**: บท 1–2 ยืด 15 ห้อง ตัวละคร 18 ตัว, 88 tests
+- **A0–A4 เสร็จ (2026-10-02)**: เกมเล่นจบได้ 3 บท; **B1+B2 (2026-10-02)**: บท 1–2 ยืด 15 ห้อง ตัวละคร 18 ตัว; **B3 (2026-10-02)**: บท 3 ตอนจบเดียว + ขบวนเรือ + การ์ดส่งท้าย 18 ใบ, 92 tests
 - UI ขัดครบแล้ว (2026-10-02): เมนูในเกม, การ์ด, ตัวเลือก, แถบกระเป๋า, กล่อง dialog, หน้าแรก + key art
 - เสียงมีแล้ว (2026-10-02) — เจ้าของฟังแล้ว: "เชยหน่อย แต่ ok"
 - **ลำดับงานทั้งเกม = `docs/DESIGN.md` ข้อ 13** (เจ้าของ 2026-10-02: "ไล่แผนดีๆ" = แผนทั้งเกม) — ตอบว่า "ทำอะไรต่อ" จากตารางนั้นเสมอ; งานแทรกจดเข้าแผนก่อน ไม่ทำทันทีเว้นแต่เจ้าของสั่ง
