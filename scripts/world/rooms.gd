@@ -643,7 +643,7 @@ const ROOMS := {
 			},
 			{
 				"id": "kiao_sofa",
-				"art": "sofa",
+				"art": "red_sofa",
 				"pos": Vector2(1.6, 4.5),
 				"foot": Vector2(1.6, 0.8),
 				"h": 45.0,

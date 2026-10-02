@@ -12,7 +12,7 @@ extends CanvasLayer
 const TITLE_HOLD := 1.6
 const TITLE_FADE := 0.6
 const NOTICE_HOLD := 2.2
-const SLOT_SIZE := Vector2(160, 164)
+const SLOT_SIZE := Vector2(156, 200)
 
 var _title_tween: Tween
 var _notices: Array[String] = []
@@ -55,14 +55,17 @@ func _ready() -> void:
 
 func _build_bag() -> void:
 	_bag = PanelContainer.new()
-	_bag.add_theme_stylebox_override("panel", UiKit.panel_style(Color(0.08, 0.07, 0.06, 0.85), 22))
+	# the rider's canvas satchel; items are paper luggage tags (ui_2090.py)
+	_bag.add_theme_stylebox_override("panel", UiKit.nine("bag_strip", 48, Vector4(34, 20, 34, 24)))
 	_bag.anchor_left = 0.5
 	_bag.anchor_right = 0.5
 	_bag.anchor_top = 1.0
 	_bag.anchor_bottom = 1.0
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 6)
-	_held_label = UiKit.label("", 24, UiKit.ACCENT)
+	_held_label = UiKit.hand_label("", 26, Color(0.98, 0.94, 0.82))
+	_held_label.add_theme_color_override("font_outline_color", Color(0.2, 0.15, 0.08))
+	_held_label.add_theme_constant_override("outline_size", 6)
 	_held_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_held_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	v.add_child(_held_label)
@@ -128,20 +131,29 @@ func _slot(item: String) -> Button:
 	b.custom_minimum_size = SLOT_SIZE
 	b.text = Puzzles.item_name(item)
 	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	b.add_theme_font_size_override("font_size", 18)
+	b.add_theme_font_override("font", UiKit.FONT_HAND)
+	b.add_theme_font_size_override("font_size", 19)
+	b.add_theme_constant_override("line_spacing", -4)
 	b.icon = ArtLibrary.item(item)
 	b.expand_icon = true
 	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	b.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
-	b.add_theme_constant_override("icon_max_width", 100)
-	b.add_theme_color_override("font_color", UiKit.TEXT)
+	b.add_theme_constant_override("icon_max_width", 84)
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		b.add_theme_color_override(state, UiKit.INK)
 	var held := GameState.held_item == item
-	var base := Puzzles.item_color(item).darkened(0.45)
-	var style := UiKit.panel_style(base, 16, UiKit.ACCENT if held else base.lightened(0.3))
-	style.set_border_width_all(6 if held else 2)
-	for state in ["normal", "hover", "pressed", "focus"]:
-		b.add_theme_stylebox_override(state, style)
+	var content := Vector4(10, 38, 10, 10)
+	var tag := UiKit.nine("tag_held" if held else "tag", 40, content)
+	for state in ["normal", "hover", "focus"]:
+		b.add_theme_stylebox_override(state, tag)
+	b.add_theme_stylebox_override("pressed", UiKit.nine("tag_held", 40, content))
 	b.pressed.connect(tap_item.bind(item))
+	UiKit.juice(b)
+	if held:
+		# the held tag is lifted off the bag and tilted
+		b.resized.connect(func(): b.pivot_offset = b.size * 0.5)
+		b.rotation_degrees = -4.0
+		b.scale = Vector2(1.06, 1.06)
 	return b
 
 

@@ -11,6 +11,20 @@ var _tween: Tween
 
 
 func _ready() -> void:
+	# a strip of paper with the speaker's name on a little tin sign (ui_2090.py)
+	add_theme_stylebox_override("panel", UiKit.nine("speech", 44, Vector4(58, 30, 58, 26)))
+	_speaker.add_theme_font_override("font", UiKit.FONT_SIGN)
+	_speaker.add_theme_font_size_override("font_size", 26)
+	_speaker.add_theme_color_override("font_color", UiKit.SIGN_TEXT)
+	_speaker.add_theme_stylebox_override("normal", UiKit.nine("sign", 30, Vector4(26, 18, 26, 14)))
+	_speaker.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_text.add_theme_color_override("font_color", UiKit.INK)
+	_hint.add_theme_color_override("font_color", UiKit.RED_INK)
+	_hint.add_theme_font_size_override("font_size", 34)
+	# the "next" arrow breathes (it sits in a container, so no moving it)
+	var pulse := create_tween().set_loops()
+	pulse.tween_property(_hint, "modulate:a", 0.35, 0.45)
+	pulse.tween_property(_hint, "modulate:a", 1.0, 0.45)
 	hide()
 	Dialog.started.connect(_on_started)
 	Dialog.finished.connect(_on_finished)

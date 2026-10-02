@@ -326,10 +326,39 @@ def boat_bike(out):
     c.finish(out)
 
 
+def red_sofa(out):
+    """โซฟาหนังแดงของเจ๊เกียว (seized from a debtor): tufted oxblood leather,
+    rolled arms, gold studs, brass feet, the old owner's name tag on a leg."""
+    c = Canvas(540, 420, seed=251)
+    p, s = c.p, c.ss
+    red, red_l = hexc("#8E1C1C"), hexc("#C0392B")
+    gold = hexc("#D9B44A")
+    c.ground_shadow(1.6, 0.8)
+    for gx, gy in ((-0.74, -0.34), (0.74, -0.34), (-0.74, 0.34), (0.74, 0.34)):
+        c.cylinder(gx, gy, 0.05, 0, 16, BRASS, spec=1.0)
+    c.box(-0.8, -0.4, 0.8, 0.4, 16, 56, red, rim=0.9, top_k=1.2)
+    c.box(-0.8, -0.4, 0.8, -0.16, 56, 126, red * 0.92, rim=1.0)
+    for k in range(4):
+        for j in range(2):
+            x, y = p(-0.6 + k * 0.4, -0.159, 76 + j * 30)
+            c.disc(x, y, 3.2 * s, 2.6 * s, red * 0.6, 0.5, 0.0, dome=False)
+            c.disc(x - 0.8 * s, y - 0.8 * s, 1.2 * s, 1.0 * s, red_l, 0.0, 0.0, dome=False)
+    for gx in (-0.82, 0.62):
+        c.box(gx, -0.4, gx + 0.2, 0.4, 56, 92, red * 1.05, rim=1.0, top_k=1.25)
+        c.cylinder(gx + 0.1, 0.4, 0.1, 82, 96, red_l, spec=0.9)
+    for gx in (-0.6, 0.0):
+        c.box(gx, -0.16, gx + 0.58, 0.36, 56, 70, red * 1.12, rim=1.0, top_k=1.14)
+    c.rivets([p(u, 0.401, 50) for u in np.linspace(-0.76, 0.76, 13)], 1.8)
+    x, y = p(0.74, 0.36, 10)
+    c.paint(c.mask_poly([(x - 4 * s, y - 12 * s), (x + 12 * s, y - 6 * s), (x + 12 * s, y + 6 * s), (x - 4 * s, y)]),
+            c.flat(WHITE), 0.8, 0)
+    c.finish(out)
+
+
 PROPS = {f.__name__: f for f in (steam_radio, wardrobe, floor_gap, upturned_boat, sluice_gate,
                                  sluice_flooded, tide_gauge, wait_bench, house_zero_plate,
                                  pump_engine, rental_bed, debt_board, boat_noodle_stall, kiao_desk,
-                                 boat_bike)}
+                                 boat_bike, red_sofa)}
 
 if __name__ == "__main__":
     name = sys.argv[1]

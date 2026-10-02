@@ -336,6 +336,104 @@ def notebook_icon(out_dir):
     save(im, out_dir, "menu_book")
 
 
+# --- dialog paper, the bag strip, luggage tags (2026-10-02: "ขัด UI แถบกระเป๋ากับกล่อง dialog") ---
+SPEECH_W, SPEECH_H, SPEECH_M = 480, 200, 44
+BAG_W, BAG_H, BAG_M = 400, 220, 48
+TAG_W, TAG_H, TAG_M = 160, 170, 40
+
+
+def paper_sheet(w, h, seed, base=(242, 234, 214), rough=1.8, edge_tone=30.0):
+    n = noise(w, h, seed, 1.2) * 0.5 + noise(w, h, seed + 1, 5.0) * 0.5
+    arr = tint(base, n, 8)
+    yy, xx = np.mgrid[0:h, 0:w]
+    edge = np.minimum(np.minimum(xx, w - 1 - xx), np.minimum(yy, h - 1 - yy)) / SS
+    arr -= (np.clip(1.0 - edge / edge_tone, 0, 1) ** 2)[..., None] * np.array([8, 20, 44])
+    return to_img(arr, rough_rect_mask(w, h, seed + 2, rough))
+
+
+def with_shadow(im, w, h, pad, drop=6, blur=5, alpha=0.5):
+    out = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    sh = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    sh.putalpha(im.split()[3].point(lambda v: int(v * alpha)))
+    tmp = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    tmp.alpha_composite(sh, (pad, pad + drop * SS))
+    out.alpha_composite(tmp.filter(ImageFilter.GaussianBlur(blur * SS)))
+    out.alpha_composite(im, (pad, pad))
+    return out
+
+
+def speech(out_dir):
+    """The dialog box: a strip of paper with a dog-eared corner (bottom right)."""
+    w, h = SPEECH_W * SS, SPEECH_H * SS
+    pad = 12 * SS
+    iw, ih = w - pad * 2, h - pad * 2
+    paper = paper_sheet(iw, ih, 71, rough=1.4)
+    d = ImageDraw.Draw(paper)
+    c = 24 * SS
+    d.polygon([(iw - c, ih), (iw, ih - c), (iw, ih)], fill=(0, 0, 0, 0))
+    d.polygon([(iw - c, ih), (iw - c * 0.9, ih - c * 0.9), (iw, ih - c)], fill=(214, 200, 168, 255),
+              outline=(150, 130, 100, 255))
+    save(with_shadow(paper, w, h, pad), out_dir, "speech")
+
+
+def bag_strip(out_dir):
+    """The bag: the rider's khaki canvas satchel flap, stitched, leather tabs at the ends."""
+    w, h = BAG_W * SS, BAG_H * SS
+    pad = 10 * SS
+    iw, ih = w - pad * 2, h - pad * 2
+    yy, xx = np.mgrid[0:ih, 0:iw]
+    weave = (np.sin(xx / (1.6 * SS)) * np.sin(yy / (1.6 * SS))) * 0.5
+    n = noise(iw, ih, 81, 1.0) * 0.6 + noise(iw, ih, 82, 12.0) * 0.8 + weave
+    cloth = to_img(tint((138, 122, 84), n, 14), rough_rect_mask(iw, ih, 83, 0.8, int(18 * SS)))
+    d = ImageDraw.Draw(cloth)
+    inset = 12 * SS
+    step = 14 * SS
+    x = inset
+    while x < iw - inset:
+        d.line((x, inset, min(x + 7 * SS, iw - inset), inset), fill=(232, 216, 170, 230), width=int(2.4 * SS))
+        d.line((x, ih - inset, min(x + 7 * SS, iw - inset), ih - inset), fill=(232, 216, 170, 230), width=int(2.4 * SS))
+        x += step
+    y = inset
+    while y < ih - inset:
+        d.line((inset, y, inset, min(y + 7 * SS, ih - inset)), fill=(232, 216, 170, 230), width=int(2.4 * SS))
+        d.line((iw - inset, y, iw - inset, min(y + 7 * SS, ih - inset)), fill=(232, 216, 170, 230), width=int(2.4 * SS))
+        y += step
+    for cx in (22 * SS, iw - 22 * SS):
+        d.rounded_rectangle((cx - 9 * SS, ih * 0.5 - 22 * SS, cx + 9 * SS, ih * 0.5 + 22 * SS), 3 * SS,
+                            fill=(92, 58, 30, 255), outline=(40, 26, 14, 255), width=int(1.4 * SS))
+        d.ellipse((cx - 4 * SS, ih * 0.5 - 4 * SS, cx + 4 * SS, ih * 0.5 + 4 * SS), fill=(201, 160, 74, 255))
+    save(with_shadow(cloth, w, h, pad, 4, 4, 0.6), out_dir, "bag_strip")
+
+
+def luggage_tag(out_dir, name, base, ink_ring):
+    """A slot in the bag: a paper luggage tag on a string, brass grommet at the top."""
+    w, h = TAG_W * SS, TAG_H * SS
+    pad = 6 * SS
+    iw, ih = w - pad * 2, h - pad * 2 - 10 * SS
+    paper = paper_sheet(iw, ih, 91 if ink_ring else 92, base, 1.0, 18.0)
+    m = Image.new("L", (iw, ih), 255)
+    md = ImageDraw.Draw(m)
+    cut = 26 * SS
+    md.polygon([(0, 0), (cut, 0), (0, cut)], fill=0)
+    md.polygon([(iw, 0), (iw - cut, 0), (iw, cut)], fill=0)
+    a = Image.fromarray(np.minimum(np.asarray(paper.split()[3]), np.asarray(m)))
+    paper.putalpha(a)
+    d = ImageDraw.Draw(paper)
+    gx, gy = iw / 2, 16 * SS
+    d.ellipse((gx - 9 * SS, gy - 9 * SS, gx + 9 * SS, gy + 9 * SS), fill=(201, 160, 74, 255), outline=(110, 80, 30, 255),
+              width=int(1.2 * SS))
+    d.ellipse((gx - 4 * SS, gy - 4 * SS, gx + 4 * SS, gy + 4 * SS), fill=(0, 0, 0, 0))
+    if ink_ring:
+        wobble_line(d, [(8 * SS, 34 * SS), (iw - 8 * SS, 32 * SS), (iw - 9 * SS, ih - 8 * SS), (9 * SS, ih - 7 * SS),
+                        (8 * SS, 34 * SS)], 4 * SS, rgba(RED_INK, 230), 93)
+    out = with_shadow(paper, w, h, pad, 4, 3, 0.55)
+    od = ImageDraw.Draw(out)
+    # the string, up out of the grommet
+    sx, sy = pad + gx, pad + gy
+    od.line([(sx, sy), (sx - 3 * SS, sy - 10 * SS), (sx + 2 * SS, 0)], fill=(120, 100, 70, 255), width=int(2 * SS))
+    save(out, out_dir, name)
+
+
 def main(out_dir):
     os.makedirs(out_dir, exist_ok=True)
     notebook(out_dir)
@@ -346,6 +444,10 @@ def main(out_dir):
         tin_sign(out_dir, name, face, border, 60 + k * 7 if name != "sign_pressed" else 60)
     note(out_dir)
     notebook_icon(out_dir)
+    speech(out_dir)
+    bag_strip(out_dir)
+    luggage_tag(out_dir, "tag", (240, 230, 204), False)
+    luggage_tag(out_dir, "tag_held", (250, 232, 150), True)
 
 
 if __name__ == "__main__":
