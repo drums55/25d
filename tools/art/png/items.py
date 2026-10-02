@@ -271,9 +271,92 @@ def parking_ticket(c):
     c.disc(*p(0.1, 0.18, 6), 8 * c.ss, 8 * c.ss, RED, outline=0.6, dome=False)
 
 
+# --- chapter-2 stretch (DESIGN 12.7) ------------------------------------------------
+def survey_form(c):
+    """แบบสอบถามความพึงพอใจของบริษัท: five empty stars, the fifth pre-ticked."""
+    p = c.p
+    c.box(-0.26, -0.32, 0.26, 0.32, 0, 4, PAPER, rim=0.2)
+    c.text("พึงพอใจ?", p(-0.2, 0.0, 8), p(0.2, 0.0, 8), 10, hexc("#2E5E9E"))
+    for k in range(5):
+        c.disc(*p(-0.18 + k * 0.09, 0.08, 6), 5 * c.ss, 5 * c.ss, YELLOW if k == 4 else PAPER, outline=0.8)
+    for k in range(3):
+        c.stroke([p(-0.2, 0.18 + k * 0.05, 5), p(0.2, 0.18 + k * 0.05, 5)], 1.0, INK, 0.4)
+
+
+def brochure(c):
+    """โบรชัวร์ "โครงการพื้นที่รับน้ำชุมชน": a smiling family, and a map with one soi painted blue."""
+    p = c.p
+    c.box(-0.26, -0.32, 0.26, 0.32, 0, 4, hexc("#7FB0E8"), rim=0.3)
+    c.box(-0.2, -0.26, 0.2, -0.02, 4, 6, PAPER, rim=0.1, outline=0.8)
+    c.disc(*p(-0.1, -0.14, 8), 5 * c.ss, 5 * c.ss, YELLOW, outline=0.6)
+    c.disc(*p(0.04, -0.14, 8), 5 * c.ss, 5 * c.ss, YELLOW, outline=0.6)
+    c.box(-0.2, 0.04, 0.2, 0.28, 4, 6, hexc("#C8D8C0"), rim=0.1, outline=0.8)
+    c.box(-0.12, 0.1, 0.0, 0.22, 6, 8, hexc("#2E5E9E"), rim=0.1, outline=0.6)
+    c.text("ภาพประกอบ", p(-0.2, 0.0, 10), p(0.2, 0.0, 10), 7, INK)
+
+
+def son_note(c):
+    """โน้ตจากน้องต้นถึงแม่ เขียนหลังแบบสอบถาม: "ไม่ได้กลับเพราะกะ ไม่ใช่เพราะไม่คิดถึง"."""
+    p = c.p
+    c.box(-0.26, -0.32, 0.26, 0.32, 0, 4, PAPER, rim=0.2)
+    for k in range(5):
+        c.stroke([p(-0.2, -0.2 + k * 0.1, 5), p(0.14 + (k % 2) * 0.06, -0.2 + k * 0.1, 5)], 1.2, hexc("#2E5E9E"), 0.8)
+    c.disc(*p(0.14, 0.24, 6), 5 * c.ss, 4 * c.ss, RED, outline=0.5)
+
+
+def adapter(c):
+    """สายแปลงหัวต่อของลูกชายพี่เปิ้ล: company plug on one end, a game pad plug on the other."""
+    p = c.p
+    c.stroke([p(-0.3, 0.1, 10), p(-0.1, -0.1, 14), p(0.1, 0.1, 10), p(0.3, -0.05, 12)], 3.0, hexc("#2B2629"))
+    c.box(-0.4, 0.04, -0.28, 0.16, 4, 20, hexc("#2E5E9E"), rim=0.5)
+    c.box(0.28, -0.12, 0.4, 0.02, 4, 20, hexc("#3A6FD8"), rim=0.5)
+    c.disc(*p(0.34, -0.05, 22), 2 * c.ss, 2 * c.ss, hexc("#4AE0C8"), outline=0.3, spec=1.0)
+
+
+def lottery_ticket(c):
+    """ลอตเตอรี่ของบริษัท เลขท้าย 69: every ticket, every draw."""
+    p = c.p
+    c.box(-0.3, -0.16, 0.3, 0.16, 0, 4, PAPER, rim=0.2)
+    c.box(-0.3, -0.16, 0.3, -0.08, 4, 5, RED, rim=0.1, outline=0.6)
+    c.text("ถูกแน่", p(-0.26, 0.0, 9), p(0.26, 0.0, 9), 7, RED)
+    c.text("69", p(-0.26, 0.0, 5), p(0.26, 0.0, 5), 14, INK)
+
+
+def blank_sign(c):
+    """ป้ายโครงการแผ่นเปล่าจากน้องบอย: blue board, nothing printed yet."""
+    p = c.p
+    c.box(-0.3, -0.22, 0.3, 0.22, 0, 8, hexc("#2E5E9E"), rim=0.5)
+    c.box(-0.3, -0.22, 0.3, -0.16, 8, 10, YELLOW, rim=0.2, outline=0.6)
+
+
+def charcoal(c):
+    """ถ่านไม้จากเตาป้านก: for rubbing marks off a post."""
+    p = c.p
+    for k, (x, y) in enumerate(((-0.12, 0.0), (0.08, 0.06), (0.0, -0.1))):
+        c.disc(*p(x, y, 10 + k * 6), 16 * c.ss, 9 * c.ss, hexc("#2A2628"), outline=1.2, rim=0.3, spec=0.2)
+    c.disc(*p(-0.08, 0.02, 20), 3 * c.ss, 2 * c.ss, hexc("#F07A1E"), outline=0.3, spec=1.0)
+
+
+def rubbing_kit(c):
+    """ป้ายเปล่า + ถ่าน = ชุดลอกลาย."""
+    p = c.p
+    c.box(-0.3, -0.22, 0.3, 0.22, 0, 8, hexc("#2E5E9E"), rim=0.5)
+    c.disc(*p(0.14, 0.08, 14), 12 * c.ss, 7 * c.ss, hexc("#2A2628"), outline=1.0, rim=0.3)
+    c.text("ลอกลาย", p(-0.26, 0.0, 10), p(0.1, 0.0, 10), 8, PAPER)
+
+
+def water_marks(c):
+    """ลอกลายขีดระดับน้ำ 30 ปีจากเสาหอระฆัง: thirty lines, the same step every year."""
+    p = c.p
+    c.box(-0.26, -0.34, 0.26, 0.34, 0, 4, PAPER, rim=0.2)
+    for k in range(10):
+        c.stroke([p(-0.14, 0.28 - k * 0.06, 5), p(0.1, 0.28 - k * 0.06, 5)], 1.6, hexc("#2A2628"), 0.9 if k % 3 else 1.0)
+    c.text("2090", p(0.08, 0.0, 9), p(0.26, 0.0, 9), 5, RED)
+
+
 ITEMS = {f.__name__: f for f in (debt_book, gum, hanger, hook, float_key, air_remote, letter,
                                  sauce_packs, brass_box, broken_crank, tape, crank, memory_chip,
-                                 debt_list, reading_glasses, love_letter, megaphone, ring, platu, firecracker, sauce_empty, curler, goldfish, amulet, parking_ticket)}
+                                 debt_list, reading_glasses, love_letter, megaphone, ring, platu, firecracker, sauce_empty, curler, goldfish, amulet, parking_ticket, survey_form, brochure, son_note, adapter, lottery_ticket, blank_sign, charcoal, rubbing_kit, water_marks)}
 
 
 def render(name, out):

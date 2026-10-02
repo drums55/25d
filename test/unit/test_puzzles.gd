@@ -369,29 +369,77 @@ func test_walkthrough_chapter_two():
 	await _go("pier", "from_home")
 	assert_null(_room().get_world().get_node_or_null("Collector"), "พี่หนวด lost his job")
 	assert_not_null(_thing("nuad"))
+	assert_not_null(_thing("live_boat"), "พี่เบิ้ม streams from the pier")
+	_tap("berm")
+	# เจ๊เกียว sold the debts and points at the wall
 	await _ride_to("kiao_raft")
-	TestHelpers.finish_dialog()
 	_tap("kiao")
-	assert_true(GameState.has_flag("met_kiao"))
-	# เก้า: a name for a memory
+	assert_true(GameState.has_flag("met_kiao") and GameState.has_flag("know_guard_post"))
+	# the garage: name the robot, get its memory
 	await _ride_to("boat_garage")
 	assert_null(_room().get_world().get_node_or_null("No9"), "no patrol in chapter 2")
 	GameState.held_item = "debt_book"
 	_tap("no9_awake")
 	assert_true(GameState.has_item("memory_chip"), "chip")
-	# น้องเก่ง reads it
+	# น้องเก่ง cannot plug a company chip into a game pad
+	await _ride_to("stilts")
+	GameState.held_item = "memory_chip"
+	_tap("keng")
+	assert_true(GameState.has_item("memory_chip"), "wrong plug: the chip stays")
+	assert_false(GameState.has_item("debt_list"))
+	# the guard post: a survey for a brochure, a survey for a note to mum
+	await _ride_to("guard_post")
+	_tap("beam")
+	assert_true(GameState.has_item("survey_form"))
+	GameState.held_item = "survey_form"
+	_tap("beam")
+	assert_true(GameState.has_item("brochure") and GameState.has_flag("got_brochure"))
+	_tap("beam")
+	assert_true(GameState.has_item("survey_form"), "another form, they never run out")
+	_tap("ton")
+	GameState.held_item = "survey_form"
+	_tap("ton")
+	assert_true(GameState.has_item("son_note"))
+	await _ride_to("boat_rank")
+	GameState.held_item = "son_note"
+	_tap("ple")
+	assert_true(GameState.has_item("adapter") and GameState.has_flag("got_adapter"))
 	await _ride_to("stilts")
 	GameState.held_item = "memory_chip"
 	_tap("keng")
 	assert_true(GameState.has_item("debt_list"), "list")
-	# ป้าจุ๋ม almost sold her house for a lottery prize
+	assert_true(GameState.has_flag("know_condo"))
+	# ป้าจุ๋ม believes ลุงหมอน้ำ, not paper
 	_tap("jum")
+	GameState.held_item = "debt_list"
+	_tap("jum")
+	assert_false(GameState.has_flag("jum_saved"), "paper is not proof to her")
+	await _ride_to("roof_market")
+	_tap("lottery_ticket")
+	await _ride_to("hall")
+	GameState.held_item = "lottery_ticket"
+	_tap("lung_mor_nam")
+	assert_true(GameState.has_flag("mor_nam_69"))
+	await _ride_to("stilts")
 	GameState.held_item = "debt_list"
 	_tap("jum")
 	assert_true(GameState.has_flag("jum_saved"), "jum saved")
 	assert_true(GameState.has_item("reading_glasses"))
-	# ลุงโต๊ะสาม's thirty-year-old letter
+	# the condo: a visit, nothing more
+	await _ride_to("condo")
+	_tap("la_or")
+	assert_true(GameState.has_flag("met_la_or"))
+	# the temple: น้องบอย's spare sign, the water marks (one of two pipe proofs)
+	await _ride_to("temple")
+	_tap("boy")
+	assert_true(GameState.has_item("blank_sign"))
 	await _ride_to("noodle_boat")
+	_tap("charcoal")
+	_hud.tap_item("blank_sign")
+	_hud.tap_item("charcoal")
+	TestHelpers.finish_dialog()
+	assert_true(GameState.has_item("rubbing_kit"))
+	# ลุงโต๊ะสาม's letter, read with ป้าจุ๋ม's glasses
 	_tap("lung_table3")
 	assert_true(GameState.has_item("love_letter"), "ลุง gives the letter")
 	GameState.held_item = "love_letter"
@@ -403,7 +451,12 @@ func test_walkthrough_chapter_two():
 	GameState.held_item = "love_letter"
 	_tap("pa_nok")
 	assert_true(GameState.has_flag("nok_love"), "ป้านก read it")
-	# คุณนายวรรณ waits at บ้านเลขที่ 0
+	assert_true(GameState.has_flag("evidence_pipe"))
+	await _ride_to("temple")
+	GameState.held_item = "rubbing_kit"
+	_tap("bell_tower")
+	assert_true(GameState.has_item("water_marks"), "the other pipe proof")
+	# บ้านเลขที่ 0: คุณนายวรรณ waits for the three proofs
 	await _ride_to("old_gate")
 	_tap("bench")
 	await wait_seconds(0.8)
@@ -417,7 +470,6 @@ func test_walkthrough_chapter_two():
 	assert_true(GameState.ui_open, "chapter card is up")
 
 
-## Everything up to the end of chapter 2, then the chapter-3 card's button.
 func _start_chapter_three() -> void:
 	for f in [
 		"got_float_key",
@@ -440,11 +492,17 @@ func _start_chapter_three() -> void:
 		"ch2",
 		"seen_kiao",
 		"met_kiao",
+		"know_guard_post",
 		"no9_named",
+		"got_adapter",
 		"got_debt_list",
+		"know_condo",
+		"got_brochure",
+		"mor_nam_69",
 		"jum_saved",
 		"nok_glasses",
 		"got_love_letter",
+		"evidence_pipe",
 		"nok_love",
 		"chapter2_done"
 	]:

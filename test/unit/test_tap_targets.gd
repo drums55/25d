@@ -4,7 +4,9 @@ extends GutTest
 ## exits and people at their visual centre; props somewhere on their art.
 ## Checked with the chapter-1, -2 and -3 flag sets so every variant spawns.
 
-const CH2_FLAGS := ["ch2", "got_debt_list", "nok_love", "no9_fused", "gate_open"]
+const CH2_FLAGS := [
+	"ch2", "got_debt_list", "nok_love", "no9_fused", "gate_open", "evidence_pipe", "got_brochure"
+]
 ## Chapter 3 at night: the ring in the mud and the company robot, then เก้า at the gate.
 const CH3_FLAGS := [
 	"ch2", "got_debt_list", "nok_love", "no9_fused", "gate_open", "ch3", "lung_ring_told"

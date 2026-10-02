@@ -450,8 +450,38 @@ def cat_roof(out):
     c.finish(out, sil=0)
 
 
+
+def guard_post(out):
+    """ป้อมยามบนกำแพงกันทะเล: the wall's concrete under the company's blue
+    fence, the dry towers right behind."""
+    gw, gh = 10, 7
+    c = _room(gw, gh, 211)
+    skyline(c, gw, gh, seed=261)
+    plaster_wall(c, "R", gw, hexc("#5E7AA0"), windows=(3.0, 7.0), poster=(8.6, "ขอบคุณที่เป็นแก้มลิง", hexc("#F2EEE4")), seed=211)
+    plaster_wall(c, "L", gh, hexc("#5E7AA0"), windows=(3.5,), seed=212)
+    wall_edge(c, gw, gh, WH)
+    concrete_floor(c, gw, gh, hexc("#B4B8B4"), seed=213)
+    flood_surround(c, gw, gh, seed=214)
+    c.finish(out, sil=0)
+
+
+def condo(out):
+    """คอนโดชั้น 3: cream plaster, marble-ish tiles, the water line at the lift."""
+    gw, gh = 10, 8
+    c = _room(gw, gh, 221)
+    skyline(c, gw, gh, seed=271)
+    plaster_wall(c, "R", gw, hexc("#E6DCCB"), windows=(2.4, 6.0), poster=(8.4, "ไรเดอร์ห้ามใช้ลิฟต์", hexc("#C0392B")), seed=221)
+    plaster_wall(c, "L", gh, hexc("#E6DCCB"), windows=(), seed=222)
+    flood_line(c, "R", gw, z=60)
+    flood_line(c, "L", gh, z=60)
+    wall_edge(c, gw, gh, WH)
+    tile_floor(c, gw, gh, hexc("#D8D0C0"), hexc("#C8C0B0"), seed=223)
+    flood_surround(c, gw, gh, seed=224)
+    c.finish(out, sil=0)
+
+
 ROOMS = {f.__name__: f for f in (home, pier, noodle_boat, stilts, boat_garage, old_gate, station, kiao_raft,
-                                 hall, roof_market, temple, boat_rank, cat_roof)}
+                                 hall, roof_market, temple, boat_rank, cat_roof, guard_post, condo)}
 
 if __name__ == "__main__":
     name = sys.argv[1]

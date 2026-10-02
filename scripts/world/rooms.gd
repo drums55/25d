@@ -172,6 +172,27 @@ const ROOMS := {
 				"h": 60.0,
 				"dialog": "look_pier_crate"
 			},
+			# chapter 2: พี่เบิ้ม จอมบุญ streams from the pier
+			{
+				"id": "live_boat",
+				"art": "live_boat",
+				"pos": Vector2(8.2, 3.4),
+				"foot": Vector2(2.0, 0.8),
+				"h": 230.0,
+				"dialog": "look_live_boat",
+				"prompt": "เรือไลฟ์สด",
+				"if_flag": "ch2"
+			},
+			{
+				"id": "drone",
+				"art": "drone",
+				"pos": Vector2(9.8, 5.3),
+				"foot": Vector2(0.3, 0.3),
+				"h": 300.0,
+				"dialog": "look_drone",
+				"prompt": "โดรน",
+				"if_flag": "ch2"
+			},
 			{
 				"id": "jar",
 				"art": "dragon_jar",
@@ -206,6 +227,14 @@ const ROOMS := {
 				"pos": Vector2(5.6, 4.5),
 				"character": "nuad",
 				"dialog": "talk_nuad_ch3",
+				"if_flag": "ch2"
+			},
+			{
+				"id": "berm",
+				"name": "พี่เบิ้ม จอมบุญ (ไลฟ์อยู่)",
+				"pos": Vector2(3.0, 5.0),
+				"character": "berm",
+				"dialog": "talk_berm",
 				"if_flag": "ch2"
 			},
 		],
@@ -270,6 +299,8 @@ const ROOMS := {
 				"action": "travel"
 			},
 		],
+		"pickups":
+		[{"item": "charcoal", "pos": Vector2(2.6, 2.6), "label": "ถ่านไม้", "if_flag": "ch2"}],
 		"npcs":
 		[
 			{
@@ -763,7 +794,7 @@ const ROOMS := {
 				"pos": Vector2(5.5, 3.0),
 				"character": "wan",
 				"dialog": "talk_wan_ch3",
-				"if_flags": ["ch2", "got_debt_list", "nok_love"]
+				"if_flags": ["ch2", "got_debt_list", "evidence_pipe", "got_brochure"]
 			},
 		],
 	},
@@ -934,7 +965,16 @@ const ROOMS := {
 				"action": "travel"
 			},
 		],
-		"pickups": [{"item": "parking_ticket", "pos": Vector2(8.0, 3.6), "label": "ใบสั่ง"}],
+		"pickups":
+		[
+			{"item": "parking_ticket", "pos": Vector2(8.0, 3.6), "label": "ใบสั่ง"},
+			{
+				"item": "lottery_ticket",
+				"pos": Vector2(9.0, 2.8),
+				"label": "ลอตเตอรี่",
+				"if_flag": "ch2"
+			},
+		],
 		"npcs":
 		[
 			{
@@ -1014,6 +1054,18 @@ const ROOMS := {
 				"action": "travel"
 			},
 		],
+		"extra_props":
+		[
+			{
+				"id": "sign_stack",
+				"art": "sign_stack",
+				"pos": Vector2(8.2, 4.4),
+				"foot": Vector2(0.9, 0.6),
+				"h": 60.0,
+				"dialog": "look_sign_stack",
+				"if_flag": "ch2"
+			},
+		],
 		"npcs":
 		[
 			{
@@ -1022,6 +1074,14 @@ const ROOMS := {
 				"pos": Vector2(5.4, 3.8),
 				"character": "luang_pee",
 				"dialog": "talk_luang_pee"
+			},
+			{
+				"id": "boy",
+				"name": "น้องบอย (ฝ่ายป้าย)",
+				"pos": Vector2(6.0, 5.0),
+				"character": "boy",
+				"dialog": "talk_boy",
+				"if_flag": "ch2"
 			},
 		],
 	},
@@ -1190,6 +1250,185 @@ const ROOMS := {
 			},
 		],
 	},
+	"guard_post":
+	{
+		"title": "ป้อมยามกำแพงกันทะเล · บจ.ป้องกันภัย",
+		"grid": Vector2i(10, 7),
+		"floor": [Color(0.7, 0.72, 0.7), Color(0.64, 0.66, 0.64)],
+		"wall": Color(0.37, 0.48, 0.63),
+		"spawns": {"default": Vector2(6.6, 5.0), "from_bike": Vector2(6.6, 5.0)},
+		"enter": {"dialog": "enter_guard_post", "flag": "seen_guard_post"},
+		"props":
+		[
+			{
+				"id": "guard_booth",
+				"art": "guard_booth",
+				"pos": Vector2(3.0, 0.8),
+				"foot": Vector2(1.2, 1.0),
+				"h": 380.0,
+				"dialog": "look_guard_booth",
+				"prompt": "ตู้ยาม"
+			},
+			{
+				"id": "barrier",
+				"art": "barrier_arm",
+				"pos": Vector2(6.8, 0.9),
+				"foot": Vector2(1.6, 0.3),
+				"h": 120.0,
+				"dialog": "look_barrier"
+			},
+			{
+				"id": "company_bot_a",
+				"art": "brass_automaton",
+				"pos": Vector2(1.6, 1.0),
+				"foot": Vector2(0.6, 0.6),
+				"h": 150.0,
+				"dialog": "look_company_bots",
+				"prompt": "หุ่นบริษัท"
+			},
+			{
+				"id": "company_bot_b",
+				"art": "brass_automaton",
+				"pos": Vector2(8.2, 0.6),
+				"foot": Vector2(0.6, 0.6),
+				"h": 150.0,
+				"dialog": "look_company_bots",
+				"prompt": "หุ่นบริษัท"
+			},
+			{
+				"id": "survey_kiosk",
+				"art": "survey_kiosk",
+				"pos": Vector2(9.3, 2.4),
+				"foot": Vector2(0.4, 0.4),
+				"h": 290.0,
+				"dialog": "look_survey_kiosk",
+				"prompt": "ตู้แบบสอบถาม"
+			},
+			{
+				"id": "atm",
+				"art": "company_atm",
+				"pos": Vector2(0.6, 3.2),
+				"foot": Vector2(0.6, 0.5),
+				"h": 260.0,
+				"dialog": "look_atm"
+			},
+			{
+				"id": "brochure_stand",
+				"art": "brochure_stand",
+				"pos": Vector2(5.0, 3.6),
+				"foot": Vector2(0.5, 0.3),
+				"h": 230.0,
+				"dialog": "look_brochure_stand"
+			},
+			{
+				"id": "float_bike",
+				"art": "boat_bike",
+				"pos": Vector2(8.6, 5.9),
+				"foot": Vector2(1.4, 0.7),
+				"h": 90.0,
+				"prompt": "เรือเตอร์ไซค์",
+				"action": "travel"
+			},
+		],
+		"npcs":
+		[
+			{
+				"id": "beam",
+				"name": "คุณบีม (ลูกค้าสัมพันธ์)",
+				"pos": Vector2(5.2, 2.8),
+				"character": "beam",
+				"dialog": "talk_beam"
+			},
+			{
+				"id": "ton",
+				"name": "น้องต้น (ยาม)",
+				"pos": Vector2(2.6, 2.2),
+				"character": "ton",
+				"dialog": "talk_ton"
+			},
+		],
+	},
+	"condo":
+	{
+		"title": "คอนโดริมกำแพง · เข้าทางชั้น 3",
+		"grid": Vector2i(10, 8),
+		"floor": [Color(0.84, 0.8, 0.74), Color(0.78, 0.74, 0.68)],
+		"wall": Color(0.9, 0.86, 0.8),
+		"spawns": {"default": Vector2(6.0, 5.6), "from_bike": Vector2(6.0, 5.6)},
+		"enter": {"dialog": "enter_condo", "flag": "seen_condo"},
+		"props":
+		[
+			{
+				"id": "lift",
+				"art": "lift_door",
+				"pos": Vector2(2.0, 0.5),
+				"foot": Vector2(1.0, 0.4),
+				"h": 240.0,
+				"dialog": "look_condo_lift"
+			},
+			{
+				"id": "condo_window",
+				"art": "condo_window",
+				"pos": Vector2(6.0, 0.15),
+				"foot": Vector2(1.2, 0.3),
+				"h": 330.0,
+				"dialog": "look_condo_window"
+			},
+			{
+				"id": "shelter_sign",
+				"art": "shelter_sign",
+				"pos": Vector2(9.0, 0.15),
+				"foot": Vector2(0.5, 0.3),
+				"h": 300.0,
+				"dialog": "look_shelter_sign"
+			},
+			{
+				"id": "condo_sofa",
+				"art": "sofa",
+				"pos": Vector2(2.8, 3.4),
+				"foot": Vector2(1.6, 0.8),
+				"h": 60.0,
+				"dialog": "look_condo_sofa"
+			},
+			{
+				"id": "parcels",
+				"art": "parcel_pile",
+				"pos": Vector2(8.0, 3.0),
+				"foot": Vector2(1.0, 0.8),
+				"h": 120.0,
+				"dialog": "look_parcel_pile",
+				"prompt": "กองพัสดุ"
+			},
+			{
+				"id": "poodle",
+				"art": "poodle_float",
+				"pos": Vector2(5.0, 6.4),
+				"foot": Vector2(0.8, 0.6),
+				"h": 80.0,
+				"dialog": "look_poodle",
+				"prompt": "พุดเดิ้ล"
+			},
+			{
+				"id": "float_bike",
+				"art": "boat_bike",
+				"pos": Vector2(8.0, 6.4),
+				"foot": Vector2(1.4, 0.7),
+				"h": 90.0,
+				"prompt": "เรือเตอร์ไซค์",
+				"action": "travel"
+			},
+		],
+		"npcs":
+		[
+			{
+				"id": "la_or",
+				"name": "คุณหญิงลออ",
+				"pos": Vector2(5.4, 3.0),
+				"character": "la_or",
+				"dialog": "talk_la_or"
+			},
+		],
+	},
 }
 
 ## Where the floating bike can go: room id -> {name, flag needed, map}.
@@ -1208,6 +1447,9 @@ const TRAVEL := {
 	"hall": {"name": "ศาลาพยากรณ์น้ำ", "flag": "know_hall", "map": Vector2(0.42, 0.21)},
 	"roof_market": {"name": "ตลาดดาดฟ้า", "flag": "know_market", "map": Vector2(0.60, 0.76)},
 	"temple": {"name": "วัดหอระฆัง", "flag": "know_temple", "map": Vector2(0.78, 0.56)},
+	"guard_post":
+	{"name": "ป้อมยามกำแพงกันทะเล", "flag": "know_guard_post", "map": Vector2(0.52, 0.12)},
+	"condo": {"name": "คอนโดชั้น 3", "flag": "know_condo", "map": Vector2(0.89, 0.37)},
 	# the boat only reaches the roof when the water is up
 	"cat_roof":
 	{

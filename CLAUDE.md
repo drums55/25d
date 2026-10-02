@@ -223,6 +223,12 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   หลังคาไปได้เฉพาะน้ำขึ้น (TRAVEL `tide`+`closed` → หมุดเทาบนแผนที่), `platu`→cat = `cat_lured` → กองสมบัติเปิด (curler, goldfish, amulet);
   D เชือกจากวินเรือ → หอระฆัง `bell_fixed` → หลวงพี่ให้ `firecracker` → ใช้กับกองยาง (event noise) → เบอร์ 9 หัน → ฟิวส์; ด่านใหญ่: `gate_bot` หุ่นรุ่นเก่าเฝ้าประตูน้ำตอนน้ำลง
   (`if_not_flags` [ch2, forecast_high]) → ปลาทอง → ลุงหมอน้ำ = `forecast_high` หุ่นกลับฐาน. ของหลอกหยิบได้: amulet, parking_ticket. `Rooms.present` รองรับ `if_not_flags`
+- **B2 บท 2 ยืด (2026-10-02)**: ห้องใหม่ guard_post (ป้อมยาม: คุณบีม `beam` + น้องต้น `ton` ลูกชายพี่เปิ้ลในตู้ยาม) และ condo (คุณหญิงลออ `la_or`), ตัวละครเพิ่มในห้องเดิมเมื่อ `ch2`:
+  พี่เบิ้ม `berm` + เรือไลฟ์สด + โดรนที่ท่าเรือ, น้องบอย `boy` + กองป้ายที่วัด (`props_b2.py`, items.py +9). สาย: E ชิป→น้องเก่งต้องมี `adapter` (บีมให้ `survey_form` → ยื่นช่องเอกสารน้องต้น
+  = `son_note` → พี่เปิ้ล = adapter `got_adapter`); F ป้าจุ๋มไม่เชื่อกระดาษ ต้องให้ลุงหมอน้ำทาย `lottery_ticket` (เก็บที่ตลาด ch2) = `mor_nam_69` ก่อน debt_list→jum;
+  I แบบสอบถาม→บีม = `brochure`/`got_brochure` (หลักฐานบริษัท); H `blank_sign` (น้องบอย) + `charcoal` (เรือป้านก ch2) → `rubbing_kit` → หอระฆัง = `water_marks`;
+  **คุณนายวรรณโผล่เมื่อ `if_flags [ch2, got_debt_list, evidence_pipe, got_brochure]`** — `evidence_pipe` ตั้งจากจดหมายรัก (nok_love) หรือลอกลายขีดน้ำ (ทางใดทางหนึ่ง).
+  เจ๊เกียวตั้ง `know_guard_post`, น้องเก่งตอนให้รายชื่อตั้ง `know_condo`. dialog ใช้ `if_not_item` (บีมให้แบบสอบถามใหม่เมื่อไม่มีในกระเป๋า)
 - **ใบ้ในเกม**: ยื่นของผิดให้คนที่เป็นด่านสำคัญ ให้มี use เฉพาะที่พูดใบ้ (เช่น จดหมาย → ป้านก = "เขียนตัวโตๆ ใส่สมุดมา") — เจ้าของติดตรงกล่องป้านก 2026-10-02
 - **ฉาก + ภาพของ (2026-10-02, เจ้าของ: "ทำฉากให้เรียบร้อย ก่อนไป A4 / ทำ item ที่ตกให้เป็นภาพ และ item ใน inventory ด้วย")**:
   - backdrop ทุกห้อง = `tools/art/png/rooms_2090.py all` → `assets/art/rooms/<room id>.png` (ใช้ helper ของ room.py: teak_wall,
@@ -346,6 +352,8 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   connect ล้มเหลว → สคริปต์ ping + เช็คพอร์ต แล้วบอกว่าเป็นที่ Tailscale / พอร์ตเปลี่ยน / ยังไม่ได้ pair
   **ใช้ได้จริงแล้ว (2026-10-02)**: pair + connect ผ่าน IP Tailscale สำเร็จ (PC กับแท็บเล็ตอยู่คนละที่)
   Redmi Pad Pro ใน Tailscale = `100.90.8.123` (ใช้ `-Device 100.90.8.123:<พอร์ตจากหน้า Wireless debugging>` หรือสั้นๆ `123:<พอร์ต>`)
+- **แก้ `update.ps1`/`run.ps1` แล้วมีผลรอบถัดไป**: สคริปต์ pull เองตอนเริ่ม แต่ PowerShell อ่านไฟล์ทั้งหมดไว้ก่อนแล้ว รอบที่ pull ได้โค้ดใหม่ยังรันโค้ดเก่า (เจ้าของเจอ 2026-10-02 กับ adb reconnect) → บอกเจ้าของให้รันซ้ำ
+- update.ps1 reconnect อุปกรณ์ที่จำไว้ (`ADB_SERIAL` ของ terminal หรือ `.adb_device`) ทุกรอบ — adb daemon รีสตาร์ทแล้วลืมอุปกรณ์ไร้สาย ("device not found")
 - `adb` ไม่อ่าน `ADB_SERIAL` เอง (มันอ่าน `ANDROID_SERIAL`) — script ส่ง `-s $env:ADB_SERIAL` ให้
 - Export template มี 1.1 GB; dev_setup แตกเฉพาะไฟล์ android_* เก็บไว้
 
@@ -360,7 +368,7 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
   Android cmdline-tools (`platform-tools`, `build-tools;34.0.0`) + ตั้ง `export/android/android_sdk_path`
 
 ## สถานะ / ยังไม่ได้ทำ
-- **A0–A4 เสร็จ (2026-10-02)**: เกมเล่นจบได้ 3 บท ตอนจบ 4 แบบ, plot ย่อย 3 สาย; **B1 (2026-10-02)**: บท 1 ยืดเป็น 13 ห้อง ~25 ขั้น, 88 tests
+- **A0–A4 เสร็จ (2026-10-02)**: เกมเล่นจบได้ 3 บท ตอนจบ 4 แบบ, plot ย่อย 3 สาย; **B1+B2 (2026-10-02)**: บท 1–2 ยืด 15 ห้อง ตัวละคร 18 ตัว, 88 tests
 - UI ขัดครบแล้ว (2026-10-02): เมนูในเกม, การ์ด, ตัวเลือก, แถบกระเป๋า, กล่อง dialog, หน้าแรก + key art
 - เสียงมีแล้ว (2026-10-02) — เจ้าของฟังแล้ว: "เชยหน่อย แต่ ok"
 - **ลำดับงานทั้งเกม = `docs/DESIGN.md` ข้อ 13** (เจ้าของ 2026-10-02: "ไล่แผนดีๆ" = แผนทั้งเกม) — ตอบว่า "ทำอะไรต่อ" จากตารางนั้นเสมอ; งานแทรกจดเข้าแผนก่อน ไม่ทำทันทีเว้นแต่เจ้าของสั่ง

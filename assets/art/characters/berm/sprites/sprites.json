@@ -1,0 +1,31 @@
+{
+ "frame_size": [
+  320,
+  480
+ ],
+ "pivot": [
+  160,
+  448
+ ],
+ "art_scale": 2,
+ "directions": [
+  "E",
+  "SE",
+  "S",
+  "SW",
+  "W",
+  "NW",
+  "N",
+  "NE"
+ ],
+ "anims": {
+  "idle": {
+   "frames": 6,
+   "fps": 6
+  },
+  "walk": {
+   "frames": 8,
+   "fps": 12
+  }
+ }
+}

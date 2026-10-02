@@ -642,6 +642,28 @@ NPCS = {
                       arms="bare", legs="skirt", feet="Male_Peasant_Feet.gltf", feet_tint="#C99068",
                       pal={"torso": ("#E88A1E", 0.35, 0), "legs": ("#E88A1E", 0.35, 0), "sash": ("#C8641A", 0.35, 0),
                            "bowl": ("#2A2E30", 0.5, 0.6), "glass": ("#2A2224", 0.3, 0.4)}),
+    # chapter-2 stretch (DESIGN 12.5 / 12.7)
+    "beam": dict(female=False, hair=["Hair_SimpleParted.gltf"], hair_tint="#2A2224", skin="#F0C8A0",
+                 arms="long", legs="long", feet="Male_Ranger_Feet_Boots.gltf", feet_tint="#1A1619",
+                 pal={"torso": ("#F2EEE4", 0.3, 0), "legs": ("#2A3550", 0.4, 0.1), "vest": ("#2E5E9E", 0.4, 0.2),
+                      "lanyard": ("#E8762D", 0.4, 0), "card": ("#F2EEE4", 0.3, 0), "smile": ("#F2EEE4", 0.5, 0.3)}),
+    "ton": dict(female=False, hair=["Hair_Buzzed.gltf"], hair_tint="#1A1618", skin="#C98A5E",
+                arms="short", legs="long", feet="Male_Ranger_Feet_Boots.gltf", feet_tint="#1A1619", scale=0.95,
+                pal={"torso": ("#8A8E96", 0.35, 0), "legs": ("#2A3550", 0.4, 0.1), "cap": ("#2E5E9E", 0.4, 0.1),
+                     "card": ("#F2EEE4", 0.3, 0)}),
+    "boy": dict(female=False, hair=["Hair_SimpleParted.gltf"], hair_tint="#141016", skin="#E0AE84",
+                arms="short", legs="long", feet="Male_Peasant_Feet.gltf", feet_tint="#4A3A2A",
+                pal={"torso": ("#C8B890", 0.35, 0), "legs": ("#5A5A62", 0.3, 0), "cap": ("#C8B890", 0.35, 0),
+                     "sign": ("#2E5E9E", 0.4, 0.1), "sign_top": ("#F2C230", 0.4, 0), "pole": ("#4A5560", 0.4, 0.5)}),
+    "la_or": dict(female=True, hair=["Hair_Buns.gltf"], hair_tint="#E8E4DC", skin="#F2D8C0",
+                  arms="long", legs="skirt", feet="Female_Peasant_Feet.gltf", feet_tint="#F2EEE4",
+                  pal={"torso": ("#7A3A8A", 0.4, 0.2), "legs": ("#7A3A8A", 0.4, 0.2), "pearl": ("#F8F4EE", 0.5, 0.9),
+                       "hat": ("#F2EEE4", 0.35, 0), "ribbon": ("#C0392B", 0.4, 0), "shade": ("#141218", 0.6, 1.0)}),
+    "berm": dict(female=False, hair=["Hair_Buzzed.gltf"], hair_tint="#1A1618", skin="#C08860",
+                 arms="bare", legs="short", feet="Male_Ranger_Feet_Boots.gltf", feet_tint="#F2EEE4",
+                 pal={"torso": ("#1E1C22", 0.35, 0), "legs": ("#3B5578", 0.35, 0), "cap": ("#D93A2E", 0.4, 0.1),
+                      "phone": ("#2B2629", 0.5, 0.8), "screen": ("#4AE0C8", 0.6, 1.0), "stick": ("#C0C8D0", 0.5, 0.8),
+                      "gold": ("#E2B54A", 0.6, 1.0)}),
     "wan": dict(female=True, hair=["Hair_Buns.gltf"], hair_tint="#141016", skin="#EFC6A0",
                 arms="long", legs="long", feet="Female_Peasant_Feet.gltf", feet_tint="#141218",
                 pal={"torso": ("#2A3550", 0.4, 0.1), "legs": ("#2A3550", 0.4, 0.1), "collar": ("#F2EEE4", 0.3, 0),
@@ -764,6 +786,44 @@ def npc_accessories(name, B, arm, head, top, neck, hc):
                     rot=(math.radians(90), 0, 0), ink=0.0)
         B.sphere("Bowl", bone_world(arm, "hand_l") + Vector((0.0, -0.02, -0.08)), 0.09, "bowl", "hand_l",
                  scale=(1.0, 1.0, 0.8), rot=(math.pi, 0, 0), cut=0.2, ink=0.006)
+    elif name == "beam":
+        # company vest over a white shirt, a lanyard with the badge, and the smile that never stops
+        garment(B, BODY, "Vest", "vest", "spine_02", 1.0, 1.36, arc=200, pad=0.03)
+        hx, fy, by = body_section(BODY, neck.z - 0.2)
+        B.torus("Lanyard", neck + Vector((0, -0.01, -0.03)), 0.075, 0.006, "lanyard", "spine_03", scale=(1.0, 1.0, 1.6), ink=0.0)
+        B.box("Badge", Vector((0.0, fy - 0.03, neck.z - 0.26)), (0.07, 0.012, 0.09), "card", "spine_03", bevel=0.006, ink=0.004)
+        B.torus("Smile", hc + Vector((0, -0.118, -0.05)), 0.04, 0.008, "smile", "Head", rot=(math.radians(90), 0, 0),
+                scale=(1.0, 0.5, 1.0), ink=0.003)
+    elif name == "ton":
+        B.sphere("Cap", hc + Vector((0, 0.01, 0.06)), 0.118, "cap", "Head", scale=(1.0, 1.08, 0.8), cut=0.1)
+        B.box("Visor", hc + Vector((0, -0.14, 0.072)), (0.14, 0.11, 0.012), "cap", "Head", rot=(math.radians(-8), 0, 0), bevel=0.02)
+        hx, fy, by = body_section(BODY, neck.z - 0.2)
+        B.box("Badge", Vector((0.06, fy - 0.03, neck.z - 0.22)), (0.06, 0.012, 0.07), "card", "spine_03", bevel=0.006, ink=0.004)
+    elif name == "boy":
+        # the sign department: khaki cap, and the next project sign under one arm
+        B.sphere("Cap", hc + Vector((0, 0.01, 0.06)), 0.118, "cap", "Head", scale=(1.0, 1.08, 0.8), cut=0.1)
+        B.box("Visor", hc + Vector((0, -0.14, 0.072)), (0.14, 0.11, 0.012), "cap", "Head", rot=(math.radians(-8), 0, 0), bevel=0.02)
+        hL = bone_world(arm, "hand_l")
+        B.cyl("Pole", hL + Vector((0.0, 0.0, 0.1)), 0.012, 0.9, "pole", "hand_l", ink=0.004)
+        B.box("Sign", hL + Vector((0.0, -0.02, 0.62)), (0.3, 0.02, 0.2), "sign", "hand_l", bevel=0.006, ink=0.005)
+        B.box("SignTop", hL + Vector((0.0, -0.02, 0.73)), (0.3, 0.02, 0.03), "sign_top", "hand_l", bevel=0.004, ink=0.0)
+    elif name == "la_or":
+        # a wide sun hat with a ribbon, pearls, sunglasses
+        B.cyl("Hat", hc + Vector((0, 0.0, 0.08)), 0.26, 0.014, "hat", "Head", r2=0.25, ink=0.005)
+        B.cyl("HatTop", hc + Vector((0, 0.0, 0.13)), 0.125, 0.1, "hat", "Head", r2=0.11, ink=0.005)
+        B.torus("Ribbon", hc + Vector((0, 0.0, 0.1)), 0.125, 0.02, "ribbon", "Head", scale=(1.0, 1.0, 0.6), ink=0.003)
+        B.torus("Pearls", neck + Vector((0, -0.01, -0.05)), 0.085, 0.012, "pearl", "spine_03", scale=(1.0, 1.0, 0.8), ink=0.0)
+        for sx in (1, -1):
+            B.box("Shade", hc + Vector((sx * 0.044, -0.122, 0.0)), (0.062, 0.012, 0.034), "shade", "Head", bevel=0.008, ink=0.003)
+    elif name == "berm":
+        # cap on backwards, gold chain, the phone on a selfie stick in the right hand
+        B.sphere("Cap", hc + Vector((0, 0.01, 0.06)), 0.118, "cap", "Head", scale=(1.0, 1.08, 0.8), cut=0.1)
+        B.box("Visor", hc + Vector((0, 0.14, 0.072)), (0.14, 0.11, 0.012), "cap", "Head", rot=(math.radians(8), 0, 0), bevel=0.02)
+        B.torus("Chain", neck + Vector((0, -0.01, -0.05)), 0.09, 0.012, "gold", "spine_03", scale=(1.0, 1.0, 0.8), ink=0.0)
+        hR = bone_world(arm, "hand_r")
+        B.cyl("Stick", hR + Vector((-0.25, -0.02, 0.0)), 0.012, 0.5, "stick", "hand_r", rot=(0, math.radians(90), 0), ink=0.004)
+        B.box("Phone", hR + Vector((-0.52, -0.02, 0.0)), (0.07, 0.012, 0.13), "phone", "hand_r", bevel=0.006, ink=0.004)
+        B.box("Screen", hR + Vector((-0.52, -0.03, 0.0)), (0.058, 0.004, 0.11), "screen", "hand_r", bevel=0.002, ink=0.0)
     elif name == "wan":
         B.torus("Collar", neck + Vector((0, 0.005, -0.01)), 0.072, 0.016, "collar", "spine_03", scale=(1.0, 1.0, 0.6), ink=0.004)
         hx, fy, by = body_section(BODY, neck.z - 0.18)
