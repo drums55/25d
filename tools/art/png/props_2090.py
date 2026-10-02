@@ -101,8 +101,9 @@ def floor_gap(out):
     c.finish(out)
 
 
-def upturned_boat(out):
-    """เรือคว่ำในอู่ — with a pair of legs sticking out (ช่างแดง)."""
+def upturned_boat(out, legs=False):
+    """เรือคว่ำในอู่ — empty; upturned_boat_legs = with ช่างแดง's legs sticking out
+    (owner 2026-10-02: the legs stayed after he had come out)."""
     c = Canvas(700, 420, seed=204)
     p = c.p
     c.ground_shadow(2.2, 0.8)
@@ -112,10 +113,14 @@ def upturned_boat(out):
     c.prism(keel, 70, 84, hexc("#E8E2D0"))
     c.stroke([p(-0.8, 0.38, 30), p(0.85, 0.38, 30)], 4.0, RED_P)
     # legs out from under the hull
-    for k, dx in enumerate((0.0, 0.14)):
+    for k, dx in enumerate((0.0, 0.14) if legs else ()):
         c.box(0.55 + dx, 0.38, 0.65 + dx, 0.85, 0, 18, JEANS, rim=0.4, outline=1.6)
         c.box(0.55 + dx, 0.82, 0.67 + dx, 0.92, 0, 26, INK, rim=0.3, outline=1.4)
     c.finish(out)
+
+
+def upturned_boat_legs(out):
+    upturned_boat(out, legs=True)
 
 
 def sluice_gate(out):
@@ -387,7 +392,7 @@ def red_sofa(out):
     c.finish(out)
 
 
-PROPS = {f.__name__: f for f in (steam_radio, wardrobe, floor_gap, upturned_boat, sluice_gate,
+PROPS = {f.__name__: f for f in (steam_radio, wardrobe, floor_gap, upturned_boat, upturned_boat_legs, sluice_gate,
                                  sluice_flooded, tide_gauge, wait_bench, house_zero_plate,
                                  pump_engine, rental_bed, debt_board, boat_noodle_stall, kiao_desk,
                                  boat_bike, red_sofa)}

@@ -501,6 +501,17 @@ const ROOMS := {
 		"spawns": {"default": Vector2(8.0, 5.6), "from_bike": Vector2(8.0, 5.6)},
 		"props":
 		[
+			# ช่างแดง's legs stick out until the robot is fused and he comes out
+			{
+				"id": "upturned_boat",
+				"art": "upturned_boat_legs",
+				"pos": Vector2(5.0, 2.6),
+				"foot": Vector2(2.2, 0.8),
+				"h": 90.0,
+				"dialog": "look_upturned_boat",
+				"prompt": "เรือคว่ำ",
+				"if_not_flag": "no9_fused"
+			},
 			{
 				"id": "upturned_boat",
 				"art": "upturned_boat",
@@ -508,7 +519,8 @@ const ROOMS := {
 				"foot": Vector2(2.2, 0.8),
 				"h": 90.0,
 				"dialog": "look_upturned_boat",
-				"prompt": "เรือคว่ำ"
+				"prompt": "เรือคว่ำ",
+				"if_flag": "no9_fused"
 			},
 			{
 				"id": "garage_bench",

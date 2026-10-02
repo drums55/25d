@@ -309,6 +309,7 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   ของที่หุ่นเฝ้าต้องมีเงื่อนไข flag ตรงๆ — มือหมุน→ประตูน้ำ: entry แรก `if_not_flag forecast_high` = หุ่นก้าวมาขวาง (sfx caught, set met_gate_bot), entry จริง `if_flag forecast_high`;
   แหวน pickup `if_flags [lung_ring_told, ally_nine]`; ป้อมยามบท 3: `talk_beam_ch3_guarded` / `look_survey_kiosk_ch3_guarded` (`if_not_flag disguised`) = หุ่นขวาง, star_card→beam `if_flag disguised`.
   โซนจับของ PatrolBot เป็นแค่ฉาก/บทพูด ห้ามใช้เป็นตัวกันผ่านด่าน. uses รองรับ `"sfx"` (default use_ok)
+- ของที่ "มีคนอยู่ข้างใน" ต้องเป็น 2 ภาพ/2 entry ตาม flag (เจ้าของ 2026-10-02: "ขาช่างแดงยังโผล่จากเรือทั้งๆที่ช่างแดงไม่อยู่"): `upturned_boat_legs` (`if_not_flag no9_fused`) / `upturned_boat` เปล่า (`if_flag no9_fused`) ใน props_2090.py
 - navmesh sliver บอกตำแหน่งแล้ว: warning "navmesh edge ... at cell (x, y)" — ป้ายใกล้ผนังขวา/ซ้ายต้องแนบผนัง (เหลือ 0.15) ไม่งั้นมุม inflate ชนกับผนัง
 - Gotcha: script ที่รันด้วย `godot -s` (shot/tool) ห้ามอ้าง class ที่อ้าง autoload ตอน compile (เช่น `Rooms` → `GameState` → `Puzzles`)
   → "Identifier not found" — ใช้ `load("res://...")` ตอน runtime แทน
