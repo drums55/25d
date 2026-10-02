@@ -157,24 +157,17 @@ const ROOMS := {
 				"id": "radio",
 				"art": "steam_radio",
 				"pos": Vector2(1.6, 6.0),
-				"foot": Vector2(0.6, 0.5),
-				"h": 40.0,
+				"foot": Vector2(0.8, 0.6),
+				"h": 240.0,
 				"color": Color(0.25, 0.55, 0.55),
 				"dialog": "look_radio",
 				"prompt": "วิทยุ"
 			},
+			# one crate, away from the radio (owner: boxes beside it made the radio read as a box)
 			{
 				"id": "crate",
 				"art": "crate",
-				"pos": Vector2(3.0, 4.2),
-				"foot": Vector2(0.9, 0.9),
-				"h": 60.0,
-				"dialog": "look_pier_crate"
-			},
-			{
-				"id": "crate",
-				"art": "crate",
-				"pos": Vector2(3.0, 5.4),
+				"pos": Vector2(4.4, 2.2),
 				"foot": Vector2(0.9, 0.9),
 				"h": 60.0,
 				"dialog": "look_pier_crate"

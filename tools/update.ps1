@@ -77,8 +77,18 @@ try {
     }
     if (-not $adb) { throw "adb not found (add platform-tools to PATH)." }
     $DeviceFile = Join-Path $PSScriptRoot '.adb_device'
-    if (-not $Device -and -not $env:ADB_SERIAL -and (Test-Path $DeviceFile)) {
-        $Device = (Get-Content $DeviceFile -Raw).Trim()
+    # A remembered device (this terminal's ADB_SERIAL from an earlier run, or the
+    # file) is reconnected every time: the adb daemon restarts between runs and
+    # forgets wireless devices (owner 2026-10-02: "device ... not found" with no
+    # connect step).
+    if (-not $Device) {
+        if ($env:ADB_SERIAL) { $Device = $env:ADB_SERIAL }
+        elseif (Test-Path $DeviceFile) { $Device = (Get-Content $DeviceFile -Raw).Trim() }
+    }
+    if ($Device -and $Device -notmatch ':') {
+        # a USB serial: nothing to connect to
+        $env:ADB_SERIAL = $Device
+        $Device = ''
     }
     if ($Device) {
         if ($Device -match '^\d+:\d+$') {
@@ -147,6 +157,9 @@ try {
         Invoke-Native { & $adb @dev uninstall $Package 2>&1 } | Out-Null
         $out = Invoke-Native { & $adb @dev install $Apk 2>&1 } | Out-String
         Write-Host $out.Trim()
+    }
+    if ($out -match 'not found') {
+        throw "adb install failed: adb lost the device. Run again (it reconnects); if the Wireless debugging port changed, pass -Device 123:<new port>"
     }
     if ($out -notmatch 'Success') { throw "adb install failed (is the device connected? 'adb devices')" }
 

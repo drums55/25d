@@ -26,17 +26,49 @@ JEANS = hexc("#3B5578")
 
 
 def steam_radio(out):
-    """วิทยุไอน้ำรุ่นคุณปู่: wooden cabinet, brass speaker grill, valve, aerial."""
-    c = Canvas(260, 400, seed=201)
+    """วิทยุไอน้ำรุ่นคุณปู่ บนโต๊ะไม้ (owner 2026-10-02: the old one "เหมือนกล่อง"):
+    a rounded bakelite cabinet, big round dial with a red needle, a slatted
+    speaker grille, two knobs, a brass valve on top and a long aerial."""
+    c = Canvas(380, 520, seed=201)
     p = c.p
-    c.ground_shadow(0.6, 0.5)
-    c.box(-0.3, -0.25, 0.3, 0.25, 0, 120, WOOD, rim=0.8)
-    c.box(-0.32, -0.27, 0.32, 0.27, 120, 128, WOOD_D, rim=0.6)
-    c.disc(*p(0.0, 0.252, 70), 34 * c.ss, 34 * c.ss, BRASS, dome=False)
-    c.gear(*p(0.0, 0.253, 70), 22 * c.ss, BRASS_D, teeth=10)
-    c.cylinder(0.18, -0.05, 0.05, 128, 160, COPPER)
-    c.stroke([p(-0.15, -0.1, 128), p(-0.32, -0.25, 300)], 3.0, STEEL)
-    c.disc(*p(-0.32, -0.25, 300), 6 * c.ss, 6 * c.ss, RED)
+    c.ground_shadow(0.8, 0.6)
+    bake, bake_d = hexc("#8A4A2A"), hexc("#5C2E18")
+    # the table
+    for gx, gy in ((-0.36, -0.2), (0.36, -0.2), (0.36, 0.2), (-0.36, 0.2)):
+        c.box(gx - 0.03, gy - 0.03, gx + 0.03, gy + 0.03, 0, 100, WOOD_D, rim=0.3, outline=1.4)
+    c.box(-0.44, -0.27, 0.44, 0.27, 100, 112, WOOD, rim=0.7)
+    # the cabinet (rounded by a lighter top strip and dark bottom strip)
+    c.box(-0.38, -0.17, 0.38, 0.17, 112, 122, bake_d, rim=0.3, outline=1.4)
+    c.box(-0.38, -0.17, 0.38, 0.17, 122, 212, bake, rim=0.9, top_k=1.2)
+    c.box(-0.36, -0.15, 0.36, 0.15, 212, 222, bake * 1.15, rim=0.5, outline=1.4)
+    # front face (+gy): dial left, grille right, knobs below
+    f = 0.172
+    c.disc(*p(-0.18, f, 172), 26 * c.ss, 26 * c.ss, BRASS, dome=False, outline=1.8, rim=0)
+    c.disc(*p(-0.18, f, 172), 21 * c.ss, 21 * c.ss, hexc("#F2E6C0"), dome=False, outline=0.8)
+    for k in range(9):
+        a = math.radians(-150 + k * 37.5)
+        x0, y0 = p(-0.18, f, 172)
+        c.stroke([(x0 + math.cos(a) * 15 * c.ss, y0 + math.sin(a) * 15 * c.ss),
+                  (x0 + math.cos(a) * 19 * c.ss, y0 + math.sin(a) * 19 * c.ss)], 1.2, INK)
+    x0, y0 = p(-0.18, f, 172)
+    c.stroke([(x0, y0), (x0 + 12 * c.ss, y0 - 13 * c.ss)], 2.0, RED_P)
+    c.disc(x0, y0, 3 * c.ss, 3 * c.ss, INK, outline=0.4)
+    c.text("90.9", p(-0.27, f, 146), p(-0.09, f, 146), 8, INK)
+    grille = c.mask_poly([p(0.02, f, 204), p(0.34, f, 204), p(0.34, f, 142), p(0.02, f, 142)])
+    c.paint(grille, c.grad(hexc("#C8A06A"), 1.0, 0.85), outline=1.6, tex=0.06)
+    for k in range(8):
+        gx = 0.045 + k * 0.038
+        c.stroke([p(gx, f + 0.004, 200), p(gx, f + 0.004, 146)], 2.4, bake_d, 0.9)
+    for gx in (-0.3, -0.08):
+        c.disc(*p(gx, f + 0.004, 128), 7 * c.ss, 7 * c.ss, BRASS, outline=1.0, spec=1.0)
+        c.disc(*p(gx, f + 0.006, 128), 2 * c.ss, 2 * c.ss, INK, outline=0.3)
+    c.disc(*p(0.18, f + 0.004, 128), 3 * c.ss, 3 * c.ss, hexc("#FFB040"), outline=0.4, spec=1.0)  # dial lamp
+    # steam: brass valve and a little gauge on top, the aerial from the back corner
+    c.cylinder(0.22, -0.05, 0.05, 222, 250, COPPER)
+    c.gear(*p(0.22, -0.05, 252), 11 * c.ss, BRASS_D, teeth=8)
+    c.gauge(*p(-0.16, -0.05, 236), 11)
+    c.stroke([p(-0.32, -0.14, 222), p(-0.42, -0.3, 300)], 3.0, STEEL)
+    c.disc(*p(-0.42, -0.3, 300), 6 * c.ss, 6 * c.ss, RED, outline=0.8, spec=1.0)
     c.finish(out)
 
 
