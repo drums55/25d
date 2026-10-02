@@ -65,7 +65,7 @@
   - **ฉากตอนจบ (2026-10-02, เจ้าของ: "ทำท่าพิเศษตอนจบด้วย")**: `Main.end_game(id)` → `go_room` ไปห้องของตอนจบ (`ENDING_SCENES`:
     five_stars = เรือป้านกตอนรุ่งเช้า ไรเดอร์ `cheer` + แขกงานแต่ง (npc `if_flag ending_five_stars`: พี่หนวดเต้น ป้าจุ๋มตะโกน น้องเก่ง);
     wet = ชุมชนยกเสาเช้า `shrug`; sunk = ชุมชนยกเสากลางคืน `sit_sad`; sold = ห้องเช่ากลางคืน `phone` (ห้าดาวบนมือถือ)) →
-    `_stage_ending` ล็อก input, ตั้งท่า + หัวข้อ, รอ `ENDING_HOLD` 3.5 วิ แล้วค่อยขึ้นการ์ด. rider ซ่อนประแจในท่า phone/sit_sad/shrug (`put_away`)
+    `_stage_ending` ล็อก input, ตั้งท่า + หัวข้อ, รอให้ fade จบ (`SceneRouter.is_busy()`) แล้วค้างฉากเปล่า `ENDING_HOLD` 3 วิ (ไม่มีตัวหนังสือ) → หัวข้อ + "แตะเพื่อดูตอนจบ" → การ์ดขึ้นเมื่อแตะเท่านั้น (`Main._ending_waiting`; เจ้าของ: "ยังไม่ทันดูฉากจบ text ขึ้นมาบัง" — เดิมนับเวลาตั้งแต่ก่อน fade จบ). rider ซ่อนประแจในท่า phone/sit_sad/shrug (`put_away`)
   - ขนาด: `CharacterView.SIZE = 0.84` (เดิมคนสูงกว่าประตู); ป้ายชื่อ NPC -222, เครื่องหมายหุ่น (! ? ~เต้น~) -300
   - render: `pip install bpy==4.2.0` + `python3 tools/art/3d/fetch_quaternius.py <QDIR>` (โหลดชุดฟรีจาก itch.io) แล้ว
     `QDIR=<QDIR> python3 char_q.py <name> <out>` + `pack.py <out>` (~2 นาที/ตัว, segfault ตอนปิด bpy ไม่เป็นไร)

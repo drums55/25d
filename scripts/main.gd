@@ -58,8 +58,8 @@ const ENDING_SCENES := {
 	{"room": "stilts", "pose": "sit_sad", "tint": NIGHT_TINT, "caption": "บนหลังคา จนถึงเช้า"},
 	"sold": {"room": "home", "pose": "phone", "tint": NIGHT_TINT, "caption": "ห้าดาว จากบริษัท"},
 }
-## Seconds the ending tableau plays before its card.
-const ENDING_HOLD := 3.5
+## Seconds the ending tableau plays (after the fade) before anything is written on it.
+const ENDING_HOLD := 3.0
 
 var _card_pending := ""
 var _reload_after_dialog := false
@@ -69,6 +69,7 @@ var _choice_after_dialog := ""
 var _dialog_after_load := ""
 ## The ending being staged ("" while playing).
 var _ending := ""
+var _ending_waiting := false
 
 @onready var _room_holder: Node2D = $RoomHolder
 @onready var _player: Player = $Player
@@ -302,27 +303,48 @@ func end_game(ending: String) -> void:
 	go_room(ENDING_SCENES[ending]["room"], "default")
 
 
-## The ending tableau: the rider strikes the ending's pose for a few seconds,
-## then the ending card comes down over it.
+## The ending tableau (owner 2026-10-02: "the text covered the ending before I
+## could see it" - the hold used to start before the fade-in had even ended).
+## Now: wait for the fade to finish, let the scene play with nothing on top,
+## then the caption and "แตะเพื่อดูตอนจบ"; the card comes only on a tap.
 func _stage_ending() -> void:
 	var scene: Dictionary = ENDING_SCENES[_ending]
-	GameState.input_locked = true
+	var ending := _ending
 	_player.cancel_order()
 	_player.facing = Iso.Dir.S
 	_player.rig.set_facing(Iso.Dir.S)
 	_player.rig.set_pose(scene["pose"])
-	_hud.show_title(scene["caption"])
-	var ending := _ending
+	while SceneRouter.is_busy():
+		await get_tree().process_frame
+	GameState.input_locked = true
 	await get_tree().create_timer(ENDING_HOLD).timeout
 	if not is_inside_tree() or _ending != ending:
 		return
-	var t: Array = Endings.TEXT[ending]
+	_hud.show_title(scene["caption"])
+	GameState.notice.emit("แตะเพื่อดูตอนจบ")
+	_ending_waiting = true
+
+
+## The ending card, after the tableau (a tap while _ending_waiting).
+func show_ending_card() -> void:
+	if not _ending_waiting:
+		return
+	_ending_waiting = false
+	var t: Array = Endings.TEXT[_ending]
 	_hud.show_overlay(t[0], t[1], [["เล่นใหม่", _new_game], ["หน้าแรก", go_title]])
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	var touch := event as InputEventScreenTouch
+	if _ending_waiting and touch != null and touch.pressed:
+		get_viewport().set_input_as_handled()
+		show_ending_card()
 
 
 func _new_game() -> void:
 	_hud.hide_overlay()
 	_ending = ""
+	_ending_waiting = false
 	_player.rig.set_pose("")
 	GameState.input_locked = false
 	GameState.new_game()

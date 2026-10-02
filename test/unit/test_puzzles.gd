@@ -447,7 +447,11 @@ func test_chapter_three_sell_the_box():
 	assert_true(
 		_player.rig.get_node("Sprite").animation.begins_with("phone"), "staring at the phone"
 	)
-	await wait_seconds(_main.ENDING_HOLD)
+	await wait_seconds(_main.ENDING_HOLD + 0.5)
+	assert_false(GameState.ui_open, "nothing covers the ending until a tap")
+	var tap := InputEventScreenTouch.new()
+	tap.pressed = true
+	_main._unhandled_input(tap)
 	assert_true(GameState.ui_open, "then the ending card")
 
 
