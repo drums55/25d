@@ -226,6 +226,9 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
     → โดรนที่ท่าเรือ = `drone_card` → พี่เบิ้ม (`berm_offered`) = `ally_berm` → ลุงหมอน้ำ `know_board_rule` → สมุดหนี้→ป้ายพยากรณ์ = `forecast_rigged` (ลอกลายมือลุงเขียน "ตีสี่")
   - hint บท 3 ไล่ตามสาย (gate ด้วย monk_sign_told/boy_permit/ally_monk/ally_ple/disguised/berm_offered/know_board_rule); เสียงใหม่ bell/firecracker/splash; ไอคอน 5 ชิ้น (items.py)
   - test: `test_endings.gd` (plan/helpers/epilogues/convoy), walkthrough บท 3 เดินครบสาย + วาล์วปฏิเสธตอนขาด, `test_chapter_three_the_box_is_not_for_sale`, `test_the_convoy_ride_...`; gdlintrc `max-public-methods: 40`
+- **B4 ขัด (2026-10-02, เริ่มหลังเจ้าของ "ทำไปก่อนเลย")**: (1) แถบดำใต้ห้องเตี้ย: `IsoRoom._fill_around` วาง Polygon2D สีเดียวกับพิกเซลล่างกลางของ backdrop (z -15) กว้างกว่าภาพ 2400px → ไม่มีดำทุกห้อง;
+  (2) dialog/uses line รองรับ `"sfx": "<name>"` (`Dialog._show_current` → `Audio.sfx`); `test_audio` สแกน json ด้วย; เสียงใหม่ meow (แมว), drone (โดรน) + bell/firecracker ติดกับ line ที่ตีระฆัง/จุดประทัด;
+  (3) hint บท 3 เพิ่ม 2 ข้อ (ally_beam→พี่เบิ้ม, ally_berm→ลุงหมอน้ำ) ให้ไล่สายต่อเนื่องไม่หลุดไปข้อสุดท้าย; (4) มุกรัฐบาลเพิ่ม: `relief_bag` ถุงยังชีพ (ชุมชนยกเสา), `siren_pole` ไซเรนทดสอบทุกพุธ (ศาลา) ใน props_b2.py
 - **คำใบ้ห้ามใบ้ล่วงหน้า (เจ้าของ 2026-10-02: "hint ป้านกเขียนตั้งแต่ยังไม่เจอป้านก = ใบ้เกิน")**: hint ทุกข้อใน puzzles.json ต้องมี `if_flag` เป็น flag ที่แปลว่า
   ผู้เล่นเจอสิ่งนั้นแล้ว (`met_<npc>` ตั้งใน talk_*_first, `met_gate_bot` ใน catch dialog, หรือ flag ของขั้นก่อนหน้า) — hint แรกที่เงื่อนไขผ่านคือที่โชว์ จึงเรียงตามลำดับเล่น
 - **B1 บท 1 ยืด (2026-10-02)**: ห้องใหม่ hall/roof_market/temple/boat_rank/cat_roof (`props_b1.py` 21 prop, `rooms_2090.py`, items.py +8 ของ), ตัวละครใหม่ lung_mor_nam/ple/luang_pee

@@ -17,6 +17,14 @@ func test_music_follows_chapter_radio_and_ending():
 
 func test_every_sound_the_code_names_exists():
 	var calls := RegEx.create_from_string('Audio\\.(sfx|music|ambience|sting)\\("([a-z_]+)"')
+	# dialog / puzzle lines may name a sound too ("sfx": "meow")
+	var json_sfx := RegEx.create_from_string('"sfx": "([a-z_]+)"')
+	for path in [Dialog.DIALOG_PATH, Puzzles.DATA_PATH]:
+		for m in json_sfx.search_all(FileAccess.get_file_as_string(path)):
+			assert_true(
+				FileAccess.file_exists("res://assets/audio/sfx/%s.ogg" % m.get_string(1)),
+				"%s names sfx %s" % [path, m.get_string(1)]
+			)
 	var found := 0
 	for path in _scripts("res://scripts"):
 		var text := FileAccess.get_file_as_string(path)

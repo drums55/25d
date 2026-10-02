@@ -97,5 +97,7 @@ func _show_current() -> void:
 	GameState.set_flag(line.get("set_flag", ""))
 	GameState.give_item(line.get("give_item", ""))
 	GameState.take_item(line.get("take_item", ""))
+	if not str(line.get("sfx", "")).is_empty():
+		Audio.sfx(str(line["sfx"]), 0.08)
 	if not str(line.get("event", "")).is_empty():
 		event.emit(str(line["event"]))

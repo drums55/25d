@@ -733,6 +733,28 @@ def sfx_splash():  # someone goes into the canal
     return norm(out, 0.8)
 
 
+def sfx_meow():  # แมวส้มโอ: a two-part meow, formant-ish
+    dur = 0.55
+    t = t_axis(dur)
+    f = 620 + 180 * np.sin(np.pi * t / dur) - 120 * np.minimum(1, t / 0.08)
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    out = np.sin(ph) + 0.5 * np.sin(2 * ph) + 0.3 * np.sin(3 * ph) + 0.15 * np.sin(5 * ph)
+    out *= np.minimum(1, t / 0.03) * np.exp(-((t - 0.3) / 0.22) ** 2)
+    out = filt(out, "band", (300, 3200))
+    return norm(out, 0.7)
+
+
+def sfx_drone():  # พี่เบิ้ม's drone hovering: four little motors, a wobble
+    dur = 1.6
+    t = t_axis(dur)
+    out = np.zeros_like(t)
+    for k, f in enumerate((180, 183, 241, 244)):
+        out += np.sin(2 * np.pi * (f + 3 * np.sin(2 * np.pi * (0.7 + k * 0.2) * t)) * t) * (0.5 if k < 2 else 0.3)
+    out += 0.4 * filt(noise(dur), "band", (1500, 6000))
+    out *= np.minimum(1, t / 0.15) * np.minimum(1, (dur - t) / 0.3)
+    return norm(out, 0.5)
+
+
 TRACKS = {
     "music/title": (music_title, 3),
     "music/day": (music_day, 3),
@@ -765,6 +787,8 @@ TRACKS = {
     "sfx/bell": (sfx_bell, 4),
     "sfx/firecracker": (sfx_firecracker, 4),
     "sfx/splash": (sfx_splash, 4),
+    "sfx/meow": (sfx_meow, 4),
+    "sfx/drone": (sfx_drone, 4),
 }
 
 

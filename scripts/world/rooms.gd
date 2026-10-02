@@ -423,6 +423,15 @@ const ROOMS := {
 				"dialog": "look_stilt_tank"
 			},
 			{
+				"id": "relief_bag",
+				"art": "relief_bag",
+				"pos": Vector2(2.4, 0.5),
+				"foot": Vector2(0.6, 0.4),
+				"h": 100.0,
+				"dialog": "look_relief_bag",
+				"prompt": "ถุงยังชีพ"
+			},
+			{
 				"id": "spirit_house",
 				"art": "spirit_house",
 				"pos": Vector2(3.6, 0.6),
@@ -889,6 +898,15 @@ const ROOMS := {
 				"foot": Vector2(0.5, 0.5),
 				"h": 150.0,
 				"dialog": "look_transistor"
+			},
+			{
+				"id": "siren",
+				"art": "siren_pole",
+				"pos": Vector2(9.5, 0.3),
+				"foot": Vector2(0.3, 0.3),
+				"h": 480.0,
+				"dialog": "look_siren",
+				"prompt": "เสาไซเรน"
 			},
 			{
 				"id": "hearing_notice",

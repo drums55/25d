@@ -60,6 +60,26 @@ func get_backdrop_rect() -> Rect2:
 	return Rect2(c[3].x, c[0].y - wall_height, c[1].x - c[3].x, c[2].y - c[0].y + wall_height)
 
 
+## Short rooms (10x7) showed a black strip between the painting's bottom edge
+## and the bag strip (DESIGN 13.3): a sheet of "canal" the colour of the
+## painting's bottom-centre pixel sits under it, far past its edges.
+func _fill_around(tex: Texture2D, rect: Rect2) -> void:
+	var img := tex.get_image()
+	if img == null:
+		return
+	var col := img.get_pixel(img.get_width() / 2, img.get_height() - 2)
+	var fill := Polygon2D.new()
+	fill.name = "Surround"
+	fill.z_index = -15
+	fill.color = col
+	var r := rect.grow(2400.0)
+	fill.polygon = PackedVector2Array(
+		[r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]
+	)
+	add_child(fill)
+	move_child(fill, 0)
+
+
 func apply_art() -> bool:
 	var tex := ArtLibrary.room(art_name if not art_name.is_empty() else name.to_snake_case())
 	if tex == null:
@@ -75,6 +95,7 @@ func apply_art() -> bool:
 	sprite.scale = rect.size / tex.get_size()
 	add_child(sprite)
 	move_child(sprite, 0)
+	_fill_around(tex, rect)
 	draw_placeholder = false
 	for child in get_world().get_children():
 		if "show_panel" in child:

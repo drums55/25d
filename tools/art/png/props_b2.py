@@ -250,8 +250,40 @@ def five_star_sign(out):
     c.finish(out)
 
 
+# --- มุกรัฐบาล (DESIGN 12.9) ------------------------------------------------------------
+def relief_bag(out):
+    """ถุงยังชีพจากเขต: a clear plastic sack, noodles, a candle, the MP's thank-you card on top."""
+    c = Canvas(300, 360, seed=408)
+    p = c.p
+    c.ground_shadow(0.6, 0.45)
+    c.box(-0.3, -0.22, 0.3, 0.22, 0, 90, hexc("#C8D8E0"), rim=0.5, outline=1.4)
+    c.glaze(c.mask_poly([p(-0.28, 0.222, 86), p(0.0, 0.222, 86), p(-0.1, 0.222, 30), p(-0.28, 0.222, 30)]), WHITE, 0.35)
+    for k, col in enumerate((hexc("#E8A030"), hexc("#D8502A"), hexc("#E8A030"))):
+        c.box(-0.24 + k * 0.16, -0.16, -0.12 + k * 0.16, 0.16, 6, 60, col, rim=0.3, outline=0.8)
+    c.cylinder(0.18, -0.1, 0.03, 6, 80, hexc("#F2EBD0"))
+    c.box(-0.2, 0.0, 0.2, 0.26, 90, 96, PAPER, rim=0.2, outline=1.0)
+    c.text("ขอบคุณ ส.ส.", p(-0.19, 0.25, 94), p(0.19, 0.25, 94), 9, RED_P)
+    c.text("ถุงยังชีพ", p(-0.28, 0.222, 72), p(0.28, 0.222, 72), 10, GOV_BLUE)
+    c.finish(out)
+
+
+def siren_pole(out):
+    """เสาไซเรนเตือนภัย: a pole, a horn speaker, the Wednesday test sign."""
+    c = Canvas(300, 620, seed=409)
+    p = c.p
+    c.ground_shadow(0.35, 0.3)
+    c.cylinder(0.0, 0.0, 0.045, 0, 430, CONCRETE)
+    c.box(-0.26, -0.03, 0.26, 0.03, 250, 340, GOV_BLUE, rim=0.8)
+    c.text("ไซเรนเตือนภัย", p(-0.24, 0.031, 326), p(0.24, 0.031, 326), 11, WHITE)
+    c.text("ทดสอบทุกพุธ 10.00", p(-0.24, 0.031, 290), p(0.24, 0.031, 290), 8, YELLOW)
+    c.frustum(0.05, 0.14, 430, 470, IRON, cx=0.0, cy=0.08)
+    c.frustum(0.05, 0.14, 430, 470, IRON, cx=0.0, cy=-0.08)
+    c.disc(*p(0.0, 0.0, 478), 14 * c.ss, 10 * c.ss, RED_P, outline=1.0, spec=1.0)
+    c.finish(out)
+
+
 PROPS = {f.__name__: f for f in (guard_booth, barrier_arm, survey_kiosk, company_atm, brochure_stand, shelter_sign,
-                                 parcel_pile, poodle_float, condo_window, live_boat, drone, sign_stack, five_star_sign)}
+                                 parcel_pile, poodle_float, condo_window, live_boat, drone, sign_stack, five_star_sign, relief_bag, siren_pole)}
 
 if __name__ == "__main__":
     name = sys.argv[1]
