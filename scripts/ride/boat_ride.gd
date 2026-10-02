@@ -132,7 +132,7 @@ func _build_ui(place: String) -> void:
 	box.position = Vector2(40, 960)
 	box.custom_minimum_size = Vector2(600, 0)
 	_ui.add_child(box)
-	box.add_child(UiKit.label("ขี่มอไซไป %s" % place, 30, UiKit.ACCENT))
+	box.add_child(UiKit.label("ขี่เรือเตอร์ไซค์ไป %s" % place, 30, UiKit.ACCENT))
 	_progress = ProgressBar.new()
 	_progress.custom_minimum_size = Vector2(600, 26)
 	_progress.show_percentage = false

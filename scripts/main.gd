@@ -89,7 +89,7 @@ func open_travel() -> void:
 		if id == GameState.room or (not need.is_empty() and not GameState.has_flag(need)):
 			continue
 		choices.append([place["name"], travel.bind(id)])
-	_hud.show_choices("ขี่มอไซไปไหนดี", choices)
+	_hud.show_choices("ขี่เรือเตอร์ไซค์ไปไหนดี", choices)
 
 
 ## Ride the canal to `dest` (or arrive at once with Settings.skip_ride).
