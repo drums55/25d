@@ -22,6 +22,18 @@
   ฉาก/prop/ไอคอน/UI = PNG ลงสีด้วย numpy+PIL (`tools/art/png/*.py`). `gen_svg.py` + .svg = ของเก่า (ยังเป็น fallback บางชิ้น)
 - (ประวัติ — ไม่ใช่ทิศปัจจุบัน) "ไรเดอร์ห้าดาว" แบบจำลองอาชีพ (เมืองสุ่ม/แอป/7 วัน, DESIGN ข้อ 10) และย่าน steampunk ก่อนหน้า ถูกถอดหมดแล้ว
   ชื่อเกมบนหน้าแรกยังเป็น "ไรเดอร์ห้าดาว"
+- **แผนที่เดินทาง (2026-10-02, เจ้าของ: "study repo แล้วทำ map")**: เรือเตอร์ไซค์เปิด `MapView` (`scripts/ui/map_view.gd`) แทนรายการป้าย:
+  แผ่นกระดาษพับ เปื้อนน้ำ วาดซอยส่งไวทั้งซอยด้วยหมึก+ดินสอสี (`tools/art/png/map_2090.py` → `assets/art/ui/map.png` 2560×1600 + `map_pin.png`, ~2 นาที)
+  ภาพมี**ทุกที่ของซอย 15 ที่โดยไม่มีชื่อ** (รวมที่ยังไม่มีในเกม) เกมวางหมุดแดง+ชื่อลายมือเฉพาะที่รู้จัก (`Rooms.TRAVEL[id].map` = สัดส่วนของแผ่น
+  ต้องตรงกับ `PLACES` ใน map_2090.py — `test_map_view` เช็ค) เรือเตอร์ไซค์+ไรเดอร์ท่า ride อยู่ที่ห้องปัจจุบัน แตะหมุด = เรือจิ๋วแล่นไปตามแผ่น 0.9 วิ
+  แล้วเข้า cutscene คลองเดิม (`Main.travel`); แตะนอกแผ่น/✕/Esc = ปิด; บท 3 ย้อมภาพด้วย `NIGHT_TINT`. บ้านเลขที่ 0 บนแผนที่ = รอยลบ "(ลบไปแล้ว?)"
+  **ห้องใหม่ = เพิ่ม `map` ใน TRAVEL 1 บรรทัด ไม่ต้องวาดใหม่** (ภูมิศาสตร์ล็อกแล้ว ดู DESIGN ข้อ 12) — ย้ายสถานที่ = แก้ PLACES แล้ว render ใหม่
+- **กรอบยืดเรื่อง (เจ้าของตอบ 2026-10-02)**: เล่นจบ **3 ชั่วโมง** (ครึ่ง Monkey Island — เต็มๆ "ยาวไป"), ยืด**ทั้ง**ขยายห้องเดิมให้หนา + เพิ่มห้องใหม่ (15 ที่ตาม DESIGN 12),
+  ปริศนาเป็นสาย 3–5 ขั้นข้ามห้อง + ด่านใหญ่ท้ายบท. มุกที่เจ้าของอยากได้: **รัฐบาล, น้ำท่วม, คนพยากรณ์มั่วแต่คนเชื่อ** (ทำเป็นกลไก: ทายผิดทุกครั้งอย่างแม่นยำ),
+  **ของหลอก** (คลิกแล้วมีเรื่องแต่ไม่มีผล — ส่วนใหญ่เป็น prop ดูได้ ของหลอกที่หยิบได้ ≤ 3–4 ชิ้นทั้งเกม กระเป๋ามีแค่ 8 ช่อง)
+- **คนทวง/หุ่นทวง = ประตูที่มีชีวิต ไม่ใช่ย่องเรียลไทม์ (เจ้าของเลือก "ก" 2026-10-02: "gameplay ซ้อน ... ไม่ค่อยมีผลกับเกม ... ต้องไม่แปลกแยก")**:
+  จะตัดกรวยสายตา/ไล่จับ/ย่องด้านหลังออก → เดินเข้าใกล้ = จับทันทีแบบคาดได้ + บทพูดฮาที่ใบ้จุดอ่อน + ผลักกลับ (ไม่มีลงโทษ), ผ่านได้ด้วยปริศนาเท่านั้น
+  (พี่หนวด = วิทยุ, เบอร์ 9 หันตามเสียง = ทำเสียงอีกฝั่งแล้วแตะหลัง, หุ่นบริษัท = เก้า) และโดนจับตอนถือของ = ของถูก "ยึดหนี้" ไปอยู่แพเจ๊เกียว ต้องไปเอาคืน. **ยังไม่ได้ทำ**
 - **ตัวเอก = ไรเดอร์** (หมวกกันน็อก แจ็กเก็ตส้ม); NPC ทุกคนมีชีตแต่งตัวของตัวเอง
 - **Drop-in art pipeline** (`ArtLibrary`): `assets/art/props/<snake_name>.(svg|png)` (origin ล่างกลาง),
   `assets/art/rooms/<room>.(svg|png)` (backdrop ทั้งห้อง), `assets/art/characters/<name>/<part>.(svg|png)`
@@ -100,10 +112,10 @@ scenes/props/            prop_block, npc, interactable, patrol_bot, steam_vent
 scripts/autoload/        GameState (flags กระเป๋า บท วัน น้ำ ห้อง เซฟ), Dialog, SceneRouter, Settings, Puzzles (ของ/ผสม/ใช้), Audio
 scripts/core/            Iso, SaveData, DialogData, ArtLibrary, PickTest — pure, unit-tested
 scripts/world/           adventure_room, rooms (ข้อมูลห้อง), interactable, marker_spot, patrol_bot, prop_block, iso_room
-scripts/ui/              hud (กระเป๋า+เมนู), save_slots, settings_panel, main_menu, ui_kit, dialog_box
+scripts/ui/              hud (กระเป๋า+เมนู), map_view (แผนที่เดินทาง), menu_book, save_slots, settings_panel, main_menu, ui_kit, dialog_box
 assets/data/puzzles.json ของ สูตรผสม การใช้ของ คำตอบเมื่อผิด
 tools/audio/gen_audio.py เสียงทั้งหมด (สังเคราะห์ด้วยโค้ด) → assets/audio/
-tools/art/               gen_svg.py (svg เก่า), png/ (paint.py room.py props_th.py ...), 3d/ (ตัวละคร)
+tools/art/               gen_svg.py (svg เก่า), png/ (paint.py room.py props_th.py map_2090.py ...), 3d/ (ตัวละคร)
 assets/dialog/dialog.json  บทพูด/ดูของ (intro, look_*, talk_*, catch_*); format อยู่หัวไฟล์ scripts/core/dialog_data.gd
 test/unit/               GUT tests (test_helpers.gd = TestHelpers.start_in(room))
 tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.ps1/.sh, godot_path.ps1, run_tests.sh, fetch_gut.*
@@ -318,7 +330,7 @@ S=<scratchpad>; curl -sSL -o $S/g.zip https://github.com/godotengine/godot/relea
 pip install "gdtoolkit==4.*" && gdformat --check scripts test && gdlint scripts test
 GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
 ```
-- Screenshot จริงได้ด้วย `xvfb-run -a $GODOT --path . --rendering-driver opengl3 -s res://<shot>.gd`
+- Screenshot จริงได้ด้วย `xvfb-run -a $GODOT --path . --rendering-driver opengl3 -s res://<shot>.gd` — **PNG ที่เพิ่งแก้ต้อง `--headless --import` ก่อน** ไม่งั้นได้ภาพเก่าจาก cache (เจอกับ map.png 2026-10-02)
 - Export APK ใน cloud ทำได้: stream templates ด้วย python `stream_unzip` (proxy ไม่รองรับ range) +
   Android cmdline-tools (`platform-tools`, `build-tools;34.0.0`) + ตั้ง `export/android/android_sdk_path`
 
@@ -329,6 +341,7 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
 - **เจ้าของ 2026-10-02 หลังเล่นจบ: "Engine ใช้ได้แล้ว"** — ระบบพอแล้ว ต่อไปเน้นเนื้อหา. **งานถัดไป (ยังไม่เริ่ม)**:
   1. **เรื่องยังไม่ลึก + ไม่ฮาพอ** → เขียนบท/มุกให้คมขึ้น, ตัวละครมีแรงจูงใจ/ปมของตัวเอง, ยืด quest (ปริศนาหลายขั้นขึ้น ไม่ใช่ใช้ของ 1 ชิ้นจบ)
      ทุกห้องยังต้องเก๊ตว่าเป็น BKK; การติดแบบ Monkey Island = เจ้าของชอบ (ตื่นเต้น) แต่ข้อความตอนติดต้องชี้สิ่งที่ขาดตอนนี้
-  2. **หน้าเลือกที่ไป = แผนที่แบบ Monkey Island** แทนรายการปุ่ม (`Main.open_travel` → `Hud.show_choices`): แผนที่ซอย/คลองวาดมือ
-     มีจุดสถานที่ (ที่ยังไม่รู้จัก = ไม่โผล่หรือ "?"), แตะจุด = ไป แล้วเล่น cutscene เรือเตอร์ไซค์ต่อเหมือนเดิม
+  2. ~~หน้าเลือกที่ไป = แผนที่~~ **ทำแล้ว (2026-10-02)** — `MapView` ดูหัวข้อ "แผนที่เดินทาง"
+  3. **เขียน DESIGN ข้อ 12 ให้เต็ม** (สายปริศนาต่อบท, ตัวละครใหม่, มุก, ของหลอก) ให้เจ้าของอ่านก่อนลงโค้ด แล้วทำทีละบท
+  4. **ถอดระบบย่อง/ไล่จับเรียลไทม์ของ PatrolBot** → ประตูที่มีชีวิต (ดูหัวข้อ "คนทวง/หุ่นทวง")
 - ลบ save บนแท็บเล็ต = `adb shell run-as com.drums55.game25d rm files/save_0.json`

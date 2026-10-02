@@ -259,6 +259,19 @@ func show_choices(title: String, choices: Array) -> void:
 	_settle_note()
 
 
+## The trip menu: the hand-drawn map (MapView). `places` = [{id, name, at}],
+## `current_at` = where the rider's boat sits on it; `on_pick(dest)` after the
+## little boat has sailed to the pin. Closing = tap off the sheet / ✕ / Esc.
+func show_map(current_at: Vector2, places: Array, on_pick: Callable, tint := Color.WHITE) -> void:
+	hide_overlay()
+	GameState.ui_open = true
+	var map := MapView.new()
+	map.name = "Overlay"
+	map.setup(current_at, places, on_pick, hide_overlay, tint)
+	_overlay = map
+	add_child(map)
+
+
 ## Dim the screen and put an empty paper note in the middle; returns its column.
 func _open_note(min_size: Vector2) -> VBoxContainer:
 	hide_overlay()

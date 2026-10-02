@@ -21,7 +21,8 @@ extends RefCounted
 ##   enter    {dialog, flag}  played once on arrival (flag marks it seen)
 ## Any entry may carry "if_flag" / "if_not_flag" / "if_flags" [all] / "if_tide"
 ## (spawn only then). Chapter 2 people/things use "if_flag": "ch2".
-## Places the bike can ride to are in TRAVEL (spawn "from_bike" there).
+## Places the bike can ride to are in TRAVEL (spawn "from_bike" there, a spot
+## on the map).
 ## A painted backdrop drops in as assets/art/rooms/<room id>.png.
 ## Gap rule as before: nothing 0.85-1.15 cells from a wall or another solid
 ## thing (navmesh slivers) — test_rooms checks every recipe.
@@ -747,14 +748,17 @@ const ROOMS := {
 	},
 }
 
-## Where the floating bike can go: room id -> {name, flag needed}.
+## Where the floating bike can go: room id -> {name, flag needed, map}.
+## `map` = where the place sits on the hand-drawn map (fraction of the sheet);
+## the same numbers as PLACES in tools/art/png/map_2090.py (test_map_view).
 const TRAVEL := {
-	"pier": {"name": "ท่าเรือหน้าซอย", "flag": ""},
-	"noodle_boat": {"name": "เรือก๋วยเตี๋ยวป้านก", "flag": ""},
-	"stilts": {"name": "ชุมชนยกเสา (ป้าจุ๋ม)", "flag": "know_stilts"},
-	"boat_garage": {"name": "อู่เรือช่างแดง", "flag": "know_garage"},
-	"old_gate": {"name": "ประตูระบายน้ำเก่าใต้สะพาน", "flag": "know_gate"},
-	"kiao_raft": {"name": "เรือนแพเจ๊เกียว", "flag": "know_kiao"},
+	"pier": {"name": "ท่าเรือหน้าซอย", "flag": "", "map": Vector2(0.26, 0.835)},
+	"noodle_boat": {"name": "เรือก๋วยเตี๋ยวป้านก", "flag": "", "map": Vector2(0.45, 0.62)},
+	"stilts": {"name": "ชุมชนยกเสา (ป้าจุ๋ม)", "flag": "know_stilts", "map": Vector2(0.22, 0.46)},
+	"boat_garage": {"name": "อู่เรือช่างแดง", "flag": "know_garage", "map": Vector2(0.55, 0.42)},
+	"old_gate":
+	{"name": "ประตูระบายน้ำเก่าใต้สะพาน", "flag": "know_gate", "map": Vector2(0.68, 0.27)},
+	"kiao_raft": {"name": "เรือนแพเจ๊เกียว", "flag": "know_kiao", "map": Vector2(0.86, 0.80)},
 }
 
 

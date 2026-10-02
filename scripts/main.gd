@@ -1,7 +1,7 @@
 extends Node
 ## Game scene: owns the persistent player + HUD and swaps the room
 ## (AdventureRoom) underneath. Exits call go_room(); the floating bike opens
-## the trip menu (open_travel) and rides the canal (BoatRide -> arrive());
+## the map (open_travel) and rides the canal (BoatRide -> arrive());
 ## arrival autosaves. Also: waiting for the tide, room entry scenes and the
 ## chapter card.
 ##
@@ -114,15 +114,18 @@ func go_room(room_id: String, spawn_id := "default") -> void:
 
 
 ## The floating bike: pick a known place to ride to.
+## The bike opens the map: pins only on the places the rider knows
+## (Rooms.TRAVEL flags), the boat where they are now.
 func open_travel() -> void:
-	var choices: Array = []
+	var places: Array = []
 	for id in Rooms.TRAVEL:
 		var place: Dictionary = Rooms.TRAVEL[id]
 		var need := str(place["flag"])
-		if id == GameState.room or (not need.is_empty() and not GameState.has_flag(need)):
+		if not need.is_empty() and not GameState.has_flag(need):
 			continue
-		choices.append([place["name"], travel.bind(id)])
-	_hud.show_choices("ขี่เรือเตอร์ไซค์ไปไหนดี", choices)
+		places.append({"id": id, "name": place["name"], "at": place["map"]})
+	var here: Vector2 = Rooms.TRAVEL.get(GameState.room, Rooms.TRAVEL["pier"])["map"]
+	_hud.show_map(here, places, travel, NIGHT_TINT if GameState.chapter >= 3 else Color.WHITE)
 
 
 ## Ride the canal to `dest`: a short skippable cutscene (owner 2026-10-02:
