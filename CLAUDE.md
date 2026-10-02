@@ -14,8 +14,8 @@
 ## การตัดสินใจที่จบแล้ว (อย่าถามซ้ำ)
 - **ทิศล่าสุด (2026-10-02) = `docs/DESIGN.md` ข้อ 11 "กรุงเทพฯ 2090"**: เกมผจญภัยตลกมีตอนจบ แนว Monkey Island แต่ simple
   (กระเป๋า + ใช้ของ + ผสมของ + ปริศนา), ไรเดอร์ติดหนี้นอกระบบ หนีคนทวง/หุ่นทวง, กทม. อนาคตจมน้ำ หน้าตาย้อนยุคไอน้ำ,
-  plot ใหญ่ + plot ย่อย. **เลิกจำลองอาชีพไรเดอร์** (เจ้าของ: "การจำลองปัญหา rider มันไม่สนุก") — ข้อด้านล่างเรื่องแอป/ออเดอร์/P0–P2
-  เป็นของที่กำลังจะถอดออกใน milestone A0
+  plot ใหญ่ + plot ย่อย. **เลิกจำลองอาชีพไรเดอร์** (เจ้าของ: "การจำลองปัญหา rider มันไม่สนุก") — ถอดออกแล้วใน A0
+  (ข้อความเก่าเรื่อง steampunk/ย่าน/บอร์ดงาน/ไรเดอร์ห้าดาว P0–P2 ด้านล่าง = ประวัติ ดูโค้ดใน git)
 - Engine **Godot 4.4.1** (GDScript), renderer **Mobile**. ไม่ใช่ Flutter/Flame/Unity
 - Art **2D isometric แบบ Hades**: Node2D + Y-sort, ไม่มี 3D, ไม่ใช่ HD-2D
 - Graphics ทั้งหมด AI generate → ตัวละครเป็น **cut-out** (ชิ้นแยก + Skeleton2D) ไม่ใช่ sprite sheet;
@@ -80,16 +80,17 @@
 project.godot            viewport 1920x1200, stretch canvas_items/expand, main scene = scenes/ui/main_menu.tscn
 export_presets.cfg       preset "Android": arm64 only, non-gradle, package com.drums55.game25d
 scenes/ui/main_menu.tscn เมนูหลัก; scenes/main.tscn = เกม: RoomHolder + Player (persistent) + HUD
-scenes/rooms/location.tscn  สถานที่เดียวที่สร้างตามประเภท (LocationRoom + LocationTemplates)
+scenes/rooms/adventure_room.tscn  ห้องเดียวที่สร้างจาก Rooms.ROOMS[GameState.room]
 scenes/characters/       character_view.tscn (sprite 8 ทิศ; ใช้จริง), cutout_rig.tscn (placeholder fallback)
 scenes/props/            prop_block, npc, interactable, patrol_bot, steam_vent
-scripts/autoload/        GameState (เงิน หนี้ น้ำมัน ดาว เวลา orders save slots), Dialog, SceneRouter, Settings, City, Orders
-scripts/core/            Iso, SaveData, DialogData, ArtLibrary, PickTest, CityGen, District, Weather, OrderGen, RideTrack, PlatformPolicy — pure, unit-tested
-scripts/ride/            ride_scene (ช่วงขี่), ride_road (วาดถนน); scenes/ride/ride.tscn
-scripts/ui/              hud, phone, city_map_view, day_clock, rain_overlay, save_slots, settings_panel, main_menu, ui_kit, dialog_box
+scripts/autoload/        GameState (flags กระเป๋า บท วัน น้ำ ห้อง เซฟ), Dialog, SceneRouter, Settings, Puzzles (ของ/ผสม/ใช้)
+scripts/core/            Iso, SaveData, DialogData, ArtLibrary, PickTest — pure, unit-tested
+scripts/world/           adventure_room, rooms (ข้อมูลห้อง), interactable, marker_spot, patrol_bot, prop_block, iso_room
+scripts/ui/              hud (กระเป๋า+เมนู), save_slots, settings_panel, main_menu, ui_kit, dialog_box
+assets/data/puzzles.json ของ สูตรผสม การใช้ของ คำตอบเมื่อผิด
 tools/art/               gen_svg.py (svg เก่า), png/ (paint.py room.py props_th.py ...), 3d/ (ตัวละคร)
-assets/dialog/dialog.json  บทพูด NPC/ของในฉาก (talk_*); format อยู่หัวไฟล์ scripts/core/dialog_data.gd
-test/unit/               GUT tests (test_helpers.gd = TestHelpers.start_at(type) เมือง seed คงที่)
+assets/dialog/dialog.json  บทพูด/ดูของ (intro, look_*, talk_*, catch_*); format อยู่หัวไฟล์ scripts/core/dialog_data.gd
+test/unit/               GUT tests (test_helpers.gd = TestHelpers.start_in(room))
 tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.ps1/.sh, godot_path.ps1, run_tests.sh, fetch_gut.*
 ```
 
@@ -115,92 +116,32 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   Main ย้าย Player เข้า World ของห้องทุกครั้งที่เปลี่ยนห้อง (player persistent ไม่ instance ใหม่)
 - **ห้อง**: floor/back wall วาด procedural ใน `IsoRoom._draw` (placeholder) + boundary collision
   สร้างตอน runtime จาก `grid_size`. ด้านหน้าเปิด (ไม่มีกำแพงบังตัวละคร)
-- **P0 loop (2026-10-01)** — เมนูหลัก `scenes/ui/main_menu.tscn` (run/main_scene): เล่นต่อ (เซฟล่าสุด) / เกมใหม่ / โหลด / ตั้งค่า / ออก →
-  `scenes/main.tscn` (Main): นาฬิกาเดินเวลาจริง (`Settings.seconds_per_minute`, หยุดตอน dialog/เมนู/การ์ด), สีแสงตามชั่วโมง+ฝน,
-  `sleep()` = จบวัน (สลิป + เช้าหักค่าเช่ารถ/ดอก), ตอนจบ (`ENDINGS`)
-- **เมือง**: `CityGen.generate(seed)` (pure) = 15 จุด 7 ประเภท (restaurant market house condo office gas garage) ชื่อไทยสุ่ม +
-  ถนน (MST + เพื่อนบ้านใกล้ 2 จุด, main/soi, km, นาที, `flood` 0-2) + `route()` Dijkstra (น้ำลึกปิด, น้ำตื้องลุยช้า ×1.6).
-  save เก็บแค่ seed. autoload `City`: get_city/node/here/forecast/rain_now/water_now/route_to/**travel(dest)** (เวลา+น้ำมัน+ซุปหก+
-  น้ำมันหมด=เข็น แล้ว `SceneRouter.go_to(LOCATION_SCENE)`)
-- **ช่วงขี่เล่นได้ (2026-10-01, เจ้าของ: "ความสนุกลดลง เหมือนคลิกๆ ตาม map")**: `City.travel()` → `start_ride()` สร้าง
-  `RideTrack.generate(seed, segments จาก route, minutes, rain)` (pure, `scripts/core/ride_track.gd`) → `scenes/ride/ride.tscn`
-  (`RideScene` + `RideRoad`): ถนน iso วิ่งไปทางขวาล่าง 3 เลน ขอบทางแดงขาว ตึกแถว/ร้านสะดวกซื้อ/เสาไฟเลื่อนผ่าน, แตะเหนือรถ = เลนซ้าย
-  ใต้รถ = เลนขวา (W/S A/D บน PC). สิ่งกีดขวาง `RideTrack.KINDS`: แท็กซี่ชมพู/รถเมล์ (ขับไปข้างหน้า), รถเข็น, มอไซค์จอด = ชน
-  (หยุด 1.1 วิ +3 นาที), หมาซอย (เดินข้ามเลน), หลุม, ฝาท่อ, น้ำขัง (ช้าลง), ด่านตรวจ (+5 นาที, ต้องหาเลนว่าง), รถติด (ทุกเลน ช้า).
-  ทางแยก: ป้ายเลนซ้าย = ซอยลัด (สั้น ×0.72 แต่หลุม/หมา/น้ำ), เลนขวา = ถนนใหญ่ (ไกล + รถติด) — ตัดสินตอนผ่านป้าย (`SIGN_LEAD`).
-  มาตร "ความนิ่งของของในกล่อง" (ชน/หลุม/ส่ายเลนรัวๆ ลด; ฝนลดหนักขึ้น) จบแล้ว < 50 = อาหารหก. นาฬิกาเกมเดินตามการขี่ (ขี่เรียบ = เวลาตามแผนที่;
-  หยุด/ช้า = เสียเวลาเพิ่ม). จบ → `City.finish_ride()` (น้ำมันตามกม. จริงของทาง, delay, หก) → โหลดสถานที่.
-  ระหว่างขี่ `GameState.riding` = true: Main ไม่เดินนาฬิกาเอง, ไม่ autosave, ซ่อนปุ่มแอป/รายการงาน, ปิดแอป.
-  ตั้งค่า "ข้ามช่วงขี่" (`Settings.skip_ride`) = ไปถึงทันทีแบบเดิม; **test ทุกตัวผ่าน `TestHelpers.start_at` ตั้ง skip_ride=true**
-  (test_ride เปิดเอง). art รถ/สิ่งกีดขวาง: taxi, city_bus, soi_dog, police_check, shophouse ใน props_bkk.py.
-  **จังหวะ (เจ้าของ 2026-10-01: "ตอนขับทุกอย่างเร็วจนไม่ enjoy")**: ความเร็วลดครึ่ง (`RideTrack.SPEED` 3.8/3.3/2.8 ช่อง/วิ),
-  รถในถนนวิ่งช้าลง, ระยะห่างสิ่งกีดขวาง 4.5–8 ช่อง (~1.5–2 วิ), เปลี่ยนเลนแบบไหล (3.5 เลน/วิ), เร่งจากนิ่ง 2 วิตอนออกตัว,
-  หมาเดินช้าลง, ข้อความค้าง 1.8 วิ. ตั้งค่า "ความเร็วช่วงขี่" ชิล ×0.75 / ปกติ / บิด ×1.4 (`Settings.ride_speed`)
-- **ฝน/น้ำท่วม**: `Weather` (pure) ฝน 0-2 ช่วง/วันจาก seed+day; น้ำบนถนน = ฝนสะสม 120 นาที (หนัก ≥30 นาที = ลึก, ฝนรวม ≥40 = ตื้น)
-  จำกัดด้วย `flood` ของถนน; ฝน = ขี่ช้า ×1.25/×1.5, ค่ารอบ +10, ซุปหก 15% (ลุยน้ำ 50%). แผนที่วาดถนนน้ำตื้น = ประฟ้า, ลึก = กากบาท
-- **ออเดอร์**: `OrderGen` (pure) food/parcel/doc ต่าง behavior (อาหาร: ready_at รอร้าน, ร้อน→อุ่น→เย็น, หก; พัสดุ: size 1-2 ช่อง, COD
-  สำรองจ่าย; เอกสาร: sign_name, deadline แข็ง) + `rate()` ดาว (สาย/เย็น/หก + รีวิว 1 ดาวไม่ยุติธรรม 8%). ค่ารอบจ่ายแค่ช่วงรับ→ส่ง.
-  autoload `Orders`: offer เด้งตามเวลา (หมดอายุ), accept/decline/cancel, กระเป๋า 3 ช่อง, รับของ = แตะ NPC `npc_id "merchant"`,
-  ส่ง = แตะลูกค้า `npc_id "customer_<id>"` (เกิดในห้องเมื่อมีออเดอร์ปลายทางนี้), `end_day()` งานค้าง = 1 ดาว
-- **P1 ปัญหาไรเดอร์ (2026-10-01)** — ตัดสินตอนสร้างออเดอร์ (`OrderGen`, ผู้เล่นไม่รู้ล่วงหน้า), ทำงานใน `Orders` + `LocationRoom`:
-  - **ปักหมุดผิด** (`pin_wrong` + `true_dropoff` = จุดข้างเคียงบนแผนที่, 25% ของบ้าน/คอนโด): แอป/แผนที่/HUD ใช้ `Orders.shown_dropoff()`,
-    ส่งได้เฉพาะ `real_dropoff()`. ที่หมุดผิดมี NPC "คนแถวนี้ (ถามทาง)" (`npc_id local_<id>`) บอกที่จริง; หรือปุ่ม "โทรหาลูกค้า" (45% ไม่รับสาย, +2 นาที)
-  - **COD ไม่มีคนรับ** (`no_show`, 30% ของพัสดุ COD): ที่ปลายทางไม่มีลูกค้า มีแต่ "กดกริ่ง" (`door_<id>`); การ์ดในแอปมี "รอลูกค้า 10 นาที"
-    (35% กลับมา) / "ตีกลับ" (ได้คืนครึ่งเดียว `GameState.pending_refund` จ่ายเช้าวันถัดไป)
-  - **ยกเลิกหลังซื้อ** (อาหารเงินสด 30% มี `cod` = ค่าอาหาร, 25% ในนั้น `will_cancel`): หลังขี่ถึงที่ไหนก็ได้ `Orders.check_cancellations()`
-    → ออเดอร์หาย เงินที่สำรองจ่ายหาย (log `cod_lost`)
-  - **คอนโด**: ลูกค้าไม่ลงมาเอง (`waiting_customers` ต้อง `called_down`) → คุยกับ รปภ. ที่โต๊ะ (merchant) = โทรขึ้นห้อง รอ 4–12 นาที
-    แล้วห้องโหลดใหม่ให้ลูกค้าโผล่; หรือ**แอบขึ้นลิฟต์** (prop ลิฟต์ `action: sneak_lift`) ตอน รปภ.เฝ้าลิฟต์ (`LiftGuard` = PatrolBot คน, `chases=false`,
-    group `guard`) มองไม่เห็น = ส่งถึงหน้าห้อง ทิป +10; เห็น = โดนไล่ +3 นาที
-  - **เจ้าหนี้ตามหา**: `LocationRoom._collector_shows_up` (ค้างจ่าย 55% / มีหนี้ 10% ต่อการมาถึง, ไม่ใช่ตอนเริ่มเกม) → PatrolBot คน
-    (`needs_cargo=false`, `catch_kind collect`) ไล่ทุกคน จับได้ = เอาเงิน ≤ 220 บาท นับเป็นจ่ายดอก (missed -1). แตะ = คำขู่ (`talk_collector`)
-    test ปิดด้วย `LocationRoom.allow_collector = false` (TestHelpers)
-  - **อุทธรณ์รีวิว 1 ดาวไม่ยุติธรรม**: `OrderGen.rate` ให้ `unfair` → `GameState.appeals`; แท็บเงินมีปุ่ม "อุทธรณ์กับแชทบอท" → `AppealChat`
-    (บอท "น้องส่งไว": ทุกข้อความ +3 นาที, ขอคนจริง = คิว 3,482, หลักฐานเพิ่มโอกาส; สำเร็จ ~15–45% → ดาวนั้นกลายเป็น 5)
-  - PatrolBot เพิ่ม `character_name` (sprite คน), `chases`, `needs_cargo`, `catch_kind`, `tamperable`, `talk_dialog`
-  - IsoRoom ตั้ง z_index -20 (พื้น placeholder) + World +20 เพื่อให้กรวยสายตา (z -1) อยู่เหนือพื้น
-- **P2 แพลตฟอร์มโหด (2026-10-02)**:
-  - **นโยบายรายวัน** `PlatformPolicy.for_day(seed, day)` (pure, `scripts/core/platform_policy.gd`): วัน 1 = welcome, วัน 2–7 สุ่มไม่ซ้ำจาก
-    fee_cut (−6/งาน), surge_cut (ฝน +2), bundle_ai (งานพ่วง 50%), accept_rule (รับงาน <80% = ค่ารอบ ×0.75), selfie (ต้องเซลฟี่ทุก 2 ชม.
-    ไม่งั้นไม่มีงานเข้า, 25% หน้าไม่ตรง), fee_up (+2 แต่ค่าธรรมเนียมระบบ 3/งาน), mega_quest (เป้า +3 โบนัส ×1.5).
-    ประกาศของพรุ่งนี้อยู่ท้ายสลิปตอนนอน ("แจ้งล่วงหน้าคืนเดียว"), ของวันนี้เป็นการ์ดบนสุดแท็บงาน. `OrderGen.make(..., policy)` ใช้ fee_delta/surge
-  - **โบนัสหลอก**: ภารกิจรายวัน ส่งครบ `target` งาน รับ `reward` (log `bonus`); ขาดอีกงานเดียว = `Orders.teasing()` → ช่องว่างงานเข้า ×2.5
-  - **งานพ่วง**: `OrderGen.make_bundle` = จุดรับเดียวกัน ปลายทางไกลสุดจากงานแรก ค่ารอบเหมา 15 บาท, `bundle` = id งานแรก; รับ/ข้าม/หมดอายุพร้อมกัน
-    (`Orders.group_of`, `offer_groups` นับคู่เป็นหนึ่ง), ข้าม = นับปฏิเสธ 2 งาน. deadline คิดแบบ "แอปคิดเหมือนงานเดียว" (+ครึ่งขาเชื่อม)
-  - **ปิดบัญชี**: เรตติ้ง < 4.3 ครั้งแรก = `GameState.suspended` (signal `account_suspended` → overlay; งานที่ยังไม่รับของโดนโอนไปคนอื่น,
-    ไม่มีงานเข้า) → อุทธรณ์ AppealChat โหมด `{"kind": "suspension"}` ได้ครั้งเดียว (35%+หลักฐาน, สำเร็จ = `reinstate()` + ดูวิดีโอ 30 นาที)
-    ไม่งั้นปลดล็อกเช้าวันถัดไป หักค่าอบรม 199. `reinstate()` เปลี่ยนดาวแย่สุดในหน้าต่างเป็น 5 จนเฉลี่ย ≥ 4.45. ครั้งที่สอง = จบ "suspended" (ปิดถาวร)
-  - **ความล้า** `GameState.fatigue` 0–100: +0.05/นาที (ฝน ×1.3), ชน +4, นอน −12/ชม. (นอน 23:00 = 8 ชม. หายหมด, ตีสอง = 5 ชม.),
-    กาแฟ 15 บาท (−10 หารจำนวนแก้ววันนั้น), งีบ 30 นาที. ≥40 เพลีย: เปลี่ยนเลนช้าลงถึง ×0.6 (`RideScene.steer_factor`); ≥70 ง่วงมาก: สัปหงก รถส่ายเลนเองทุก 4–7 วิ
-  - **อุบัติเหตุ**: ชนในช่วงขี่ → โอกาส `City.accident_chance(fatigue, rain)` = 4% + 0.4%/แต้มล้าเกิน 30 + ฝน 5% → `City.accident()`:
-    คลินิก 40 นาที 300–600 บาท อาหารหก ล้า +10, เงินไม่พอ = ยืมเจ้าหนี้ (หนี้เพิ่ม); ประกันแพลตฟอร์ม "พิจารณา 14 วันทำการ" / "ไม่คุ้มครอง". ข้ามช่วงขี่ = ครึ่งโอกาส เมื่อล้า ≥ 40
-  - save เพิ่ม fatigue, coffees_today, suspended, suspensions, suspension_appealed, selfie_due (ยัง v5, ค่า default ถ้าไม่มี)
-- **ย่านส่งไว ทำมือ (2026-10-02, DESIGN 10.10)** — เจ้าของ: P2 "เหมือนทำ app rider ... แบบแรกสนุกกว่า", ที่สนุก = "สำรวจห้อง แล้วบทสนทนา/ของมันฮาๆ":
-  - `City.get_city()` = `District.city(seed)` (`scripts/core/district.gd`): 10 ที่ตายตัว (มี `key`) + ถนน 15 เส้นเขียนมือ; seed ใช้แค่ฝน/ออเดอร์.
-    `CityGen.generate` ยังอยู่ (test_city ใช้) แต่เกมไม่ใช้. Save v6 (id สถานที่เปลี่ยนความหมาย → เซฟ v5 ถูกข้าม)
-  - ห้องต่อที่ = `LocationTemplates.for_place(place)` = template ของประเภท + `PlaceRooms.ROOMS[key]` (`scripts/world/place_rooms.gd`):
-    key ที่ให้แทนของประเภท, `merchant` merge (+ `name` = ป้ายชื่อ), extras วางครบทุกชิ้น, `npcs` = คนในย่าน {name,pos,character,tint,dialog,action}.
-    กติกา gap/sliver ใช้กับทุก recipe (`LocationTemplates.all_recipes()` ใน test); NPC ห้ามชิดผนัง ~0.5 ช่องเพราะ navmesh sliver (เจอที่ปั๊ม/คอนโด)
-  - เควสต์ = dialog.json ล้วน (flags + items + `if_money_at_least` + `money`) + `GameState.ITEMS`; HUD แสดง "ในกระเป๋า: ..." อีกครั้ง.
-    รางวัลที่ผูกกับระบบ: `aunt_jum` → `Orders.neighbour_hints()` เปิดหมุดผิดตอนมาถึง; `guard_friend` → ไม่มี LiftGuard + เรียกลูกค้า 1 นาที;
-    `dog_friend` → `RideScene._apply` ข้ามผล "dog"; `cat_fed` (+100); Dialog event `nok_meal` (ล้า −25 วันละครั้ง flag `nok_meal_d<day>`),
-    `lobby_nap` (ล้า −15); `Interactable.action "rumor"` = พี่ต้อยเล่านโยบายพรุ่งนี้. ทดสอบใน `test/unit/test_district.gd`
-- **ส่งไม่ทัน (เจ้าของ 2026-10-01: "ส่งช้าตลอด")**: deadline คิดจากเส้นทางจริง `OrderGen.set_deadline` = ขี่ไปจุดรับ + (รออาหาร) +
-  ทางรับ→ส่ง ×1.25 + slack (อาหาร 15 / พัสดุ 90 / เอกสาร 30 นาที); อาหารร้อน <25 นาที อุ่น <50; นาฬิกาในสถานที่ช้าลง ปกติ 2 วิ/นาที
-- **สถานที่**: `scenes/rooms/location.tscn` + `LocationRoom` (extends IsoRoom) สร้างจาก `LocationTemplates.T[type]` ตอน `_ready`
-  ก่อน IsoRoom อบ navmesh: props + extras สุ่ม (seed = city seed + node id), merchant (`behind_counter` = ไม่มี collision กัน navmesh
-  sliver ระหว่างเคาน์เตอร์-NPC-ผนัง), ลูกค้า (ป้ายชื่อบนหัว), รถตัวเองมุมหน้าขวา (`bike_cell`, แตะ = เปิดแผนที่), ชื่อร้านบนผนัง.
-  `Interactable.action`: "open_map", "refuel" (เด็กปั๊ม). **กติกา template**: ระยะห่างของ↔ของ/ผนัง ห้ามอยู่ช่วง 0.85–1.15 ช่อง
-  (= 2× agent radius → navmesh sliver) — `test_templates_avoid_sliver_gaps` ตรวจ + `test_every_place_builds_a_valid_room` (4 seed × ทุกจุด)
-- **เงิน/หนี้/ตัวเลข** (`GameState`, consts ปรับ balance ที่นั่น): เริ่ม 300 บาท, หนี้ 3000 ดอก 60/วัน (ดอกลอย), ค่าเช่ารถ 150/วัน,
-  ไม่พอจ่ายตอนเช้า 3 ครั้ง = รถโดนยึด, เรตติ้ง (เฉลี่ย 40 งานล่าสุด, เริ่ม 4.8) < 4.3 = บัญชีถูกระงับ, ครบวันที่ 7 = ตอนจบ
-  (ปลดหนี้ / ยังติดหนี้), น้ำมัน 4 ลิตร 40 กม./ลิตร 38 บาท/ลิตร (เติมที่ปั๊ม), อัตรารับงาน = accepted/offered
-- **Save v5**: `SaveData` = {version, meta, state} (state = `GameState.snapshot()`); slot 0 = ออโต้เซฟ (ทุกครั้งที่ถึงที่หมาย + ตอนนอน),
-  slot 1–3 บันทึกเองจากแอป; save < v5 (เกมย่านเก่า) ถูกข้าม. **Settings** autoload → `user://settings.cfg` (ความเร็วนาฬิกา/ตัวหนังสือ,
-  เสียง, คำแนะนำ). `config/name` = "Rider 5 Stars" (โฟลเดอร์ user:// บน PC เปลี่ยนตาม)
-- **UI** (สร้างด้วยโค้ด, `UiKit`): HUD = เงิน·หนี้ / น้ำมัน·ดาว·รับงาน, หน้าปัด `DayClock` (07:00–23:00 + สภาพอากาศ), รายการงาน
-  + เวลาเหลือ, ปุ่ม "แอปไรเดอร์" (ปุ่มเดียวบนจอ — ข้อยกเว้นกฎไม่มีปุ่ม เพราะแอปคือแกนเกม), แบนเนอร์งานใหม่, `RainOverlay`,
-  `show_overlay()` (สลิป/ตอนจบ). `Phone` แท็บ งาน / แผนที่ (`CityMapView`) / เงิน / เมนู (`SaveSlots`, `SettingsPanel`, หน้าแรก)
+- **ระบบจำลองอาชีพไรเดอร์ถูกถอดออกแล้ว (A0, 2026-10-02)** — แอป/ออเดอร์/เมืองสุ่ม/ย่านส่งไว/ฝน/ช่วงขี่/นโยบาย/ความล้า/เงิน
+  อยู่ใน git ที่ commit `aad5f57` (ก่อน A0): `City`, `Orders`, `CityGen`, `District`, `Weather`, `OrderGen`, `RideTrack`/`RideScene`
+  (ช่วงขี่ 3 เลน — จะเอากลับมาเป็นขับเรือใน A2), `PlatformPolicy`, `LocationRoom`/`PlaceRooms`, `Phone`, `AppealChat`, `CityMapView`
+- **GameState (A0)**: flags, `inventory` (เริ่มด้วย `START_ITEMS` = debt_book, gum), chapter, day, `tide` ("low"/"high"),
+  `room` (Rooms id) + `spawn`, `held_item` (ของติดนิ้ว ไม่เซฟ), input_locked/ui_open. ไม่มีเงิน/นาฬิกา (หนี้ = เรื่อง ไม่ใช่มาตรวัด).
+  **Save v7** {chapter, day, place, saved_at}; slot 0 = ออโต้เซฟทุกครั้งที่เข้าห้อง (SceneRouter), 1–3 จากเมนู
+- **ห้อง (A1)**: `scenes/rooms/adventure_room.tscn` + `AdventureRoom` (extends IsoRoom) สร้างจาก `Rooms.ROOMS[GameState.room]`
+  (`scripts/world/rooms.gd`, format อยู่หัวไฟล์): props (`id` = thing id สำหรับใช้ของ; ไม่มี art = กล่อง placeholder; exit_to/exit_flag
+  = prop ที่เป็นทางออก เช่น รถลอยน้ำ), pickups (`MarkerSpot` เพชรสีตามของ + ป้าย, หายเมื่อ flag `got_<item>`), npcs (มีป้ายชื่อ),
+  exits (`MarkerSpot` วงแหวน+ลูกศร), bots (PatrolBot คนทวงหนี้). ทุก entry มี `if_flag`/`if_not_flag`. backdrop วาดใส่ทีหลังได้ที่
+  `assets/art/rooms/<room id>.png`. Main.`go_room(id, spawn)` = ย้ายห้อง (fade + autosave). กติกา gap 0.85–1.15 + navmesh
+  (`test_rooms_avoid_sliver_gaps`, `test_every_room_builds_valid`); **ป้าย/ของบางชิดผนังต้องห่าง ≥ ~1.5 ช่องจากมุม หรือแนบผนัง (y 0.15)**
+  ไม่งั้น navmesh sliver (เจอกับ sign ที่ y 0.4–0.6)
+- **ปริศนา (A1)**: autoload `Puzzles` + `assets/data/puzzles.json` (format หัวไฟล์ puzzles.gd): `items` {name, desc, color},
+  `combos` a+b→result, `uses` item+target (+if_flag/if_not_flag, consume), `fail` คำตอบฮาเมื่อผิด (target → item → "combine"/"*").
+  lines ใช้ action เดียวกับ dialog.json. HUD แถบกระเป๋าล่างจอ: แตะของ = ถือ, แตะซ้ำ = ดู (คืนกระเป๋า), แตะของอื่น = ผสม;
+  ถือของแล้วแตะคน/ของในฉาก = `Interactable.interact` → `Puzzles.use(held, thing_id)`; แตะพื้น = เก็บของคืน.
+  `Interactable`: dialog_id / pickup_item / exit_to(+exit_flag, locked_dialog) / thing_id. ปุ่ม "เมนู" มุมขวาบน (บันทึก/โหลด/ตั้งค่า/หน้าแรก).
+  test: `test_puzzles.gd` ตรวจว่าของทุกชิ้นหาได้, target ทุกตัวมีในห้อง, dialog id มีจริง + walkthrough ทั้ง slice
+- **A1 slice (บทเปิด)**: ห้องเช่า (ไม้แขวนเสื้อ+หมากฝรั่ง = ไม้ตกของ → ร่องพื้น → กุญแจรถลอยน้ำ; รีโมท; จดหมายไม่ลงชื่อ) →
+  ท่าเรือ (พี่หนวดคนทวงหนี้เดินตรวจ, ถ่านจากรีโมท → วิทยุ → `radio_on` → พี่หนวดเต้น (`PatrolBot.distract_flag`); กุญแจ → รถ → `bike_ready`)
+  → เรือป้านก (ป้านกหูไม่ดี → ใช้สมุดหนี้เขียน → กล่องทองเหลือง `got_box` → การ์ดจบตอนทดลองใน Main; ลุงโต๊ะสามฝากน้ำจิ้มไก่ = plot ย่อย)
+- **PatrolBot** (A0): ไล่ถ้า `chases` (ไม่มีเงื่อนไขถือของแล้ว), จับได้ = `catch_dialog` + ผลัก, `distract_flag`/`distract_dir`/`distract_mark`
+  = หยุดถาวรเมื่อ flag ถูกตั้ง (เช็คตอน `_ready` + `GameState.flag_changed`)
+- Gotcha: script ที่รันด้วย `godot -s` (shot/tool) ห้ามอ้าง class ที่อ้าง autoload ตอน compile (เช่น `Rooms` → `GameState` → `Puzzles`)
+  → "Identifier not found" — ใช้ `load("res://...")` ตอน runtime แทน
 - **Dialog**: JSON-driven; เงื่อนไขต่อ entry: `if_flag`/`if_not_flag`/`if_item`/`if_not_item` (+`else` chain);
   action ต่อบรรทัด: `set_flag`/`give_item`/`take_item`/`money` (ทำตอนบรรทัดโชว์ → HUD ขึ้น notice). แตะที่ไหนก็ได้ = next
   (ถ้ากำลังพิมพ์ = แสดงทั้งบรรทัด). Quest = flags + inventory ใน dialog.json ล้วนๆ ไม่มี quest system แยก
@@ -270,13 +211,9 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
   Android cmdline-tools (`platform-tools`, `build-tools;34.0.0`) + ตั้ง `export/android/android_sdk_path`
 
 ## สถานะ / ยังไม่ได้ทำ
-- **ย่านส่งไว ทำมือ (2026-10-02)**: แผนที่ตายตัว 10 ที่, คนมีชื่อ 12 คน, ~60 บทพูดใหม่, เควสต์ของ 5 สาย (99 tests). รอเจ้าของลองเล่น
-- **P2 เสร็จ (2026-10-02)**: นโยบายรายวัน, โบนัสหลอก, งานพ่วง, ปิดบัญชี+อุทธรณ์, ความล้า, อุบัติเหตุ (89 tests)
-- **P1 เสร็จ (2026-10-01)**: ปักหมุดผิด, COD ไม่รับ, ยกเลิกหลังซื้อ, รปภ.คอนโด+ลิฟต์, เจ้าหนี้ตามหา, อุทธรณ์ 1 ดาว, deadline สมจริง
-- **ช่วงขี่เล่นได้ เสร็จ (2026-10-01)** — เจ้าของ: "ดีขึ้นแล้ว" หลังลดความเร็ว
-- **P0 เสร็จ (2026-10-01)**: เมนู/เซฟ 3 ช่อง+ออโต้/ตั้งค่า, เมืองสุ่ม+แผนที่+ขี่, ฝน/น้ำท่วม, แอป (งานเข้า/รับ/ข้าม/ยกเลิก/นำทาง),
-  อาหาร/พัสดุ/เอกสาร, ดาว+รีวิว, เงิน/หนี้/ค่าเช่า/น้ำมัน/ปั๊ม, สลิปรายวัน, ตอนจบ 4 แบบ
-- ต่อไป (DESIGN 10.10): แอปบางลง, คนในย่านพูดเรื่องใหม่ตามวัน, ปริศนาในฉากแทนปุ่มในแอป, ตอนจบ;
-  **art กรุงเทพฯ ปัจจุบัน** (พื้น/ผนังต่อประเภท, prop: เซเว่น ตู้กดน้ำ โต๊ะสแตนเลส ป้อม รปภ. หัวจ่ายน้ำมัน ฯลฯ ด้วย paint.py)
-- ยังไม่มี: เสียง, sprite จริงของ NPC แต่ละแบบ, balance (ตัวเลขใน GameState/OrderGen ยังเดา)
+- **A0 + A1 เสร็จ (2026-10-02)**: ถอดระบบจำลองอาชีพ, GameState/เซฟ v7 ใหม่, กระเป๋า/ใช้ของ/ผสมของ, 3 ห้อง (ห้องเช่า ท่าเรือ เรือป้านก),
+  ปริศนาบทเปิดจนได้กล่องทองเหลือง + การ์ดจบตอนทดลอง (55 tests). ภาพยังเป็น prop เดิม + กล่อง placeholder (ตู้เสื้อผ้า ร่องพื้น วิทยุ)
+- ต่อไป A2 (DESIGN 11.8): บท 1 ครบ 5–6 ห้อง, น้ำขึ้นลง, ขับเรือ (เอา RideTrack จาก git), ไปถึงบ้านเลขที่ 0, คำใบ้ (โทรหาป้าจุ๋ม),
+  กดค้าง = จุดที่แตะได้เรืองแสง; art ซอยจมน้ำ (บ้านยกเสา พื้นน้ำ เรือ วิทยุ ตู้เสื้อผ้า) ด้วย paint.py
+- ยังไม่มี: เสียง, sprite จริงของ NPC แต่ละแบบ, ไอคอนของในกระเป๋า (ตอนนี้เป็นปุ่มสีตามของ + ชื่อ)
 - ลบ save บนแท็บเล็ต = `adb shell run-as com.drums55.game25d rm files/save_0.json`

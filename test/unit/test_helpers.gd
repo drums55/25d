@@ -1,19 +1,14 @@
 class_name TestHelpers
 extends RefCounted
-## Shared setup for scene tests: a fixed city and a chosen kind of place.
-
-const SEED := 4242
+## Shared setup for scene tests: a fresh adventure in a chosen room.
 
 
-## Fresh game on the fixed city with the rider at the first place of `type`.
-## Trips resolve instantly unless a test turns the ride back on.
-static func start_at(type: String) -> int:
-	Settings.skip_ride = true
-	LocationRoom.allow_collector = false
-	GameState.new_game(SEED)
-	var id: int = CityGen.nodes_of_type(City.get_city(), type)[0]["id"]
-	GameState.location = id
-	return id
+## New game with the rider in `room` (intro already seen).
+static func start_in(room: String) -> void:
+	GameState.new_game()
+	GameState.set_flag("intro_done")
+	GameState.room = room
+	GameState.spawn = "default"
 
 
 static func finish_dialog() -> void:

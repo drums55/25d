@@ -1,6 +1,6 @@
 extends CanvasLayer
-## Room transitions with a fade. Main registers itself as the room host; riding
-## (City.travel) and save loading call go_to(). Each arrival autosaves (slot 0).
+## Room transitions with a fade. Main registers itself as the room host; exits
+## (Main.go_room) and save loading call go_to(). Each arrival autosaves (slot 0).
 
 signal room_changed(room_path: String)
 
@@ -46,8 +46,7 @@ func go_to(room_path: String, spawn_id := "default", fade := true) -> void:
 		_busy = false
 		return
 	if _host.load_room(room_path, spawn_id):
-		if not GameState.riding:
-			GameState.save_game(0)
+		GameState.save_game(0)
 		room_changed.emit(room_path)
 	if fade:
 		await _fade_to(0.0)

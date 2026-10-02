@@ -25,6 +25,11 @@ func _ready() -> void:
 	_data = DialogData.load_file(DIALOG_PATH)
 
 
+## Dialog ids known to the game (tests check every reference resolves).
+func has_dialog(id: String) -> bool:
+	return _data.has(id)
+
+
 func is_active() -> bool:
 	return _index >= 0
 
@@ -32,7 +37,7 @@ func is_active() -> bool:
 func start(id: String) -> bool:
 	if is_active():
 		return false
-	_lines = DialogData.resolve(_data, id, GameState.flags, GameState.inventory, GameState.money)
+	_lines = DialogData.resolve(_data, id, GameState.flags, GameState.inventory)
 	if _lines.is_empty():
 		push_warning("Dialog: unknown or empty dialog '%s'" % id)
 		return false
@@ -43,7 +48,7 @@ func start(id: String) -> bool:
 	return true
 
 
-## Plays lines that are not in dialog.json (job pickups/dropoffs).
+## Plays lines that are not in dialog.json (puzzle results, built-in lines).
 func start_lines(lines: Array, id := "adhoc") -> bool:
 	if is_active():
 		return false
@@ -57,8 +62,7 @@ func start_lines(lines: Array, id := "adhoc") -> bool:
 	return true
 
 
-## Drops the current dialog at once (several deliveries in one go show only
-## the last review).
+## Drops the current dialog at once.
 func end_now() -> void:
 	if not is_active():
 		return
@@ -93,6 +97,5 @@ func _show_current() -> void:
 	GameState.set_flag(line.get("set_flag", ""))
 	GameState.give_item(line.get("give_item", ""))
 	GameState.take_item(line.get("take_item", ""))
-	GameState.add_money(line.get("money", 0))
 	if not str(line.get("event", "")).is_empty():
 		event.emit(str(line["event"]))

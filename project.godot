@@ -19,8 +19,7 @@ GameState="*res://scripts/autoload/game_state.gd"
 Dialog="*res://scripts/autoload/dialog.gd"
 SceneRouter="*res://scripts/autoload/scene_router.gd"
 Settings="*res://scripts/autoload/settings.gd"
-City="*res://scripts/autoload/city.gd"
-Orders="*res://scripts/autoload/orders.gd"
+Puzzles="*res://scripts/autoload/puzzles.gd"
 
 [display]
 

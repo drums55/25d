@@ -1,6 +1,6 @@
 class_name SaveSlots
 extends VBoxContainer
-## Save / load slot list, used by the main menu and the phone's menu tab.
+## Save / load slot list, used by the main menu and the in-game menu.
 ## Slot 0 is the autosave (load only).
 
 signal loaded(slot: int)
@@ -29,14 +29,8 @@ func refresh() -> void:
 		var info := "ว่าง"
 		if not meta.is_empty():
 			info = (
-				"วันที่ %d %s · ฿%d · หนี้ %d · %s"
-				% [
-					int(meta.get("day", 1)),
-					meta.get("clock", ""),
-					int(meta.get("money", 0)),
-					int(meta.get("debt", 0)),
-					meta.get("place", "")
-				]
+				"บทที่ %d วันที่ %d · %s"
+				% [int(meta.get("chapter", 1)), int(meta.get("day", 1)), meta.get("place", "")]
 			)
 		var text := "%s — %s" % [name, info]
 		var b := UiKit.button(text, _on_slot.bind(slot), 26, 70)

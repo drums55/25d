@@ -39,7 +39,7 @@ func test_shipped_dialog_file_parses_and_ids_resolve():
 func test_dialog_runner_sets_flags_and_finishes():
 	GameState.new_game()
 	watch_signals(Dialog)
-	assert_true(Dialog.start("talk_rider_rest"))
+	assert_true(Dialog.start("look_trash"))
 	assert_true(Dialog.is_active())
 	for i in 20:
 		Dialog.typing = false
@@ -78,9 +78,11 @@ func test_conditions_and_actions():
 
 func test_start_lines_plays_adhoc_lines_with_actions():
 	GameState.new_game()
-	assert_true(Dialog.start_lines([{"speaker": "x", "text": "hi", "money": 5}, "bye"], "t"))
+	assert_true(
+		Dialog.start_lines([{"speaker": "x", "text": "hi", "give_item": "hanger"}, "bye"], "t")
+	)
 	assert_true(Dialog.is_active())
-	assert_eq(GameState.money, GameState.START_MONEY + 5)
+	assert_true(GameState.has_item("hanger"))
 	for i in 5:
 		Dialog.typing = false
 		Dialog.advance()

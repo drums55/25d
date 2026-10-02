@@ -4,8 +4,9 @@ extends CharacterBody2D
 ##
 ## Tap/click the floor to walk there (hold and drag to steer), tap something
 ## pickable to walk up to it and use it: Interactable -> interact, anything
-## with tamper() (patrol bots) -> walk up and pull its fuse, Door -> walk into
-## it. No combat (M2 puzzle-first). Paths come from the room's navigation mesh
+## with tamper() (patrol bots) -> walk up to it. With a bag item held
+## (GameState.held_item) the Interactable gets the item used on it.
+## No combat. Paths come from the room's navigation mesh
 ## (NavigationAgent2D). Keyboard (WASD/E) still works on PC and cancels a click
 ## order. During dialog any tap advances the dialog.
 
@@ -79,6 +80,9 @@ func click_at(world_pos: Vector2) -> void:
 		Dialog.advance()
 		return
 	var target := pick(get_tree().get_nodes_in_group("pickable"), world_pos)
+	if target == null and not GameState.held_item.is_empty():
+		# tapping the floor puts the held item back in the bag
+		GameState.held_item = ""
 	order_target = target
 	if target is Interactable:
 		order = Order.INTERACT

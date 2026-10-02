@@ -18,9 +18,7 @@ func _ready() -> void:
 	left.add_theme_constant_override("separation", 18)
 	add_child(left)
 	left.add_child(UiKit.label("ไรเดอร์ห้าดาว", 96, UiKit.ACCENT))
-	left.add_child(
-		UiKit.label("วิ่งงาน ใช้หนี้ รักษาดาว ... ในกรุงเทพฯ ที่ไม่เคยเหมือนเดิม", 32, UiKit.MUTED)
-	)
+	left.add_child(UiKit.label("กรุงเทพฯ 2090 จมไปครึ่งเมือง ... หนี้ยังไม่จม", 32, UiKit.MUTED))
 	left.add_child(Control.new())
 	_continue = UiKit.button("เล่นต่อ", _on_continue, 40, 100)
 	_continue.disabled = GameState.latest_slot() < 0

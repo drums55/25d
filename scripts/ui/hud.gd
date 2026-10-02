@@ -1,219 +1,207 @@
 class_name Hud
 extends CanvasLayer
-## On-screen UI: money/debt, fuel/rating line, the day dial + weather, the
-## orders in progress, notices, dialog box, and the rider app (Phone) with its
-## button and the "new order" banner. Point & click elsewhere: Player asks
-## blocks_point() so taps on UI never walk the rider.
+## On-screen UI (DESIGN 11.5): the bag (inventory bar, bottom), what is held,
+## notices, the room title, the dialog box, a menu button (save / load /
+## settings / title) and full-screen cards. Player asks blocks_point() so taps
+## on UI never walk the rider.
+##
+## Bag taps: nothing held -> hold it; the held item again -> look at it and
+## put it back; another item -> combine the two (Puzzles.combine). With an
+## item held, tapping a thing in the room uses it there (Interactable).
 
 const TITLE_HOLD := 1.6
 const TITLE_FADE := 0.6
 const NOTICE_HOLD := 2.2
+const SLOT_SIZE := Vector2(170, 130)
 
-var phone: Phone
 var _title_tween: Tween
 var _notices: Array[String] = []
 var _notice_busy := false
-var _phone_button: Button
-var _banner: Button
+var _bag: PanelContainer
+var _slots: HBoxContainer
+var _held_label: Label
+var _menu_button: Button
+var _menu: PanelContainer
+var _menu_body: VBoxContainer
 var _overlay: PanelContainer
-var _rain: RainOverlay
 
 @onready var _title: Label = %RoomTitle
-@onready var _money: Label = %Money
-@onready var _stats: Label = %Clock
-@onready var _items: Label = %Items
 @onready var _notice: Label = %Notice
-@onready var _deliveries: Label = %Deliveries
-@onready var _day_clock: DayClock = %DayClock
 
 
 func _ready() -> void:
 	add_to_group("hud")
-	GameState.inventory_changed.connect(_on_items)
-	_on_items(GameState.inventory)
-	_rain = RainOverlay.new()
-	_rain.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(_rain)
-	move_child(_rain, 0)
-	_build_phone()
-	phone.sleep_requested.connect(func(): get_tree().call_group("main", "sleep"))
-	phone.title_requested.connect(func(): get_tree().call_group("main", "go_title"))
-	GameState.money_changed.connect(_on_money)
+	_build_bag()
+	_build_menu_button()
 	GameState.notice.connect(_on_notice)
-	GameState.time_changed.connect(_on_time)
-	GameState.stats_changed.connect(_refresh_stats)
-	Orders.orders_changed.connect(_refresh_orders)
-	Orders.offer_added.connect(_on_offer)
-	GameState.account_suspended.connect(_on_suspended)
-	_on_money(GameState.money)
-	_refresh_stats()
-	_refresh_orders()
+	GameState.inventory_changed.connect(func(_inv): _refresh_bag())
+	GameState.held_changed.connect(func(_item): _refresh_bag())
+	Dialog.started.connect(func(_id): _bag.hide())
+	Dialog.finished.connect(func(_id): _refresh_bag.call_deferred())
 	_notice.modulate.a = 0.0
+	_refresh_bag()
 
 
-func _build_phone() -> void:
-	phone = Phone.new()
-	phone.anchor_left = 1.0
-	phone.anchor_right = 1.0
-	phone.anchor_bottom = 1.0
-	phone.offset_left = -880
-	phone.offset_right = -24
-	phone.offset_top = 24
-	phone.offset_bottom = -24
-	add_child(phone)
-	_phone_button = UiKit.button("แอปไรเดอร์", func(): open_phone("orders"), 34, 96)
-	_phone_button.anchor_left = 1.0
-	_phone_button.anchor_top = 1.0
-	_phone_button.anchor_right = 1.0
-	_phone_button.anchor_bottom = 1.0
-	_phone_button.offset_left = -330
-	_phone_button.offset_top = -130
-	_phone_button.offset_right = -30
-	_phone_button.offset_bottom = -30
-	_phone_button.add_theme_stylebox_override("normal", UiKit.panel_style(UiKit.ACCENT_DARK, 24))
-	add_child(_phone_button)
-	phone.visibility_toggled.connect(func(open: bool): _phone_button.visible = not open)
-	_banner = UiKit.button("", func(): open_phone("orders"), 30, 84)
-	_banner.anchor_left = 0.5
-	_banner.anchor_right = 0.5
-	_banner.offset_left = -520
-	_banner.offset_right = 520
-	_banner.offset_top = 170
-	_banner.offset_bottom = 254
-	_banner.add_theme_stylebox_override("normal", UiKit.panel_style(UiKit.ACCENT_DARK, 20))
-	_banner.hide()
-	add_child(_banner)
+func _build_bag() -> void:
+	_bag = PanelContainer.new()
+	_bag.add_theme_stylebox_override("panel", UiKit.panel_style(Color(0.08, 0.07, 0.06, 0.85), 22))
+	_bag.anchor_left = 0.5
+	_bag.anchor_right = 0.5
+	_bag.anchor_top = 1.0
+	_bag.anchor_bottom = 1.0
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 6)
+	_held_label = UiKit.label("", 24, UiKit.ACCENT)
+	_held_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_held_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	v.add_child(_held_label)
+	_slots = HBoxContainer.new()
+	_slots.add_theme_constant_override("separation", 10)
+	v.add_child(_slots)
+	_bag.add_child(v)
+	add_child(_bag)
+
+
+func _build_menu_button() -> void:
+	_menu_button = UiKit.button("เมนู", toggle_menu, 30, 80)
+	_menu_button.anchor_left = 1.0
+	_menu_button.anchor_right = 1.0
+	_menu_button.offset_left = -200
+	_menu_button.offset_right = -30
+	_menu_button.offset_top = 30
+	_menu_button.offset_bottom = 110
+	add_child(_menu_button)
+
+
+func _refresh_bag() -> void:
+	UiKit.clear(_slots)
+	for item in GameState.inventory:
+		_slots.add_child(_slot(item))
+	var held := GameState.held_item
+	_held_label.visible = not held.is_empty()
+	_held_label.text = (
+		"ถือ %s — แตะคนหรือของเพื่อใช้ · แตะของในกระเป๋าเพื่อผสม" % Puzzles.item_name(held)
+	)
+	_bag.visible = not GameState.inventory.is_empty() and not Dialog.is_active()
+	# keep the bar centred on the bottom edge as it grows
+	_bag.reset_size()
+	var sz := _bag.get_combined_minimum_size()
+	_bag.offset_left = -sz.x * 0.5
+	_bag.offset_right = sz.x * 0.5
+	_bag.offset_top = -20 - sz.y
+	_bag.offset_bottom = -20
+
+
+func _slot(item: String) -> Button:
+	var b := Button.new()
+	b.name = "Slot_%s" % item
+	b.custom_minimum_size = SLOT_SIZE
+	b.text = Puzzles.item_name(item)
+	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	b.add_theme_font_size_override("font_size", 22)
+	b.add_theme_color_override("font_color", UiKit.TEXT)
+	var held := GameState.held_item == item
+	var base := Puzzles.item_color(item).darkened(0.45)
+	var style := UiKit.panel_style(base, 16, UiKit.ACCENT if held else base.lightened(0.3))
+	style.set_border_width_all(6 if held else 2)
+	for state in ["normal", "hover", "pressed", "focus"]:
+		b.add_theme_stylebox_override(state, style)
+	b.pressed.connect(tap_item.bind(item))
+	return b
+
+
+## Bag slot tapped (see class doc).
+func tap_item(item: String) -> void:
+	if Dialog.is_active() or GameState.input_locked:
+		return
+	var held := GameState.held_item
+	if held.is_empty():
+		GameState.held_item = item
+	elif held == item:
+		GameState.held_item = ""
+		Puzzles.look(item)
+	else:
+		GameState.held_item = ""
+		Puzzles.combine(held, item)
 
 
 ## True when a screen point is on a HUD control (the world must ignore it).
 func blocks_point(screen_pos: Vector2) -> bool:
-	for c in [phone, _phone_button, _banner, _overlay]:
+	for c in [_bag, _menu_button, _menu, _overlay]:
 		if c and c.is_visible_in_tree() and (c as Control).get_global_rect().has_point(screen_pos):
 			return true
 	return false
 
 
-## On the road the app is put away (eyes on the road).
-func set_riding(on: bool) -> void:
-	if on:
-		phone.close()
-	_phone_button.visible = not on
-	_deliveries.visible = not on
-	_banner.hide()
-
-
-func open_phone(tab := "orders") -> void:
-	if not GameState.finished.is_empty() or GameState.riding:
+# --- menu ------------------------------------------------------------------
+func toggle_menu() -> void:
+	if _menu:
+		close_menu()
 		return
-	_banner.hide()
-	phone.open(tab)
-
-
-func _on_offer(o: Dictionary) -> void:
-	_phone_button.text = "แอปไรเดอร์ (%d)" % Orders.offers().size()
-	if phone.is_open() or GameState.riding:
-		return
-	_banner.text = (
-		"งานใหม่! [%s] %d บาท · %s — แตะเพื่อดู"
-		% [OrderGen.KIND_NAMES[o["kind"]], int(o["fee"]), City.node_name(o["pickup"])]
+	GameState.ui_open = true
+	_menu = PanelContainer.new()
+	_menu.add_theme_stylebox_override(
+		"panel", UiKit.panel_style(UiKit.PANEL, 24, UiKit.ACCENT_DARK)
 	)
-	_banner.show()
-	var tween := create_tween()
-	tween.tween_interval(6.0)
-	tween.tween_callback(_banner.hide)
-
-
-func _on_time(_day: int, _minute: float) -> void:
-	_day_clock.queue_redraw()
-	_refresh_orders()
-	_rain.level = City.rain_now() if City.has_city() else 0
-
-
-## Funny things picked up around the district (quests are flags + items).
-func _on_items(inventory: Array) -> void:
-	var names: Array[String] = []
-	for item in inventory:
-		names.append(GameState.item_name(item))
-	_items.text = "ในกระเป๋า: " + ", ".join(names)
-	_items.visible = not names.is_empty()
-
-
-func _on_money(money: int) -> void:
-	_money.text = "฿ %d · หนี้ %d" % [money, GameState.debt]
-
-
-func _refresh_stats() -> void:
-	_on_money(GameState.money)
-	_stats.text = (
-		"น้ำมัน %.1f ลิตร · ★ %.2f · รับงาน %d%% · ล้า %d%%"
-		% [
-			GameState.fuel,
-			GameState.rating(),
-			roundi(GameState.acceptance() * 100),
-			roundi(GameState.fatigue),
-		]
+	_menu.anchor_left = 0.5
+	_menu.anchor_top = 0.5
+	_menu.anchor_right = 0.5
+	_menu.anchor_bottom = 0.5
+	_menu.offset_left = -560
+	_menu.offset_right = 560
+	_menu.offset_top = -470
+	_menu.offset_bottom = 470
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 12)
+	var bar := HBoxContainer.new()
+	bar.add_theme_constant_override("separation", 8)
+	for page in [["บันทึก", "save"], ["โหลด", "load"], ["ตั้งค่า", "settings"]]:
+		var b := UiKit.button(page[0], _menu_page.bind(page[1]), 28, 70)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		bar.add_child(b)
+	bar.add_child(
+		UiKit.button("หน้าแรก", func(): get_tree().call_group("main", "go_title"), 28, 70)
 	)
-	_stats.modulate = (
-		Color(1, 0.6, 0.5) if GameState.fatigue >= GameState.EXHAUSTED else Color.WHITE
-	)
+	bar.add_child(UiKit.button("ปิด", close_menu, 28, 70))
+	v.add_child(bar)
+	_menu_body = VBoxContainer.new()
+	_menu_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	v.add_child(_menu_body)
+	_menu.add_child(v)
+	add_child(_menu)
+	_menu_page("save")
 
 
-func _on_suspended() -> void:
-	show_overlay(
-		"บัญชีถูกระงับชั่วคราว",
-		(
-			(
-				'"คะแนนของคุณต่ำกว่ามาตรฐานแพลตฟอร์ม (%.1f) บัญชีถูกระงับชั่วคราว\n'
-				+ 'งานที่ยังไม่ได้รับของถูกโอนให้ไรเดอร์ท่านอื่นแล้ว ของที่ถืออยู่ส่งต่อได้"\n\n'
-				+ "ปลดล็อกพรุ่งนี้เช้า (ค่าอบรม %d บาท) หรืออุทธรณ์กับแชทบอทได้หนึ่งครั้ง\n"
-				+ "โดนระงับอีกครั้ง = ปิดบัญชีถาวร"
-			)
-			% [GameState.MIN_RATING, GameState.UNLOCK_FEE]
-		),
-		[["อุทธรณ์เลย", _appeal_now], ["ไว้ก่อน", hide_overlay]]
-	)
+func _menu_page(page: String) -> void:
+	UiKit.clear(_menu_body)
+	match page:
+		"save":
+			_menu_body.add_child(SaveSlots.new("save"))
+		"load":
+			var slots := SaveSlots.new("load")
+			slots.loaded.connect(_on_loaded)
+			_menu_body.add_child(slots)
+		"settings":
+			_menu_body.add_child(SettingsPanel.new())
 
 
-func _appeal_now() -> void:
-	hide_overlay()
-	open_phone("orders")
-	phone.open_appeal({"kind": "suspension"})
+func _on_loaded(_slot: int) -> void:
+	close_menu()
+	get_tree().call_group("main", "go_room", GameState.room, GameState.spawn)
 
 
-## Orders in progress with countdowns, under the day dial.
-func _refresh_orders() -> void:
-	_phone_button.text = (
-		"แอปไรเดอร์ (%d)" % Orders.offers().size() if Orders.offers().size() > 0 else "แอปไรเดอร์"
-	)
-	var rows: Array[String] = []
-	for o in Orders.active():
-		var picked: bool = o["status"] == "picked"
-		var where: int = Orders.shown_dropoff(o) if picked else int(o["pickup"])
-		var left := int(float(o.get("deadline", GameState.minute)) - GameState.minute)
-		var due := "สายแล้ว!" if left < 0 else "เหลือ %d นาที" % left
-		var heat := ""
-		if picked and o["kind"] == "food":
-			heat = " · " + OrderGen.heat_text(OrderGen.heat(o, GameState.minute))
-		rows.append(
-			(
-				"[%s] %s %s%s · %s"
-				% [
-					OrderGen.KIND_NAMES[o["kind"]],
-					"ส่ง" if picked else "รับ",
-					City.node_name(where),
-					heat,
-					due
-				]
-			)
-		)
-	_deliveries.text = "\n".join(rows)
+func close_menu() -> void:
+	if _menu:
+		_menu.queue_free()
+		_menu = null
+	GameState.ui_open = false
 
 
-## Full-screen card (day slip, ending). `buttons` = [[text, callable], ...].
+# --- cards & notices ----------------------------------------------------------
+## Full-screen card (story beats, endings). `buttons` = [[text, callable], ...].
 func show_overlay(title: String, body: String, buttons: Array) -> void:
 	hide_overlay()
 	GameState.ui_open = true
-	GameState.clock_paused = true
 	_overlay = PanelContainer.new()
 	_overlay.add_theme_stylebox_override(
 		"panel", UiKit.panel_style(UiKit.PANEL, 24, UiKit.ACCENT_DARK)
@@ -224,8 +212,8 @@ func show_overlay(title: String, body: String, buttons: Array) -> void:
 	_overlay.anchor_bottom = 0.5
 	_overlay.offset_left = -620
 	_overlay.offset_right = 620
-	_overlay.offset_top = -430
-	_overlay.offset_bottom = 430
+	_overlay.offset_top = -380
+	_overlay.offset_bottom = 380
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 16)
 	v.add_child(UiKit.label(title, 48, UiKit.ACCENT))
@@ -248,7 +236,6 @@ func hide_overlay() -> void:
 		_overlay.queue_free()
 		_overlay = null
 	GameState.ui_open = false
-	GameState.clock_paused = false
 
 
 func _on_notice(text: String) -> void:

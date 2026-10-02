@@ -1,16 +1,28 @@
 class_name Interactable
 extends Area2D
-## Something the player can use with the interact button. Plays `dialog_id`
-## if set, and always emits `interacted` so scenes can add custom behaviour.
+## Something the rider can tap (DESIGN 11.5): talk / look (`dialog_id`), pick
+## up (`pickup_item`), walk out (`exit_to`), or have a bag item used on it
+## (`thing_id`, see Puzzles.use). With an item on the finger, tapping this =
+## "use item on thing"; otherwise its own behaviour runs.
 
 signal interacted(by: Node)
 
-@export var prompt := "Talk"
+@export var prompt := "ดู"
 @export var dialog_id := ""
-## Identity for the order system: "merchant" (pickups) or "customer_<id>".
-@export var npc_id := ""
-## Built-in action instead of / before the dialog: "open_map" (the parked
-## bike), "refuel" (gas station attendant).
+## Name of this thing for item uses / fail lines (Puzzles data "target").
+@export var thing_id := ""
+## Tapping picks this item up (the parent prop disappears) and sets
+## "got_<item>" so the room does not spawn it again.
+@export var pickup_item := ""
+## Line shown when picking up (default: the item's description).
+@export var pickup_text := ""
+## Walking out: room id + spawn there. `exit_flag` = needed first, otherwise
+## `locked_dialog` plays.
+@export var exit_to := ""
+@export var exit_spawn := "default"
+@export var exit_flag := ""
+@export var locked_dialog := ""
+## Built-in behaviour instead of the dialog (none yet; kept for later rooms).
 @export var action := ""
 @export var enabled := true
 ## Tap area relative to this node's origin (feet), covers the visual above it.
@@ -29,61 +41,33 @@ func interact(by: Node) -> void:
 	if not enabled:
 		return
 	interacted.emit(by)
-	if Orders.on_interact(npc_id):
+	if not GameState.held_item.is_empty():
+		var item := GameState.held_item
+		GameState.held_item = ""
+		Puzzles.use(item, thing_id if not thing_id.is_empty() else name.to_snake_case())
 		return
-	match action:
-		"open_map":
-			get_tree().call_group("hud", "open_phone", "map")
+	if not pickup_item.is_empty():
+		_pick_up()
+		return
+	if not exit_to.is_empty():
+		if not exit_flag.is_empty() and not GameState.has_flag(exit_flag):
+			if not locked_dialog.is_empty():
+				Dialog.start(locked_dialog)
 			return
-		"sneak_lift":
-			var seen := false
-			for g in get_tree().get_nodes_in_group("guard"):
-				if g.state != PatrolBot.State.OFF and g.can_see(by.global_position):
-					seen = true
-			Orders.sneak_lift(seen)
-			return
-		"rumor":
-			var p := PlatformPolicy.for_day(GameState.city_seed, GameState.day + 1)
-			(
-				Dialog
-				. start_lines(
-					[
-						{"speaker": "พี่ต้อย", "text": "มาๆ นั่งก่อน วินฯ รู้ข่าวก่อนแอปเสมอ"},
-						{
-							"speaker": "พี่ต้อย",
-							"text": 'ได้ข่าวมาว่าพรุ่งนี้แอปจะประกาศ "%s"' % p["title"]
-						},
-						{"speaker": "พี่ต้อย", "text": _rumor_tail(p["id"])},
-					],
-					"rumor"
-				)
-			)
-			return
-		"refuel":
-			var cost := GameState.refuel()
-			var line := (
-				"เติมเต็มถัง %d บาท ... ราคาน้ำมันขึ้นอีกแล้ว" % cost
-				if cost > 0
-				else "ถังเต็มอยู่แล้ว (หรือเงินไม่พอ)"
-			)
-			Dialog.start_lines([{"speaker": "เด็กปั๊ม", "text": line}], "refuel")
-			return
+		get_tree().call_group("main", "go_room", exit_to, exit_spawn)
+		return
 	if not dialog_id.is_empty():
 		Dialog.start(dialog_id)
 
 
-static func _rumor_tail(id: String) -> String:
-	match id:
-		"fee_cut", "fee_up":
-			return "ค่ารอบน่ะ ลงเร็วกว่าน้ำมันขึ้นอีก ... วันนี้ตักตวงไว้ก่อน"
-		"bundle_ai":
-			return "งานพ่วงเพียบ AI มันไม่รู้ว่าคลองแสนแสบข้ามไม่ได้"
-		"selfie":
-			return "เซลฟี่ทุกสองชั่วโมง พี่ซ้อมยิ้มในหมวกกันน็อกมาสามวันแล้ว"
-		"accept_rule":
-			return "อย่าข้ามงานเยอะ ระบบมันจำ ... ระบบจำแต่เรื่องไม่ดี"
-		"surge_cut":
-			return "ฝนตกก็ได้สองบาท ซื้อถุงคลุมรองเท้ายังไม่พอเลย"
-		"mega_quest":
-			return "โบนัสใหญ่ ... งานสุดท้ายไม่มีวันเด้งหรอก เชื่อพี่"
-	return "อะไรก็ไม่รู้ ฟังแล้วเหนื่อย กินหมูปิ้งก่อนไหม"
+func _pick_up() -> void:
+	var item := pickup_item
+	GameState.set_flag("got_%s" % item)
+	var text := pickup_text if not pickup_text.is_empty() else Puzzles.item_desc(item)
+	Dialog.start_lines([{"text": text, "give_item": item}], "pickup")
+	enabled = false
+	var owner_node := get_parent()
+	if owner_node and owner_node.name != "World":
+		owner_node.queue_free()
+	else:
+		queue_free()

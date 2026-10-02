@@ -1,0 +1,286 @@
+class_name Rooms
+extends RefCounted
+## Hand-made rooms of กรุงเทพฯ 2090 (DESIGN 11), keyed by room id; built by
+## AdventureRoom. Grid positions are cells (Iso.grid_to_world).
+##
+## Recipe keys:
+##   title, grid, floor [a, b], wall, spawns {id: cell}
+##   props    [{id, art?, pos, foot, h, color?, dialog?, prompt?,
+##              exit_to?, exit_spawn?, exit_flag?, locked_dialog?}]
+##            `id` = thing id for item uses; no art = placeholder block
+##   pickups  [{item, pos, label, text?}]  gone once "got_<item>" is set
+##   npcs     [{id, name, pos, character, tint?, dialog}]
+##   exits    [{to, spawn, pos, label}]
+##   bots     [{id, name, pos, patrol [cells, offsets], character, tint,
+##              catch_dialog, talk_dialog, distract_flag?, distract_dir?}]
+## Any entry may carry "if_flag" / "if_not_flag" (spawn only then).
+## A painted backdrop drops in as assets/art/rooms/<room id>.png.
+## Gap rule as before: nothing 0.85-1.15 cells from a wall or another solid
+## thing (navmesh slivers) — test_rooms checks every recipe.
+
+const LUNG := "lung_pradit"
+const JE := "je_muay"
+
+const ROOMS := {
+	"home":
+	{
+		"title": "ห้องเช่าเหนือคลอง · ชั้นสอง (ชั้นหนึ่งเป็นคลองไปแล้ว)",
+		"grid": Vector2i(10, 8),
+		"floor": [Color(0.55, 0.42, 0.3), Color(0.5, 0.38, 0.27)],
+		"wall": Color(0.42, 0.56, 0.52),
+		"spawns": {"default": Vector2(4.0, 5.5), "from_pier": Vector2(8.0, 4.0)},
+		"props":
+		[
+			{
+				"id": "bed",
+				"art": "sofa",
+				"pos": Vector2(2.0, 0.6),
+				"foot": Vector2(1.6, 0.8),
+				"h": 45.0,
+				"dialog": "look_bed",
+				"prompt": "ที่นอน"
+			},
+			{
+				"id": "wardrobe",
+				"pos": Vector2(5.0, 0.5),
+				"foot": Vector2(1.2, 0.6),
+				"h": 200.0,
+				"color": Color(0.45, 0.3, 0.2),
+				"dialog": "look_wardrobe"
+			},
+			{
+				"id": "debt_board",
+				"art": "sign",
+				"pos": Vector2(7.2, 0.15),
+				"foot": Vector2(0.5, 0.3),
+				"h": 110.0,
+				"dialog": "look_debt_board"
+			},
+			{
+				"id": "floor_gap",
+				"pos": Vector2(4.6, 3.6),
+				"foot": Vector2(1.0, 0.5),
+				"h": 4.0,
+				"color": Color(0.12, 0.1, 0.1),
+				"dialog": "look_floor_gap",
+				"prompt": "ร่องพื้น"
+			},
+			{
+				"id": "plant",
+				"art": "plant_pots",
+				"pos": Vector2(0.6, 4.0),
+				"foot": Vector2(0.6, 0.6),
+				"h": 60.0,
+				"dialog": "look_plant"
+			},
+			{
+				"id": "trash",
+				"art": "trash_bin",
+				"pos": Vector2(0.8, 7.2),
+				"foot": Vector2(0.8, 0.8),
+				"h": 60.0,
+				"dialog": "look_trash"
+			},
+		],
+		"pickups":
+		[
+			{"item": "hanger", "pos": Vector2(5.6, 1.6), "label": "ไม้แขวนเสื้อ"},
+			{"item": "air_remote", "pos": Vector2(2.6, 1.9), "label": "รีโมท"},
+			{"item": "letter", "pos": Vector2(8.4, 5.8), "label": "จดหมาย"},
+		],
+		"exits":
+		[{"to": "pier", "spawn": "from_home", "pos": Vector2(9.4, 4.0), "label": "ลงท่าเรือ"}],
+	},
+	"pier":
+	{
+		"title": "ท่าเรือหน้าซอยส่งไว",
+		"grid": Vector2i(12, 9),
+		"floor": [Color(0.46, 0.36, 0.26), Color(0.42, 0.33, 0.24)],
+		"wall": Color(0.36, 0.42, 0.5),
+		"spawns":
+		{
+			"default": Vector2(1.6, 2.6),
+			"from_home": Vector2(1.6, 2.6),
+			"from_boat": Vector2(8.0, 5.6)
+		},
+		"props":
+		[
+			{
+				"id": "float_bike",
+				"art": "steam_bike",
+				"pos": Vector2(10.0, 7.0),
+				"foot": Vector2(1.4, 0.7),
+				"h": 90.0,
+				"prompt": "รถลอยน้ำ",
+				"exit_to": "noodle_boat",
+				"exit_spawn": "from_pier",
+				"exit_flag": "bike_ready",
+				"locked_dialog": "look_bike_locked"
+			},
+			{
+				"id": "longtail",
+				"art": "longtail_boat",
+				"pos": Vector2(6.5, 0.7),
+				"foot": Vector2(2.6, 0.8),
+				"h": 80.0,
+				"dialog": "look_longtail"
+			},
+			{
+				"id": "pier_sign",
+				"art": "pier_sign",
+				"pos": Vector2(2.2, 0.15),
+				"foot": Vector2(0.5, 0.3),
+				"h": 120.0,
+				"dialog": "look_pier_sign"
+			},
+			{
+				"id": "radio",
+				"pos": Vector2(1.6, 6.0),
+				"foot": Vector2(0.6, 0.5),
+				"h": 40.0,
+				"color": Color(0.25, 0.55, 0.55),
+				"dialog": "look_radio",
+				"prompt": "วิทยุ"
+			},
+			{
+				"id": "crate",
+				"art": "crate",
+				"pos": Vector2(3.0, 4.2),
+				"foot": Vector2(0.9, 0.9),
+				"h": 60.0
+			},
+			{
+				"id": "crate",
+				"art": "crate",
+				"pos": Vector2(3.0, 5.4),
+				"foot": Vector2(0.9, 0.9),
+				"h": 60.0
+			},
+			{
+				"id": "jar",
+				"art": "dragon_jar",
+				"pos": Vector2(10.8, 2.0),
+				"foot": Vector2(0.8, 0.8),
+				"h": 90.0,
+				"dialog": "look_jar"
+			},
+		],
+		"exits":
+		[{"to": "home", "spawn": "from_pier", "pos": Vector2(0.6, 2.4), "label": "ขึ้นห้อง"}],
+		"bots":
+		[
+			{
+				"id": "collector",
+				"name": "พี่หนวด (คนทวงหนี้)",
+				"pos": Vector2(7.0, 4.5),
+				"patrol": [Vector2(-2.5, 0.0), Vector2(2.0, 0.0)],
+				"character": LUNG,
+				"tint": Color(0.8, 0.5, 0.45),
+				"catch_dialog": "catch_nuad",
+				"talk_dialog": "talk_nuad",
+				"distract_flag": "radio_on",
+				"distract_dir": Vector2(-1, 0.5)
+			},
+		],
+	},
+	"noodle_boat":
+	{
+		"title": "เรือก๋วยเตี๋ยวป้านก · ลอยลำกลางคลอง",
+		"grid": Vector2i(10, 7),
+		"floor": [Color(0.6, 0.45, 0.3), Color(0.56, 0.42, 0.28)],
+		"wall": Color(0.85, 0.45, 0.2),
+		"spawns": {"default": Vector2(6.8, 6.3), "from_pier": Vector2(6.8, 6.3)},
+		"props":
+		[
+			{
+				"id": "noodle_pot",
+				"art": "noodle_cart",
+				"pos": Vector2(4.5, 0.8),
+				"foot": Vector2(1.6, 0.9),
+				"h": 90.0,
+				"dialog": "look_noodle_pot",
+				"prompt": "หม้อก๋วยเตี๋ยว"
+			},
+			{
+				"id": "boat_table",
+				"art": "steel_table",
+				"pos": Vector2(6.5, 3.8),
+				"foot": Vector2(1.0, 1.0),
+				"h": 55.0,
+				"dialog": "look_boat_table"
+			},
+			{
+				"id": "stool",
+				"art": "red_stool",
+				"pos": Vector2(5.4, 4.6),
+				"foot": Vector2(0.4, 0.4),
+				"h": 30.0
+			},
+			{
+				"id": "stool",
+				"art": "red_stool",
+				"pos": Vector2(7.6, 4.6),
+				"foot": Vector2(0.4, 0.4),
+				"h": 30.0
+			},
+			{
+				"id": "jar",
+				"art": "dragon_jar",
+				"pos": Vector2(1.0, 1.0),
+				"foot": Vector2(0.8, 0.8),
+				"h": 90.0,
+				"dialog": "look_boat_jar"
+			},
+			{
+				"id": "float_bike",
+				"art": "steam_bike",
+				"pos": Vector2(8.6, 5.9),
+				"foot": Vector2(1.4, 0.7),
+				"h": 90.0,
+				"prompt": "กลับท่าเรือ",
+				"exit_to": "pier",
+				"exit_spawn": "from_boat"
+			},
+		],
+		"npcs":
+		[
+			{
+				"id": "pa_nok",
+				"name": "ป้านก",
+				"pos": Vector2(4.5, 2.0),
+				"character": JE,
+				"tint": Color(1, 0.9, 0.85),
+				"dialog": "talk_pa_nok"
+			},
+			{
+				"id": "lung_table3",
+				"name": "ลุงโต๊ะสาม",
+				"pos": Vector2(3.0, 4.8),
+				"character": LUNG,
+				"tint": Color(1, 0.92, 0.8),
+				"dialog": "talk_lung_table3"
+			},
+		],
+	},
+}
+
+
+static func get_room(id: String) -> Dictionary:
+	return ROOMS.get(id, ROOMS[GameState.START_ROOM])
+
+
+static func title(id: String) -> String:
+	return str(get_room(id).get("title", id))
+
+
+## Spawn only when the entry's flag conditions hold.
+static func present(entry: Dictionary, flags: Dictionary) -> bool:
+	var need := str(entry.get("if_flag", ""))
+	var never := str(entry.get("if_not_flag", ""))
+	if not need.is_empty() and not flags.get(need, false):
+		return false
+	if not never.is_empty() and flags.get(never, false):
+		return false
+	if entry.has("item") and flags.get("got_%s" % entry["item"], false):
+		return false
+	return true

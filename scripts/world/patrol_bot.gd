@@ -1,15 +1,15 @@
 class_name PatrolBot
 extends CharacterBody2D
-## Patrol obstacle with a vision cone (was the steam-company automaton; P1
-## turns it into debt collectors, guards and soi dogs). A puzzle, not a fight
-## (owner 2026-10-01: "killing it gives nothing"; the game is puzzle-first).
+## Patrol obstacle with a vision cone: debt collectors (people) and collector
+## robots (DESIGN 11). A puzzle, not a fight.
 ##
-## Walks its `patrol` waypoints with a visible vision cone on the floor. A rider
-## it sees while carrying cargo is chased; caught = "cargo inspection": food
-## spills, 10 minutes are lost, the rider is pushed away. Ways around it:
+## Walks its `patrol` waypoints with a visible vision cone on the floor. A
+## chaser that sees the rider runs after them; caught = `catch_dialog` (a
+## threat) and the rider is pushed away. Ways around it:
 ## - sneak past while it looks away; props block its line of sight,
-## - tap it from behind (outside the cone) to pull its fuse: off for the day
-##   (first time ever: a scrap fuse to sell),
+## - distract it: when `distract_flag` is set (a puzzle did something, e.g.
+##   the radio plays) it stops, faces `distract_dir` and ignores everyone,
+## - machines: tap from behind to pull the fuse (off for the day),
 ## - turn a steam valve (dialog line action `"event": "steam_valve"`): every
 ##   steam-powered bot in the room freezes for STUN_TIME seconds.
 
@@ -45,10 +45,13 @@ const CONE_RAYS := 14
 @export var character_name := ""
 ## false = only stares (condo lift guard); true = chases.
 @export var chases := true
-## Chase only riders carrying cargo (inspection) or anyone (debt collector).
-@export var needs_cargo := true
-## What a catch does: "inspect" (time + shaken food) or "collect" (money).
-@export var catch_kind := "inspect"
+## Dialog played when it catches the rider.
+@export var catch_dialog := ""
+## Story flag that distracts it for good (see class doc), the way it then
+## faces (screen) and the mark over its head.
+@export var distract_flag := ""
+@export var distract_dir := Vector2(1, 0)
+@export var distract_mark := "~ เต้น ~"
 ## Can its fuse be pulled from behind (machines only)?
 @export var tamperable := true
 ## Dialog when tapped while not tamperable.
@@ -81,9 +84,31 @@ func _ready() -> void:
 	facing = _ground(start_facing).normalized()
 	_apply_art()
 	Dialog.event.connect(_on_dialog_event)
+	GameState.flag_changed.connect(_on_flag)
+	_update_marks()
 	if GameState.has_flag(off_flag()):
 		_switch_off(false)
-	_update_marks()
+	elif not distract_flag.is_empty() and GameState.has_flag(distract_flag):
+		_distract()
+
+
+func _on_flag(flag: String, value: bool) -> void:
+	if value and flag == distract_flag and state != State.OFF:
+		_distract()
+
+
+## Stops for good, looking at whatever distracted it.
+func _distract() -> void:
+	velocity = Vector2.ZERO
+	facing = _ground(distract_dir).normalized()
+	_set_state(State.OFF)
+	if _mark:
+		_mark.text = distract_mark
+		_mark.modulate = Color(0.7, 1.0, 0.8)
+	if _rig:
+		_rig.set_facing(Iso.dir8(distract_dir))
+		_rig.set_walk(0.0)
+	_update_cone()
 
 
 func off_flag() -> String:
@@ -162,7 +187,7 @@ func _physics_process(delta: float) -> void:
 	_calm = maxf(_calm - delta, 0.0)
 	var player := get_tree().get_first_node_in_group("player") as Node2D
 	var sees := player != null and _calm == 0.0 and can_see(player.global_position)
-	if sees and chases and (not needs_cargo or Orders.carrying_cargo()):
+	if sees and chases:
 		if state != State.CHASE:
 			_lost = 0.0
 			_set_state(State.CHASE)
@@ -230,40 +255,9 @@ func _catch(player: Node2D) -> void:
 	_set_state(State.WAIT)
 	if player.has_method("caught_by"):
 		player.caught_by(self)
-	if catch_kind == "collect":
-		_collect()
-	else:
-		Orders.on_player_caught()
-		GameState.advance_minutes(10)
-		GameState.notice.emit("โดนเรียกตรวจ! เสียเวลาไป 10 นาที")
+	if not catch_dialog.is_empty():
+		Dialog.start(catch_dialog)
 	caught_player.emit()
-
-
-## Debt collector caught the rider: takes what cash there is (up to two
-## days of interest + "ค่าเดินทาง") and counts it as a payment.
-func _collect() -> void:
-	var take := mini(GameState.money, GameState.DEBT_INTEREST * 2 + 100)
-	GameState.add_money(-take, "collector")
-	if take >= GameState.DEBT_INTEREST and GameState.missed_payments > 0:
-		GameState.missed_payments -= 1
-	GameState.stats_changed.emit()
-	(
-		Dialog
-		. start_lines(
-			[
-				{
-					"speaker": "เจ้าหนี้",
-					"text": "เจอตัวจนได้นะ ไรเดอร์ ... ดอกเมื่อวานยังไม่จ่ายเลย"
-				},
-				{
-					"speaker": "เจ้าหนี้",
-					"text": "เอามา %d บาท รวมค่าน้ำมันพี่ด้วย ขับมาตามตั้งไกล" % take
-				},
-				"(เงินในกระเป๋าหายไป %d บาท)" % take,
-			],
-			"collector"
-		)
-	)
 
 
 ## Player tapped it and walked up. From behind = fuse pulled; from the front
@@ -279,7 +273,7 @@ func tamper(player: Node2D) -> void:
 	if state != State.STUNNED and in_cone(player.global_position):
 		facing = _ground(player.global_position - global_position).normalized()
 		GameState.notice.emit("หุ่นหันมาเห็นพอดี ... ต้องย่องเข้าทางด้านหลัง")
-		if Orders.carrying_cargo():
+		if chases:
 			_set_state(State.CHASE)
 		else:
 			_timer = STARE_TIME
@@ -300,23 +294,7 @@ func _switch_off(by_player: bool) -> void:
 		if art:
 			tween.parallel().tween_property(art, "modulate", grey, 0.4)
 		switched_off.emit()
-		var fused := "%s_fused" % bot_id
-		if not GameState.has_flag(fused):
-			GameState.set_flag(fused)
-			GameState.add_money(20)
-			(
-				Dialog
-				. start_lines(
-					[
-						"คุณย่องไปด้านหลัง เปิดฝาหลังหุ่น แล้วดึงฟิวส์ทองเหลืองออกมา ... หุ่นฟุบหลับคาที่",
-						{"speaker": "ไรเดอร์", "text": "ฟิวส์ทองเหลืองแท้ ขายเจ๊หมวยได้ยี่สิบ"},
-						"(พรุ่งนี้เช้าก็มีคนเปลี่ยนฟิวส์ใหม่ให้มันอยู่ดี)",
-					],
-					"bot_fuse"
-				)
-			)
-		else:
-			GameState.notice.emit("ดึงฟิวส์หุ่นออก ... หลับไปทั้งวัน")
+		GameState.notice.emit("ดึงฟิวส์หุ่นออก ... หลับไปทั้งวัน")
 	else:
 		_body.rotation = 0.2
 		if art:
