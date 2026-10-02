@@ -20,6 +20,7 @@ Dialog="*res://scripts/autoload/dialog.gd"
 SceneRouter="*res://scripts/autoload/scene_router.gd"
 Settings="*res://scripts/autoload/settings.gd"
 Puzzles="*res://scripts/autoload/puzzles.gd"
+Audio="*res://scripts/autoload/audio.gd"
 
 [display]
 

@@ -88,6 +88,7 @@ func combine(a: String, b: String) -> bool:
 	if c.is_empty():
 		_fail(["combine", b, a])
 		return false
+	Audio.sfx("combine")
 	GameState.take_item(a)
 	GameState.take_item(b)
 	GameState.give_item(str(c["result"]))
@@ -101,6 +102,7 @@ func use(item: String, target: String) -> bool:
 	if u.is_empty():
 		_fail([target, item])
 		return false
+	Audio.sfx("use_ok")
 	if u.get("consume", false):
 		GameState.take_item(item)
 	Dialog.start_lines(u.get("lines", []), "use_%s_%s" % [item, target])
@@ -108,6 +110,7 @@ func use(item: String, target: String) -> bool:
 
 
 func _fail(keys: Array) -> void:
+	Audio.sfx("fail", 0.08)
 	var fail: Dictionary = data.get("fail", {})
 	var pool: Array = []
 	for k in keys:

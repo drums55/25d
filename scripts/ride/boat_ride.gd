@@ -265,6 +265,7 @@ func _check_hits() -> void:
 		_hit[i] = true
 		var effect: String = BoatTrack.KINDS[o["kind"]]["hit"]
 		hits.append(effect)
+		Audio.sfx("bump" if effect != "slow" else "tide", 0.1)
 		if effect == "slow":
 			_slow = 1.5
 		else:

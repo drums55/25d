@@ -59,6 +59,9 @@ const ENDING_SCENES := {
 	"sold": {"room": "home", "pose": "phone", "tint": NIGHT_TINT, "caption": "ห้าดาว จากบริษัท"},
 }
 ## Seconds the ending tableau plays (after the fade) before anything is written on it.
+const ENDING_STINGS := {
+	"five_stars": "sting_good", "wet": "sting_chapter", "sunk": "sting_sad", "sold": "sting_sad"
+}
 const ENDING_HOLD := 3.0
 
 var _card_pending := ""
@@ -127,6 +130,7 @@ func open_travel() -> void:
 ## the steerable runner, kept for story set pieces.
 func travel(dest: String, play := false) -> void:
 	_hud.hide_overlay()
+	Audio.sfx("bike_start")
 	if BoatRide.skip_all:
 		arrive(dest)
 		return
@@ -161,6 +165,7 @@ func load_room(room_path: String, spawn_id: String) -> bool:
 	if node is BoatRide:
 		_room_holder.add_child(node)
 		_hud.set_riding(true)
+		Audio.ambience("engine")
 		return true
 	var room := node as IsoRoom
 	if room == null:
@@ -168,6 +173,7 @@ func load_room(room_path: String, spawn_id: String) -> bool:
 		node.free()
 		return false
 	_hud.set_riding(false)
+	Audio.for_room(GameState.room, _ending)
 	room.modulate = NIGHT_TINT if GameState.chapter >= 3 else Color.WHITE
 	if not _ending.is_empty():
 		room.modulate = ENDING_SCENES[_ending]["tint"]
@@ -253,6 +259,7 @@ func _on_dialog_finished(_id: String) -> void:
 func _show_card(flag: String) -> void:
 	var c: Array = CHAPTERS[flag]
 	var next: int = c[2]
+	Audio.sting("sting_chapter")
 	var buttons: Array = [["หน้าแรก", go_title]]
 	if next > 0:
 		buttons.push_front(["ไปบทที่ %d" % next, start_chapter.bind(next)])
@@ -324,6 +331,7 @@ func _stage_ending() -> void:
 	if not is_inside_tree() or _ending != ending:
 		return
 	_hud.show_title(scene["caption"])
+	Audio.sting(ENDING_STINGS.get(ending, "sting_chapter"))
 	GameState.notice.emit("แตะเพื่อดูตอนจบ")
 	_ending_waiting = true
 

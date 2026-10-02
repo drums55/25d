@@ -59,6 +59,7 @@ func give_item(item: String) -> void:
 		return
 	inventory.append(item)
 	inventory_changed.emit(inventory)
+	Audio.sfx("pickup")
 	notice.emit("ได้ของ: %s" % item_name(item))
 
 

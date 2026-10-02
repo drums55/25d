@@ -54,6 +54,7 @@ func _ready() -> void:
 	_right.add_theme_constant_override("separation", 6)
 	_book.add_child(_right)
 	open_page("save")
+	Audio.sfx("book_open")
 	_book.pivot_offset = BOOK_SIZE * 0.5
 	_book.scale = Vector2(0.9, 0.9)
 	_book.rotation_degrees = -3.0
@@ -151,5 +152,6 @@ func _on_loaded(_slot: int) -> void:
 func close() -> void:
 	if is_queued_for_deletion():
 		return
+	Audio.sfx("book_close")
 	closed.emit()
 	queue_free()

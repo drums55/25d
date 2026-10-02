@@ -38,6 +38,7 @@ func go_to(room_path: String, spawn_id := "default", fade := true) -> void:
 	_busy = true
 	GameState.input_locked = true
 	if fade:
+		Audio.sfx("whoosh", 0.1)
 		await _fade_to(1.0)
 	if not is_instance_valid(_host):
 		# the game scene went away mid-fade (back to the title, tests)

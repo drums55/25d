@@ -260,6 +260,7 @@ func _catch(player: Node2D) -> void:
 		player.caught_by(self)
 	if not catch_dialog.is_empty():
 		Dialog.start(catch_dialog)
+	Audio.sfx("caught")
 	caught_player.emit()
 
 
@@ -296,6 +297,7 @@ func _switch_off(by_player: bool) -> void:
 		tween.tween_property(_body, "rotation", 0.2, 0.4)
 		if art:
 			tween.parallel().tween_property(art, "modulate", grey, 0.4)
+		Audio.sfx("spark")
 		switched_off.emit()
 		GameState.set_flag("%s_fused" % bot_id)
 		GameState.notice.emit("ดึงฟิวส์หุ่นออก ... หลับปุ๋ย")
@@ -312,6 +314,8 @@ func _on_dialog_event(event_name: String) -> void:
 
 
 func _set_state(s: State) -> void:
+	if s == State.CHASE and state != State.CHASE:
+		Audio.sfx("alert")
 	state = s
 	_update_marks()
 

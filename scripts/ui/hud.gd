@@ -161,6 +161,7 @@ func _slot(item: String) -> Button:
 func tap_item(item: String) -> void:
 	if Dialog.is_active() or GameState.input_locked:
 		return
+	Audio.sfx("tag", 0.1)
 	var held := GameState.held_item
 	if held.is_empty():
 		GameState.held_item = item

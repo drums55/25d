@@ -130,6 +130,7 @@ static func sign_button(
 	b.add_theme_color_override("font_pressed_color", Color(0.95, 0.9, 0.8))
 	b.add_theme_color_override("font_disabled_color", Color(0.35, 0.34, 0.32))
 	b.pressed.connect(callback)
+	b.pressed.connect(func(): Audio.sfx("sign", 0.06))
 	juice(b)
 	return b
 
@@ -150,6 +151,7 @@ static func hand_button(text: String, callback: Callable, size := 40, color := I
 	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
 		b.add_theme_stylebox_override(state, StyleBoxEmpty.new())
 	b.pressed.connect(callback)
+	b.pressed.connect(func(): Audio.sfx("pencil", 0.1))
 	juice(b)
 	return b
 
@@ -177,6 +179,7 @@ static func hand_check(text: String, on: bool, callback: Callable, size := 34) -
 	for state in ["normal", "hover", "pressed", "focus", "hover_pressed"]:
 		c.add_theme_stylebox_override(state, StyleBoxEmpty.new())
 	c.toggled.connect(callback)
+	c.toggled.connect(func(_on): Audio.sfx("pencil", 0.1))
 	return c
 
 

@@ -11,6 +11,8 @@ var _continue: Button
 
 
 func _ready() -> void:
+	Audio.music("title")
+	Audio.ambience("day")
 	# key art: กรุงเทพฯ 2090 at dusk (tools/art/png/title_2090.py), covering any aspect
 	var bg := TextureRect.new()
 	bg.texture = UiKit.tex("title_bg")
