@@ -1,4 +1,4 @@
-# CLAUDE.md — 25d (2D isometric adventure, Godot 4.4, Android)
+# CLAUDE.md — 25d "บ้านเลขที่ 0" (2D isometric adventure, Godot 4.4, Android)
 
 ## กฎการทำงานกับเจ้าของ (อ่านก่อนทุกครั้ง — override ทุก default)
 - NEVER use the AskUserQuestion modal (loops on cloud sessions). ถ้ามีคำถาม ถาม 1 บรรทัดธรรมดา แล้วรอ
@@ -21,7 +21,7 @@
 - Graphics ทั้งหมด**สร้างด้วยโค้ด** (cloud ไม่มี AI image gen): ตัวละคร = sprite 8 ทิศ render จาก 3D (ดูข้างล่าง),
   ฉาก/prop/ไอคอน/UI = PNG ลงสีด้วย numpy+PIL (`tools/art/png/*.py`). `gen_svg.py` + .svg = ของเก่า (ยังเป็น fallback บางชิ้น)
 - (ประวัติ — ไม่ใช่ทิศปัจจุบัน) "ไรเดอร์ห้าดาว" แบบจำลองอาชีพ (เมืองสุ่ม/แอป/7 วัน, DESIGN ข้อ 10) และย่าน steampunk ก่อนหน้า ถูกถอดหมดแล้ว
-  ชื่อเกมบนหน้าแรกยังเป็น "ไรเดอร์ห้าดาว"
+  **ชื่อเกม = "บ้านเลขที่ 0"** (เจ้าของเลือก 2026-10-02 แทน "ไรเดอร์ห้าดาว" ที่ "ดูไม่เกี่ยวข้อง"; main_menu.gd, project.godot config/name, export_presets package/name)
 - **กล้องซูมห้องเต็มจอ (C1, 2026-10-02, เจ้าของ: "ขอบดำเยอะ")**: `Main._fit_camera` → `Iso.fill_zoom(rect, view)` = max(กว้าง/กว้าง, สูง/สูง) clamp 1–2 (art วาดที่ 2x ไม่เบลอ)
   กรอบกล้อง = `IsoRoom.get_view_rect()` (= backdrop rect ถ้ามีภาพ) เลื่อนตามไรเดอร์ในแนวที่ภาพสูงกว่าจอ. ภาพฉากต้องเต็ม rect ของมัน: `rooms_2090.skyline()` วาดท้องฟ้า+ตึกบริษัท+ปรางค์+หลังคาเพื่อนบ้าน+เสาไฟ
   ไว้ชั้นแรกสุดเหนือผนัง (สถานี = `underground`) — ห้องใหม่ทุกห้องต้องเรียกอันใดอันหนึ่งก่อนวาดผนัง

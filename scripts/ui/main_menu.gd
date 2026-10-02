@@ -27,7 +27,7 @@ func _ready() -> void:
 	left.custom_minimum_size = Vector2(620, 0)
 	left.add_theme_constant_override("separation", 16)
 	add_child(left)
-	var title := UiKit.label("ไรเดอร์ห้าดาว", 112, Color(1.0, 0.82, 0.36))
+	var title := UiKit.label("บ้านเลขที่ 0", 112, Color(1.0, 0.82, 0.36))
 	title.add_theme_font_override("font", UiKit.FONT_SIGN)
 	title.add_theme_color_override("font_outline_color", Color(0.45, 0.08, 0.06))
 	title.add_theme_constant_override("outline_size", 20)
