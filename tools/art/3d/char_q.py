@@ -681,7 +681,9 @@ def npc_region(spec):
             return "torso" if arms == "long" else "skin"
         if bone.startswith("upperarm"):
             if arms == "bare":
-                return "skin"
+                # the strap still covers the top of the shoulder (joint at z 1.456;
+                # owner 2026-10-02: "เสื้อกล้าม/กั๊กทุกคนใส่ไม่ถึงไหล่")
+                return "torso" if p.z > 1.40 else "skin"
             if arms == "short" and p.z < 1.28:
                 return "skin"
             return "torso"
