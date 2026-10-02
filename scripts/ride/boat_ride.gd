@@ -95,7 +95,7 @@ func _sprite(art: String, scale_k := 1.0) -> Sprite2D:
 func _build_rider() -> void:
 	_rider = Node2D.new()
 	_rider.name = "Rider"
-	var bike := _sprite("steam_bike")
+	var bike := _sprite("boat_bike")
 	if bike:
 		_rider.add_child(bike)
 	var who := (load("res://scenes/characters/character_view.tscn") as PackedScene).instantiate()

@@ -248,9 +248,88 @@ def kiao_desk(out):
     c.finish(out)
 
 
+def boat_bike(out):
+    """เรือเตอร์ไซค์ (owner's name 2026-10-02): the rider's motorbike with its wheels
+    gone, bolted onto two blue plastic drums, a longtail propeller off the engine,
+    a steam chimney and the rubber-duck keyring as a figurehead. Seat height is the
+    old steam_bike's (boat_ride.gd sits the rider at -38 px)."""
+    c = Canvas(400, 480, seed=243)
+    p, s = c.p, c.ss
+    blue, blue_l = hexc("#2F6FB0"), hexc("#5B9BD8")
+    rope = hexc("#D8C79A")
+    duck, beak = hexc("#F6CF2E"), hexc("#F08A1E")
+    c.ground_shadow(1.6, 0.85)
+    # longtail shaft + propeller (behind everything, down into the water at the back)
+    c.pipe([p(-0.12, 0.14, 62), p(-0.7, 0.24, 30), p(-1.08, 0.3, 6)], 6, STEEL * 0.75, spec=0.9)
+    hx, hy = p(-1.1, 0.3, 4)
+    for ang in (0.5, 2.6, 4.7):
+        c.stroke([(hx, hy), (hx + math.cos(ang) * 16 * s, hy + math.sin(ang) * 7 * s)], 6.0, BRASS_D)
+    c.disc(hx, hy, 5 * s, 5 * s, BRASS, 1.0, 0.4)
+    # two drums (far one first) with rope lashings
+    def drum(gy):
+        cap = [(-0.78, gy - 0.13), (0.55, gy - 0.13), (0.66, gy - 0.07), (0.68, gy), (0.66, gy + 0.07),
+               (0.55, gy + 0.13), (-0.78, gy + 0.13), (-0.84, gy + 0.07), (-0.85, gy), (-0.84, gy - 0.07)]
+        c.prism(cap, 0, 34, blue, top_c=blue_l, rim=0.9, smooth=True)
+        # a round drum, not a box: sheen along the top, molded ribs
+        c.stroke([p(-0.74, gy + 0.06, 33), p(0.56, gy + 0.06, 33)], 5.0, hexc("#CFE6FA"), 0.45)
+        for gx in (-0.66, -0.25, 0.2):
+            c.stroke([p(gx, gy + 0.13, 4), p(gx, gy + 0.13, 30)], 2.0, blue * 0.7, 0.6)
+        for gx in (-0.5, 0.0, 0.42):
+            c.stroke([p(gx, gy + 0.13, 2), p(gx, gy + 0.13, 34), p(gx, gy - 0.13, 34)], 3.2, rope, 0.95)
+        c.disc(*p(0.3, gy, 35), 6 * s, 3 * s, hexc("#E9E4D4"), 0.8, 0.3)
+    drum(-0.32)
+    # deck planks across the drums
+    for gx in (-0.42, 0.26):
+        c.box(gx - 0.08, -0.4, gx + 0.08, 0.4, 34, 42, WOOD_L, rim=0.5)
+    # rear delivery box
+    c.box(-0.74, -0.2, -0.46, 0.2, 96, 164, RED, rim=0.9)
+    c.box(-0.76, -0.22, -0.44, 0.22, 164, 172, RED * 0.78, rim=0.8)
+    lx, ly = p(-0.6, 0.2, 132)
+    c.gear(lx, ly - 4 * s, 10 * s, CREAM, teeth=8, flat=1.0, hole=0.35, outline=0.8)
+    c.pipe([p(-0.6, 0.0, 42), p(-0.6, 0.0, 96)], 6, SOOT * 1.6)
+    # frame from the deck up to the bars
+    c.pipe([p(-0.42, 0.0, 42), p(-0.08, 0, 66), p(0.36, 0, 120)], 9, COPPER, spec=1.0)
+    c.pipe([p(0.26, 0.0, 42), p(0.38, 0.0, 156)], 8, STEEL * 0.8, spec=0.8)
+    # engine + boiler + chimney with a puff
+    c.box(-0.16, -0.1, 0.14, 0.1, 44, 98, SOOT * 1.5, rim=0.5)
+    for gx in (-0.06, 0.06):
+        c.disc(*p(gx, 0.1, 76), 6 * s, 9 * s, STEEL, 1.0, 0.3, spec=0.8)
+    c.cylinder(-0.34, 0.0, 0.1, 96, 176, BRASS, spec=1.0, rim=0.8, top_c=BRASS * 0.9)
+    c.band(-0.34, 0.0, 0.1, 112, 118, COPPER)
+    c.band(-0.34, 0.0, 0.1, 156, 162, COPPER)
+    c.gauge(*c.cyl_pt(-0.34, 0.0, 0.1, 0.1, 136), 7, angle=40)
+    bx, by = p(-0.34, 0.0, 176)
+    c.pipe([(bx, by), (bx, by - 44 * s)], 8, SOOT * 1.8, spec=0.4)
+    c.disc(bx, by - 44 * s, 7 * s, 3 * s, SOOT * 1.3, 1.2, 0.3, dome=False)
+    for k, (dx, dy, r) in enumerate(((-6, -60, 11), (-20, -74, 14), (-40, -86, 17))):
+        c.disc(bx + dx * s, by + dy * s, r * s, r * 0.8 * s, hexc("#EEF0F2"), 0.9, 0.0, spec=0.2)
+    # seat, tank, bars, lamp
+    seat = [(-0.24, -0.1), (0.04, -0.09), (0.1, 0.0), (0.04, 0.09), (-0.24, 0.1)]
+    c.prism(seat, 128, 142, SOOT * 1.7, rim=0.8, smooth=True)
+    tank = [(0.1, -0.1), (0.3, -0.08), (0.36, 0.0), (0.3, 0.08), (0.1, 0.1)]
+    c.prism(tank, 120, 150, COPPER, top_c=COPPER * 1.12, rim=1.0, smooth=True)
+    c.pipe([p(0.4, -0.24, 166), p(0.4, 0.24, 166)], 6, STEEL * 0.8, spec=0.8)
+    for gy in (-0.24, 0.24):
+        c.pipe([p(0.4, gy, 166), p(0.38, gy * 1.15, 168)], 7, SOOT * 1.6)
+    lx, ly = p(0.48, 0.03, 140)
+    c.disc(lx, ly, 13 * s, 14 * s, BRASS, 1.6, 0.7, spec=1.0)
+    c.disc(lx + 2 * s, ly + 1 * s, 8 * s, 9 * s, hexc("#FFF4C8"), 0.8, 0.0, spec=1.0)
+    # near drum (in front of the bike's legs)
+    drum(0.32)
+    # bow plate between the drums + the rubber-duck figurehead
+    c.box(0.6, -0.3, 0.7, 0.3, 26, 40, WOOD_D, rim=0.5)
+    dx, dy = p(0.68, 0.0, 40)
+    c.disc(dx, dy - 12 * s, 17 * s, 12 * s, duck, 1.4, 0.6, spec=0.8)
+    c.disc(dx + 10 * s, dy - 28 * s, 10 * s, 10 * s, duck, 1.4, 0.6, spec=0.8)
+    c.disc(dx + 19 * s, dy - 26 * s, 6 * s, 3 * s, beak, 0.8, 0.2)
+    c.disc(dx + 12 * s, dy - 31 * s, 1.8 * s, 1.8 * s, INK, 0.0, 0.0, dome=False)
+    c.finish(out)
+
+
 PROPS = {f.__name__: f for f in (steam_radio, wardrobe, floor_gap, upturned_boat, sluice_gate,
                                  sluice_flooded, tide_gauge, wait_bench, house_zero_plate,
-                                 pump_engine, rental_bed, debt_board, boat_noodle_stall, kiao_desk)}
+                                 pump_engine, rental_bed, debt_board, boat_noodle_stall, kiao_desk,
+                                 boat_bike)}
 
 if __name__ == "__main__":
     name = sys.argv[1]
