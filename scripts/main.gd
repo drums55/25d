@@ -26,10 +26,11 @@ const ENDINGS := {
 	],
 	"suspended":
 	[
-		"บัญชีถูกระงับ",
+		"บัญชีถูกปิดถาวร",
 		(
-			'"บัญชีของคุณถูกระงับชั่วคราว เนื่องจากคะแนนต่ำกว่ามาตรฐานของแพลตฟอร์ม\n'
-			+ 'หากมีข้อสงสัย กรุณาติดต่อแชทบอท (ตอบกลับภายใน 7-15 วันทำการ)"'
+			'"บัญชีของคุณถูกปิดถาวร เนื่องจากคะแนนต่ำกว่ามาตรฐานของแพลตฟอร์มซ้ำ\n'
+			+ 'หากมีข้อสงสัย กรุณาติดต่อแชทบอท (ตอบกลับภายใน 7-15 วันทำการ)"\n'
+			+ "กล่องส่งไวต้องคืนภายในสามวัน ค่ามัดจำกล่องไม่คืน"
 		),
 	],
 	"paid_off":
@@ -157,17 +158,25 @@ func sleep() -> void:
 		return
 	if not GameState.finished.is_empty():
 		return
+	var tomorrow := PlatformPolicy.for_day(GameState.city_seed, GameState.day + 1)
+	var slept := GameState.sleep_hours(GameState.minute)
 	var charges := GameState.start_new_day()
 	body += (
-		"\n\nเช้าวันที่ %d: ค่าเช่ารถ %d · ดอกเจ้าหนี้ %d%s\nเหลือเงิน %d บาท · หนี้ %d"
+		"\n\nเช้าวันที่ %d: ค่าเช่ารถ %d · ดอกเจ้าหนี้ %d%s%s\nเหลือเงิน %d บาท · หนี้ %d"
 		% [
 			GameState.day,
 			charges["rent"],
 			charges["interest"],
+			(" · ค่าอบรมปลดล็อกบัญชี %d" % charges["unlock"]) if charges["unlock"] > 0 else "",
 			(" · ขาด %d!" % charges["short"]) if charges["short"] > 0 else "",
 			GameState.money,
 			GameState.debt
 		]
+	)
+	body += "\nนอน %.1f ชม. · ความล้า %d%%" % [slept, roundi(GameState.fatigue)]
+	body += (
+		"\n\nประกาศจากแพลตฟอร์ม (มีผลวันนี้ แจ้งล่วงหน้าแล้ว 1 คืน):\n%s — %s"
+		% [tomorrow["title"], tomorrow["text"]]
 	)
 	GameState.save_game(0)
 	if not GameState.check_game_over().is_empty():

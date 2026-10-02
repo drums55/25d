@@ -3,11 +3,15 @@ extends VBoxContainer
 ## Phone: appeal an unfair 1-star review with the platform's chatbot
 ## "น้องส่งไว" (DESIGN 10.5: ratings favour customers, complaints go nowhere).
 ## Every message costs game time; the outcome is mostly "คงคะแนนเดิม".
+## `{"kind": "suspension"}` = appeal a suspended account (P2): one try per
+## suspension; success = back online after a 30-minute "training video".
 
 signal closed
 
 const MINUTES_PER_MESSAGE := 3.0
 const BASE_CHANCE := 0.15
+const SUSPENSION_CHANCE := 0.35
+const TRAINING_MINUTES := 30.0
 
 var appeal := {}
 var chance := BASE_CHANCE
@@ -22,6 +26,10 @@ func _init(a: Dictionary) -> void:
 	rng.randomize()
 
 
+func is_suspension() -> bool:
+	return appeal.get("kind", "") == "suspension"
+
+
 func _ready() -> void:
 	add_child(UiKit.label("แชทกับ น้องส่งไว (บอทช่วยเหลือไรเดอร์)", 30, UiKit.ACCENT))
 	_log = VBoxContainer.new()
@@ -30,6 +38,19 @@ func _ready() -> void:
 	_choices = VBoxContainer.new()
 	_choices.add_theme_constant_override("separation", 8)
 	add_child(_choices)
+	if is_suspension():
+		chance = SUSPENSION_CHANCE
+		GameState.suspension_appealed = true
+		_bot("บัญชีของคุณถูกระงับเนื่องจากไม่เป็นไปตามมาตรฐานแพลตฟอร์มค่ะ")
+		_offer(
+			[
+				["ขอทราบเหตุผลที่ชัดเจน", _why],
+				["รีวิวที่ทำให้คะแนนตกไม่ใช่ความผิดผม", _explain],
+				["ขอคุยกับเจ้าหน้าที่ที่เป็นคน", _human],
+				["ช่างมัน", _give_up],
+			]
+		)
+		return
 	_bot("สวัสดีค่ะ น้องส่งไวยินดีให้บริการตลอด 24 ชม. (ยกเว้นช่วงที่มีปัญหา)")
 	_bot('เรื่องรีวิว "%s" (%s) ใช่ไหมคะ' % [appeal.get("review", ""), appeal.get("item", "")])
 	_offer(
@@ -77,6 +98,18 @@ func _explain() -> void:
 	)
 
 
+func _why() -> void:
+	_bot("ด้วยเหตุผลด้านความปลอดภัยของระบบ ไม่สามารถเปิดเผยรายละเอียดได้ค่ะ")
+	_bot("แต่น้องส่งไวเข้าใจความรู้สึกนะคะ <3")
+	_offer(
+		[
+			["รีวิวที่ทำให้คะแนนตกไม่ใช่ความผิดผม", _explain],
+			["ผมมีลูกต้องเลี้ยง", _evidence.bind(0.0)],
+			["ช่างมัน", _give_up],
+		]
+	)
+
+
 func _human() -> void:
 	GameState.advance_minutes(5)
 	_bot("ขณะนี้เจ้าหน้าที่ทุกท่านไม่ว่าง คิวของคุณคือ 3,482 ... ระหว่างนี้น้องส่งไวช่วยได้นะคะ!")
@@ -89,6 +122,9 @@ func _evidence(bonus: float, extra_minutes := 0.0) -> void:
 	chance += bonus
 	_bot("ได้รับหลักฐานแล้วค่ะ ระบบกำลังพิจารณา (อาจใช้เวลา 7-15 วันทำการ ... หรือเดี๋ยวนี้เลย)")
 	var ok := rng.randf() < chance
+	if is_suspension():
+		_suspension_result(ok)
+		return
 	if ok:
 		var idx := int(appeal.get("index", -1))
 		if idx >= 0 and idx < GameState.ratings.size():
@@ -97,6 +133,17 @@ func _evidence(bonus: float, extra_minutes := 0.0) -> void:
 		_bot("ผลการพิจารณา: ลบรีวิวนี้แล้วค่ะ (ครั้งนี้เท่านั้นนะคะ) ดาวของคุณกลับมาแล้ว")
 	else:
 		_bot("ผลการพิจารณา: คงคะแนนเดิมค่ะ ขอบคุณที่เป็นส่วนหนึ่งของครอบครัวส่งไว <3")
+	_close_appeal()
+
+
+func _suspension_result(ok: bool) -> void:
+	if ok:
+		GameState.reinstate()
+		GameState.advance_minutes(TRAINING_MINUTES)
+		_bot("ผลการพิจารณา: ปลดระงับแล้วค่ะ! กรุณาชมวิดีโออบรมมาตรฐานบริการ 30 นาที (กดข้ามไม่ได้)")
+		GameState.notice.emit("บัญชีกลับมาออนไลน์ (ดูวิดีโออบรม 30 นาที)")
+	else:
+		_bot("ผลการพิจารณา: คงการระงับไว้ค่ะ ระบบจะปลดล็อกให้พรุ่งนี้เช้า (มีค่าอบรม)")
 	_close_appeal()
 
 

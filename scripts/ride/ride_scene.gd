@@ -29,6 +29,10 @@ var steadiness := 100.0
 var hits: Array[String] = []
 var delay_minutes := 0.0
 var done := false
+## Rider fatigue at the start of the ride (P2): slower steering, nodding off.
+var fatigue := 0.0
+## A crash turned into a real accident (City.finish_ride bills the clinic).
+var accident := false
 var _stopped := 0.0
 var _slow_reason := ""
 var _hit := {}
@@ -47,6 +51,8 @@ var _steady: ProgressBar
 var _toast: Label
 var _hint: Label
 var _signs: Array[Node2D] = []
+var _rng := RandomNumberGenerator.new()
+var _nod_at := 0.0
 
 
 func _ready() -> void:
@@ -58,6 +64,9 @@ func _ready() -> void:
 	dest = int(pending["dest"])
 	route = pending["route"]
 	track = pending["track"]
+	fatigue = GameState.fatigue
+	_rng.seed = hash([GameState.city_seed, GameState.day, int(GameState.minute), dest, "ride"])
+	_nod_at = _rng.randf_range(3.0, 6.0)
 	_road = RideRoad.new()
 	_road.ride = self
 	_road.z_index = -20
@@ -240,7 +249,15 @@ func _process(delta: float) -> void:
 ## Advances the ride by `delta` seconds (tests call this directly).
 func step(delta: float) -> void:
 	t += delta
-	lane = move_toward(lane, float(target_lane), LANE_MOVE * delta)
+	lane = move_toward(lane, float(target_lane), LANE_MOVE * steer_factor(fatigue) * delta)
+	if fatigue >= GameState.EXHAUSTED and t >= _nod_at:
+		# nodding off: the bike drifts a lane on its own
+		_nod_at = t + _rng.randf_range(4.0, 7.0)
+		var drift := -1 if _rng.randf() < 0.5 else 1
+		if target_lane + drift < -1 or target_lane + drift > 1:
+			drift = -drift
+		target_lane += drift
+		_say("สัปหงก! รถส่ายเอง")
 	var speed: float = track["speed"]
 	_slow_reason = ""
 	speed *= clampf(t / RAMP, 0.15, 1.0)
@@ -267,6 +284,11 @@ func step(delta: float) -> void:
 	steadiness = clampf(steadiness, 0.0, 100.0)
 	if travelled >= end_x():
 		_finish()
+
+
+## Lane-change speed multiplier: tired riders steer late.
+static func steer_factor(f: float) -> float:
+	return lerpf(1.0, 0.6, clampf((f - GameState.TIRED) / 60.0, 0.0, 1.0))
 
 
 func _visible(o: Dictionary) -> bool:
@@ -300,7 +322,14 @@ func _apply(effect: String) -> void:
 	match effect:
 		"crash":
 			_stopped = 1.1
-			_say("โครม! ล้มแล้วลุก ... เสียเวลา 3 นาที")
+			GameState.add_fatigue(4.0)
+			if not accident and _rng.randf() < City.accident_chance(fatigue, int(track["rain"])):
+				accident = true
+				_stopped = 3.0
+				steadiness -= 40.0
+				_say("อุบัติเหตุ! ล้มหนัก ... ต้องแวะคลินิก")
+			else:
+				_say("โครม! ล้มแล้วลุก ... เสียเวลา 3 นาที")
 			_flash(Color(1, 0.4, 0.4))
 		"dog":
 			_say("หมาซอยไล่! เบรกตัวโก่ง")
@@ -344,6 +373,7 @@ func _finish() -> void:
 		"hits": hits,
 		"delay": delay_minutes,
 		"branch": branch,
+		"accident": accident,
 	}
 	City.finish_ride(result)
 

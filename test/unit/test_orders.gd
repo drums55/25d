@@ -148,10 +148,15 @@ func test_three_unpaid_mornings_lose_the_bike():
 	assert_eq(GameState.check_game_over(), "lose_bike")
 
 
-func test_low_rating_suspends_account():
+func test_low_rating_suspends_then_closes_account():
 	for i in 40:
 		GameState.add_rating(1)
-	assert_eq(GameState.check_game_over(), "suspended")
+	assert_eq(GameState.check_game_over(), "", "first time = suspended, not over")
+	assert_true(GameState.suspended)
+	GameState.reinstate()
+	for i in 40:
+		GameState.add_rating(1)
+	assert_eq(GameState.check_game_over(), "suspended", "second time = closed for good")
 
 
 func test_debt_payment_and_last_day_ending():

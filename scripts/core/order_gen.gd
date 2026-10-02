@@ -20,6 +20,8 @@ const KIND_NAMES := {"food": "อาหาร", "parcel": "พัสดุ", "do
 const BASE_FEE := {"food": 28, "parcel": 32, "doc": 40}
 const PER_KM := {"food": 5, "parcel": 5, "doc": 7}
 const RAIN_SURGE := 10
+## Flat fee for the second job of an app-forced pair (P2 งานพ่วง).
+const BUNDLE_FEE := 15
 const CASH_FOOD_CHANCE := 0.3
 const CANCEL_CHANCE := 0.25
 const NO_SHOW_CHANCE := 0.3
@@ -72,7 +74,12 @@ const DROPOFF_TYPES := {
 
 
 static func make(
-	rng: RandomNumberGenerator, city: Dictionary, minute: float, rain: int, id: int
+	rng: RandomNumberGenerator,
+	city: Dictionary,
+	minute: float,
+	rain: int,
+	id: int,
+	policy := {},
 ) -> Dictionary:
 	var kind := CityGen._weighted(rng, KIND_WEIGHTS)
 	var pickup := _pick_node(rng, city, PICKUP_TYPES[kind], -1)
@@ -80,7 +87,8 @@ static func make(
 	var a: Dictionary = city["nodes"][pickup]
 	var b: Dictionary = city["nodes"][dropoff]
 	var km: float = (a["pos"] as Vector2).distance_to(b["pos"]) / CityGen.UNITS_PER_KM
-	var fee := int(BASE_FEE[kind] + PER_KM[kind] * km) + (RAIN_SURGE if rain > 0 else 0)
+	var surge: int = policy.get("surge", RAIN_SURGE) if rain > 0 else 0
+	var fee := int(BASE_FEE[kind] + PER_KM[kind] * km) + surge + int(policy.get("fee_delta", 0))
 	var order := {
 		"id": id,
 		"kind": kind,
@@ -124,6 +132,41 @@ static func make(
 			order["pin_wrong"] = true
 			order["true_dropoff"] = real
 	return order
+
+
+## P2 "งานพ่วง": the app glues a second job onto `first` — same pickup, a
+## drop-off far from the first one's, a flat BUNDLE_FEE. Both carry
+## `bundle` = first id and are accepted / declined / expire together.
+static func make_bundle(
+	rng: RandomNumberGenerator, city: Dictionary, first: Dictionary, id: int
+) -> Dictionary:
+	var o := first.duplicate(true)
+	for key in ["pin_wrong", "true_dropoff", "no_show", "will_cancel"]:
+		o.erase(key)
+	o["id"] = id
+	o["customer"] = CUSTOMERS[(CUSTOMERS.find(first["customer"]) + 1) % CUSTOMERS.size()]
+	o["fee"] = BUNDLE_FEE
+	o["tip"] = 0
+	o["cod"] = 0
+	o["size"] = 1
+	var items: Array = {"food": FOOD_ITEMS, "parcel": PARCEL_ITEMS, "doc": DOC_ITEMS}[o["kind"]]
+	o["item"] = items[rng.randi() % items.size()]
+	if o["kind"] == "doc":
+		o["sign_name"] = o["customer"]
+	# farthest drop-off from the first one: "ทางเดียวกัน" according to the AI
+	var from: Vector2 = city["nodes"][int(first["dropoff"])]["pos"]
+	var best := -1
+	var best_d := -1.0
+	for n in city["nodes"]:
+		if n["type"] in DROPOFF_TYPES[o["kind"]] and int(n["id"]) != int(first["pickup"]):
+			var d := from.distance_to(n["pos"])
+			if d > best_d:
+				best_d = d
+				best = int(n["id"])
+	o["dropoff"] = best if best >= 0 else int(first["dropoff"])
+	o["bundle"] = int(first["id"])
+	first["bundle"] = int(first["id"])
+	return o
 
 
 ## A place next to `id` on the road map (not `avoid`), or -1.

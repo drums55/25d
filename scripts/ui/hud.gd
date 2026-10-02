@@ -43,6 +43,7 @@ func _ready() -> void:
 	GameState.stats_changed.connect(_refresh_stats)
 	Orders.orders_changed.connect(_refresh_orders)
 	Orders.offer_added.connect(_on_offer)
+	GameState.account_suspended.connect(_on_suspended)
 	_on_money(GameState.money)
 	_refresh_stats()
 	_refresh_orders()
@@ -134,9 +135,39 @@ func _on_money(money: int) -> void:
 func _refresh_stats() -> void:
 	_on_money(GameState.money)
 	_stats.text = (
-		"น้ำมัน %.1f ลิตร · ★ %.2f · รับงาน %d%%"
-		% [GameState.fuel, GameState.rating(), roundi(GameState.acceptance() * 100)]
+		"น้ำมัน %.1f ลิตร · ★ %.2f · รับงาน %d%% · ล้า %d%%"
+		% [
+			GameState.fuel,
+			GameState.rating(),
+			roundi(GameState.acceptance() * 100),
+			roundi(GameState.fatigue),
+		]
 	)
+	_stats.modulate = (
+		Color(1, 0.6, 0.5) if GameState.fatigue >= GameState.EXHAUSTED else Color.WHITE
+	)
+
+
+func _on_suspended() -> void:
+	show_overlay(
+		"บัญชีถูกระงับชั่วคราว",
+		(
+			(
+				'"คะแนนของคุณต่ำกว่ามาตรฐานแพลตฟอร์ม (%.1f) บัญชีถูกระงับชั่วคราว\n'
+				+ 'งานที่ยังไม่ได้รับของถูกโอนให้ไรเดอร์ท่านอื่นแล้ว ของที่ถืออยู่ส่งต่อได้"\n\n'
+				+ "ปลดล็อกพรุ่งนี้เช้า (ค่าอบรม %d บาท) หรืออุทธรณ์กับแชทบอทได้หนึ่งครั้ง\n"
+				+ "โดนระงับอีกครั้ง = ปิดบัญชีถาวร"
+			)
+			% [GameState.MIN_RATING, GameState.UNLOCK_FEE]
+		),
+		[["อุทธรณ์เลย", _appeal_now], ["ไว้ก่อน", hide_overlay]]
+	)
+
+
+func _appeal_now() -> void:
+	hide_overlay()
+	open_phone("orders")
+	phone.open_appeal({"kind": "suspension"})
 
 
 ## Orders in progress with countdowns, under the day dial.

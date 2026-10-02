@@ -13,6 +13,9 @@ signal time_changed(day: int, minute: float)
 ## Fuel, rating, debt or acceptance changed.
 signal stats_changed
 signal game_over(reason: String)
+## The platform suspended the account (P2): the app stops offering until an
+## appeal works or the next morning (unlock fee).
+signal account_suspended
 
 const LOCATION_SCENE := "res://scenes/rooms/location.tscn"
 const SAVE_SLOTS := 3
@@ -38,6 +41,21 @@ const BAG_SLOTS := 3
 ## The platform suspends the account below this average.
 const MIN_RATING := 4.3
 const RATING_WINDOW := 40
+## Suspensions survived; one more than this = account closed for good.
+const MAX_SUSPENSIONS := 1
+## Next-morning fee to unlock a suspended account ("ค่าอบรมมาตรฐานบริการ").
+const UNLOCK_FEE := 199
+## Fatigue 0..100 (P2): + per game minute awake (x RAIN_FATIGUE in rain),
+## - per hour slept. Tired riders steer slower, nod off, crash more.
+const FATIGUE_PER_MINUTE := 0.05
+const RAIN_FATIGUE := 1.3
+const SLEEP_RECOVERY := 12.0
+const TIRED := 40.0
+const EXHAUSTED := 70.0
+const COFFEE_PRICE := 15
+const COFFEE_REST := 10.0
+const NAP_MINUTES := 30.0
+const NAP_REST := 15.0
 
 ## Item id -> display name for dialog items (kept from the dialog system).
 const ITEMS := {}
@@ -66,6 +84,14 @@ var next_order_id := 1
 var pending_refund := 0
 ## Unfair 1-star reviews the rider can appeal: [{id, item, review, index, open}].
 var appeals: Array = []
+var fatigue := 0.0
+var coffees_today := 0
+var suspended := false
+var suspensions := 0
+## The one chatbot appeal allowed per suspension was used.
+var suspension_appealed := false
+## Selfie-policy days: the app locks at this minute until a selfie.
+var selfie_due := float(DAY_START) + PlatformPolicy.SELFIE_EVERY
 ## Today's numbers for the evening slip.
 var log_today := {}
 var finished := ""
@@ -149,8 +175,49 @@ func clock_text() -> String:
 func advance_minutes(m: float) -> void:
 	if m <= 0.0:
 		return
+	var rate := FATIGUE_PER_MINUTE
+	if City.has_city() and City.rain_now() > 0:
+		rate *= RAIN_FATIGUE
+	add_fatigue(m * rate)
 	minute += m
 	time_changed.emit(day, minute)
+
+
+func add_fatigue(amount: float) -> void:
+	var before := fatigue
+	fatigue = clampf(fatigue + amount, 0.0, 100.0)
+	if before < EXHAUSTED and fatigue >= EXHAUSTED:
+		notice.emit("ง่วงมาก ... ตาจะปิด (ขี่ส่าย อุบัติเหตุง่าย) — กาแฟหรืองีบในแอป")
+	if int(before) != int(fatigue):
+		stats_changed.emit()
+
+
+static func fatigue_text(f: float) -> String:
+	if f >= EXHAUSTED:
+		return "ง่วงมาก"
+	return "เพลีย" if f >= TIRED else "สดชื่น"
+
+
+## Canned coffee: less each cup the same day.
+func drink_coffee() -> bool:
+	if money < COFFEE_PRICE:
+		return false
+	add_money(-COFFEE_PRICE, "food")
+	coffees_today += 1
+	add_fatigue(-COFFEE_REST / coffees_today)
+	return true
+
+
+## Nap on the bike seat in the shade.
+func nap() -> void:
+	advance_minutes(NAP_MINUTES)
+	add_fatigue(-NAP_REST - NAP_MINUTES * FATIGUE_PER_MINUTE)
+	notice.emit("งีบ 30 นาทีบนเบาะรถ ... ตื่นมามีน้ำลายบนกล่องส่งไว")
+
+
+## Hours of sleep from going to bed at `bed_minute` until DAY_START tomorrow.
+static func sleep_hours(bed_minute: float) -> float:
+	return clampf((24.0 * 60.0 + DAY_START - bed_minute) / 60.0, 0.0, 12.0)
 
 
 func is_closing() -> bool:
@@ -190,7 +257,11 @@ func pay_debt(amount: int) -> int:
 ## Morning: bike rent + loan interest. Unpaid = a strike with the creditor.
 ## Returns the charges for the slip.
 func morning_charges() -> Dictionary:
-	var due := BIKE_RENT + (DEBT_INTEREST if debt > 0 else 0)
+	var unlock := UNLOCK_FEE if suspended else 0
+	var due := BIKE_RENT + (DEBT_INTEREST if debt > 0 else 0) + unlock
+	if suspended:
+		reinstate()
+		notice.emit("บัญชีกลับมาใช้งานได้ (หักค่าอบรมมาตรฐานบริการ %d บาท)" % UNLOCK_FEE)
 	var paid := mini(due, money)
 	money -= paid
 	var short := due - paid
@@ -204,7 +275,12 @@ func morning_charges() -> Dictionary:
 			"เงินไม่พอจ่ายค่าเช่ารถ+ดอก ขาด %d บาท (เตือนครั้งที่ %d)" % [short, missed_payments]
 		)
 	stats_changed.emit()
-	return {"rent": BIKE_RENT, "interest": DEBT_INTEREST if debt > 0 else 0, "short": short}
+	return {
+		"rent": BIKE_RENT,
+		"interest": DEBT_INTEREST if debt > 0 else 0,
+		"unlock": unlock,
+		"short": short
+	}
 
 
 ## Checks the losing conditions; returns the reason ("" = still playing).
@@ -213,9 +289,31 @@ func check_game_over() -> String:
 		return finished
 	if missed_payments >= MISSES_TO_LOSE_BIKE:
 		return _finish("lose_bike")
-	if ratings.size() >= 10 and rating() < MIN_RATING:
-		return _finish("suspended")
+	if not suspended and ratings.size() >= 10 and rating() < MIN_RATING:
+		suspensions += 1
+		if suspensions > MAX_SUSPENSIONS:
+			return _finish("suspended")
+		suspended = true
+		suspension_appealed = false
+		stats_changed.emit()
+		account_suspended.emit()
 	return ""
+
+
+## Back online: the platform "recalculates" (drops the worst recent ratings
+## until the average clears the bar with a little room).
+func reinstate() -> void:
+	suspended = false
+	var start := maxi(0, ratings.size() - RATING_WINDOW)
+	while rating() < MIN_RATING + 0.15:
+		var worst := start
+		for i in range(start, ratings.size()):
+			if int(ratings[i]) < int(ratings[worst]):
+				worst = i
+		if int(ratings[worst]) >= 5:
+			break
+		ratings[worst] = 5
+	stats_changed.emit()
 
 
 func _finish(reason: String) -> String:
@@ -229,9 +327,12 @@ func end_run() -> String:
 
 
 func start_new_day() -> Dictionary:
+	add_fatigue(-SLEEP_RECOVERY * sleep_hours(minute))
 	day += 1
 	minute = DAY_START
 	log_today = {}
+	coffees_today = 0
+	selfie_due = DAY_START + PlatformPolicy.SELFIE_EVERY
 	var charges := morning_charges()
 	time_changed.emit(day, minute)
 	notice.emit("วันที่ %d" % day)
@@ -260,6 +361,12 @@ func new_game(seed := -1) -> void:
 	pending_refund = 0
 	appeals = []
 	log_today = {}
+	fatigue = 0.0
+	coffees_today = 0
+	suspended = false
+	suspensions = 0
+	suspension_appealed = false
+	selfie_due = DAY_START + PlatformPolicy.SELFIE_EVERY
 	finished = ""
 	input_locked = false
 	ui_open = false
@@ -290,6 +397,12 @@ func snapshot() -> Dictionary:
 		"pending_refund": pending_refund,
 		"appeals": appeals.duplicate(true),
 		"log_today": log_today.duplicate(true),
+		"fatigue": fatigue,
+		"coffees_today": coffees_today,
+		"suspended": suspended,
+		"suspensions": suspensions,
+		"suspension_appealed": suspension_appealed,
+		"selfie_due": selfie_due,
 		"finished": finished,
 	}
 
@@ -322,6 +435,12 @@ func restore(d: Dictionary) -> void:
 			if o.has(key):
 				o[key] = int(o[key])
 	log_today = d.get("log_today", {})
+	fatigue = float(d.get("fatigue", 0.0))
+	coffees_today = int(d.get("coffees_today", 0))
+	suspended = bool(d.get("suspended", false))
+	suspensions = int(d.get("suspensions", 0))
+	suspension_appealed = bool(d.get("suspension_appealed", false))
+	selfie_due = float(d.get("selfie_due", selfie_due))
 	finished = str(d.get("finished", ""))
 	inventory_changed.emit(inventory)
 	stats_changed.emit()

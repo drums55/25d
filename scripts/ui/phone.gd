@@ -129,6 +129,26 @@ func _build_orders() -> void:
 	)
 	_body.add_child(UiKit.label(status, 26, UiKit.MUTED))
 	_body.add_child(UiKit.label(Weather.summary(City.forecast()), 24, Color(0.6, 0.8, 1.0)))
+	_body.add_child(_platform_card())
+	if GameState.suspended:
+		_body.add_child(_suspended_card())
+	elif Orders.selfie_needed():
+		(
+			_body
+			. add_child(
+				(
+					UiKit
+					. card(
+						[
+							UiKit.label(
+								"ถึงเวลายืนยันตัวตน! ไม่มีงานเข้าจนกว่าจะถ่ายเซลฟี่", 26, UiKit.WARN
+							),
+							UiKit.button("ถ่ายเซลฟี่คู่กล่อง (2 นาที)", Orders.take_selfie, 26, 66),
+						]
+					)
+				)
+			)
+		)
 	var offers := Orders.offers()
 	_body.add_child(UiKit.label("งานเข้า", 32, UiKit.ACCENT))
 	if offers.is_empty():
@@ -136,7 +156,8 @@ func _build_orders() -> void:
 			UiKit.label("รองานเด้ง ... (เวลาเดินไปงานใหม่จะเข้ามาเอง)", 26, UiKit.MUTED)
 		)
 	for o in offers:
-		_body.add_child(_offer_card(o))
+		if int(o.get("bundle", o["id"])) == int(o["id"]):
+			_body.add_child(_offer_card(o))
 	_body.add_child(UiKit.label("งานที่รับไว้", 32, UiKit.ACCENT))
 	var act := Orders.active()
 	if act.is_empty():
@@ -147,7 +168,50 @@ func _build_orders() -> void:
 	_body.add_child(UiKit.button(sleep_text, func(): sleep_requested.emit(), 28, 80))
 
 
+## Today's platform announcement + the incentive quest.
+func _platform_card() -> Control:
+	var p := Orders.policy()
+	return (
+		UiKit
+		. card(
+			[
+				UiKit.label("ประกาศ: " + str(p["title"]), 26, UiKit.ACCENT),
+				UiKit.label(str(p["text"]), 22, UiKit.MUTED),
+				UiKit.label(
+					PlatformPolicy.quest_text(p, Orders.delivered_today(), Orders.quest_paid()),
+					24,
+					Color(1, 0.85, 0.5)
+				),
+			]
+		)
+	)
+
+
+func _suspended_card() -> Control:
+	var items := [
+		UiKit.label("บัญชีถูกระงับชั่วคราว", 30, UiKit.WARN),
+		UiKit.label(
+			(
+				(
+					"คะแนนต่ำกว่ามาตรฐาน ไม่มีงานเข้า (ส่งของที่ถืออยู่ได้)\n"
+					+ "ปลดล็อกอัตโนมัติพรุ่งนี้เช้า หักค่าอบรม %d บาท · โดนอีกครั้ง = ปิดบัญชีถาวร"
+				)
+				% GameState.UNLOCK_FEE
+			),
+			22,
+			UiKit.MUTED
+		),
+	]
+	if not GameState.suspension_appealed:
+		items.append(
+			UiKit.button("อุทธรณ์กับแชทบอท", open_appeal.bind({"kind": "suspension"}), 26, 66)
+		)
+	return UiKit.card(items)
+
+
 func _offer_card(o: Dictionary) -> Control:
+	if o.has("bundle"):
+		return _bundle_card(o)
 	var left := int(float(o["expires_at"]) - GameState.minute)
 	var head := UiKit.label(
 		(
@@ -172,6 +236,36 @@ func _offer_card(o: Dictionary) -> Control:
 	accept.disabled = not Orders.can_accept(o) or GameState.is_closing()
 	accept.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var skip := UiKit.button("ข้าม", func(): Orders.decline(int(o["id"])), 28)
+	lines.append(UiKit.row([accept, skip]))
+	return UiKit.card(lines)
+
+
+## A forced pair: one card, one accept for both (declining = two declines).
+func _bundle_card(o: Dictionary) -> Control:
+	var group := Orders.group_of(o)
+	var left := int(float(o["expires_at"]) - GameState.minute)
+	var total := 0
+	for g in group:
+		total += int(g["fee"])
+	var lines: Array = [
+		UiKit.label(
+			"งานพ่วง x%d · รวม %d บาท (AI จัดให้ 'ทางเดียวกัน')" % [group.size(), total], 28
+		),
+	]
+	for g in group:
+		lines.append(
+			UiKit.label(
+				"[%s] %s · %d บาท" % [OrderGen.KIND_NAMES[g["kind"]], g["item"], int(g["fee"])], 24
+			)
+		)
+		lines.append(UiKit.label(_trip_text(g), 22, UiKit.MUTED))
+		lines.append(UiKit.label(_extra_text(g), 22, Color(1, 0.85, 0.5)))
+	var accept := UiKit.button(
+		"รับทั้งคู่ (หมดใน %d นาที)" % maxi(left, 0), _accept.bind(int(o["id"])), 28
+	)
+	accept.disabled = not Orders.can_accept(o) or GameState.is_closing()
+	accept.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var skip := UiKit.button("ข้ามทั้งคู่", func(): Orders.decline(int(o["id"])), 28)
 	lines.append(UiKit.row([accept, skip]))
 	return UiKit.card(lines)
 
@@ -208,6 +302,8 @@ func _extra_text(o: Dictionary) -> String:
 		parts.append("ของใหญ่ กิน 2 ช่อง")
 	if o["kind"] == "doc":
 		parts.append("ต้องให้ %s เซ็นรับเท่านั้น" % o["sign_name"])
+	if o.get("penalized", false):
+		parts.append("ค่ารอบโดนลดเพราะอัตรารับงานต่ำ")
 	return " · ".join(parts)
 
 
@@ -351,6 +447,34 @@ func _build_wallet() -> void:
 			)
 		)
 	)
+	_body.add_child(UiKit.label("ร่างกาย", 32, UiKit.ACCENT))
+	_body.add_child(
+		UiKit.label(
+			(
+				(
+					"ความล้า %d%% (%s) — ล้ามาก = เปลี่ยนเลนช้า สัปหงก อุบัติเหตุง่าย\n"
+					+ "นอนเร็ว = หายล้ามาก · ประกันแพลตฟอร์มคุ้มครองเฉพาะ 'ระหว่างส่งงาน'"
+				)
+				% [roundi(g.fatigue), GameState.fatigue_text(g.fatigue)]
+			),
+			24,
+			UiKit.WARN if g.fatigue >= g.EXHAUSTED else UiKit.MUTED
+		)
+	)
+	(
+		_body
+		. add_child(
+			(
+				UiKit
+				. row(
+					[
+						UiKit.button("กาแฟกระป๋อง %d บาท" % g.COFFEE_PRICE, _coffee, 26, 70),
+						UiKit.button("งีบ 30 นาที", g.nap, 26, 70),
+					]
+				)
+			)
+		)
+	)
 	var open_appeals := g.appeals.filter(func(a): return a.get("open", false))
 	if not open_appeals.is_empty():
 		_body.add_child(UiKit.label("รีวิว 1 ดาวที่ไม่ยุติธรรม", 32, UiKit.WARN))
@@ -363,7 +487,7 @@ func _build_wallet() -> void:
 						. card(
 							[
 								UiKit.label('"%s" — %s' % [a["review"], a["item"]], 24),
-								UiKit.button("อุทธรณ์กับแชทบอท", _appeal.bind(a), 26, 64),
+								UiKit.button("อุทธรณ์กับแชทบอท", open_appeal.bind(a), 26, 64),
 							]
 						)
 					)
@@ -376,27 +500,43 @@ func _build_wallet() -> void:
 static func slip_text(log: Dictionary) -> String:
 	return (
 		(
-			"ส่งสำเร็จ %d งาน\nค่ารอบ %d · ทิป %d\nน้ำมันใช้ไป %.2f ลิตร · จ่ายค่าน้ำมัน %d\n"
-			+ "สำรองจ่าย COD %d · เก็บคืน %d\nจ่ายหนี้เงินต้น %d"
+			"ส่งสำเร็จ %d งาน\nค่ารอบ %d · ทิป %d · โบนัส %d · ค่าธรรมเนียมระบบ %d\n"
+			+ "น้ำมันใช้ไป %.2f ลิตร · จ่ายค่าน้ำมัน %d · กาแฟ %d\n"
+			+ "สำรองจ่าย COD %d · เก็บคืน %d\nค่ารักษา %d%s · จ่ายหนี้เงินต้น %d"
 		)
 		% [
 			int(log.get("delivered", 0)),
 			int(log.get("fees", 0)),
 			int(log.get("tips", 0)),
+			int(log.get("bonus", 0)),
+			-int(log.get("platform_fee", 0)),
 			float(log.get("fuel_l", 0.0)),
 			-int(log.get("fuel", 0)),
+			-int(log.get("food", 0)),
 			-int(log.get("cod_out", 0)),
 			int(log.get("cod_in", 0)),
+			-int(log.get("medical", 0)) + int(log.get("medical_debt", 0)),
+			(
+				" (ยืมเจ้าหนี้ %d)" % int(log.get("medical_debt", 0))
+				if int(log.get("medical_debt", 0)) > 0
+				else ""
+			),
 			-int(log.get("debt", 0)),
 		]
 	)
 
 
-func _appeal(a: Dictionary) -> void:
+func _coffee() -> void:
+	if not GameState.drink_coffee():
+		GameState.notice.emit("เงินไม่พอซื้อกาแฟ")
+
+
+func open_appeal(a: Dictionary) -> void:
 	tab = "appeal"  # refresh() leaves the chat alone while it runs
 	UiKit.clear(_body)
 	var chat := AppealChat.new(a)
-	chat.closed.connect(func(): show_tab("wallet"))
+	var back := "orders" if a.get("kind", "") == "suspension" else "wallet"
+	chat.closed.connect(func(): show_tab(back))
 	_body.add_child(chat)
 
 

@@ -1,4 +1,4 @@
-# gdlint: disable=max-public-methods
+# gdlint: disable=max-public-methods,max-file-lines
 extends Node
 ## Rider app orders (DESIGN 10.4, P0). Offers pop up while the clock runs and
 ## expire if not taken; accepted orders are picked up from the place's
@@ -28,6 +28,54 @@ var _day := -1
 func _ready() -> void:
 	rng.randomize()
 	GameState.time_changed.connect(_on_time)
+	GameState.account_suspended.connect(_on_suspended)
+
+
+## Today's platform rule + incentive (PlatformPolicy, P2).
+func policy() -> Dictionary:
+	return PlatformPolicy.for_day(GameState.city_seed, GameState.day)
+
+
+func delivered_today() -> int:
+	return int(GameState.log_today.get("delivered", 0))
+
+
+func quest_paid() -> bool:
+	return int(GameState.log_today.get("bonus", 0)) > 0
+
+
+## One job short of the incentive: the app goes quiet (the "job 20" tease).
+func teasing() -> bool:
+	return not quest_paid() and delivered_today() == int(policy()["target"]) - 1
+
+
+## Selfie-policy day and the selfie is due: no offers until one is taken.
+func selfie_needed() -> bool:
+	return policy()["selfie"] and GameState.minute >= GameState.selfie_due
+
+
+## Phone button: selfie with the delivery box. The face check fails with a
+## helmet on sometimes.
+func take_selfie() -> bool:
+	GameState.advance_minutes(2)
+	if rng.randf() < 0.25:
+		GameState.notice.emit(
+			"ระบบ: ใบหน้าไม่ตรงกับในระบบ (กรุณาถอดหมวกกันน็อก ... แล้วใส่กลับ) ลองใหม่"
+		)
+		return false
+	GameState.selfie_due = GameState.minute + PlatformPolicy.SELFIE_EVERY
+	GameState.notice.emit("ยืนยันตัวตนสำเร็จ! ขอบคุณที่ยิ้ม (ระบบไม่เห็นเพราะหมวก)")
+	orders_changed.emit()
+	return true
+
+
+## Suspended: offers and not-yet-picked jobs go to other riders; what is in
+## the bag can still be delivered.
+func _on_suspended() -> void:
+	for o in GameState.orders.duplicate():
+		if o["status"] != "picked":
+			GameState.orders.erase(o)
+	orders_changed.emit()
 
 
 func _on_time(_day: int, minute: float) -> void:
@@ -45,8 +93,13 @@ func tick(minute: float) -> void:
 		if o["status"] == "offered" and minute > float(o["expires_at"]):
 			GameState.orders.erase(o)
 			changed = true
-	if not GameState.is_closing() and GameState.finished.is_empty():
-		if offers().size() < MAX_OFFERS and minute >= _next_offer_at:
+	if (
+		not GameState.is_closing()
+		and GameState.finished.is_empty()
+		and not GameState.suspended
+		and not selfie_needed()
+	):
+		if offer_groups() < MAX_OFFERS and minute >= _next_offer_at:
 			_add_offer(minute)
 			changed = true
 	if changed:
@@ -55,17 +108,39 @@ func tick(minute: float) -> void:
 
 func _add_offer(minute: float) -> void:
 	var rain := City.rain_now()
-	var o := OrderGen.make(rng, City.get_city(), minute, rain, GameState.next_order_id)
-	var to_pick := City.route_to(int(o["pickup"]))
-	var trip := City.route_between(int(o["pickup"]), int(o["dropoff"]))
-	OrderGen.set_deadline(
-		o, minute, float(to_pick.get("minutes", 20.0)), float(trip.get("minutes", 25.0))
-	)
+	var p := policy()
+	var o := OrderGen.make(rng, City.get_city(), minute, rain, GameState.next_order_id, p)
 	GameState.next_order_id += 1
-	GameState.orders.append(o)
-	GameState.offered += 1
+	var to_pick := float(City.route_to(int(o["pickup"])).get("minutes", 20.0))
+	var trip := City.route_between(int(o["pickup"]), int(o["dropoff"]))
+	OrderGen.set_deadline(o, minute, to_pick, float(trip.get("minutes", 25.0)))
+	var group := [o]
+	if rng.randf() < float(p["bundle"]):
+		var b := OrderGen.make_bundle(rng, City.get_city(), o, GameState.next_order_id)
+		GameState.next_order_id += 1
+		# the app times the pair as if each were a single job from the pickup
+		var trip_b := float(
+			City.route_between(int(b["pickup"]), int(b["dropoff"])).get("minutes", 25.0)
+		)
+		var leg := float(
+			City.route_between(int(o["dropoff"]), int(b["dropoff"])).get("minutes", 20.0)
+		)
+		OrderGen.set_deadline(b, minute, to_pick, trip_b + leg * 0.5)
+		group.append(b)
+	var low_accept := (
+		float(p["min_accept"]) > 0.0 and GameState.acceptance() < float(p["min_accept"])
+	)
+	for g in group:
+		if low_accept:
+			g["fee"] = int(int(g["fee"]) * PlatformPolicy.ACCEPT_PENALTY)
+			g["penalized"] = true
+		GameState.orders.append(g)
+		GameState.offered += 1
 	var gap := GAP_RAIN if rain > 0 else GAP_DRY
-	_next_offer_at = minute + rng.randi_range(gap.x, gap.y)
+	var wait := float(rng.randi_range(gap.x, gap.y))
+	if teasing():
+		wait *= PlatformPolicy.TEASE_GAP
+	_next_offer_at = minute + wait
 	offer_added.emit(o)
 	GameState.stats_changed.emit()
 
@@ -81,6 +156,23 @@ func offers() -> Array:
 	return GameState.orders.filter(func(o): return o["status"] == "offered")
 
 
+## Offers on screen, counting a forced pair once.
+func offer_groups() -> int:
+	var seen := {}
+	for o in offers():
+		seen[int(o.get("bundle", o["id"]))] = true
+	return seen.size()
+
+
+## The orders that go together with `o` (itself, plus its pair if bundled).
+func group_of(o: Dictionary) -> Array:
+	if not o.has("bundle"):
+		return [o]
+	return GameState.orders.filter(
+		func(x): return int(x.get("bundle", -1)) == int(o["bundle"]) and x["status"] == o["status"]
+	)
+
+
 func active() -> Array:
 	return GameState.orders.filter(func(o): return o["status"] != "offered")
 
@@ -93,7 +185,10 @@ func bag_used() -> int:
 
 
 func can_accept(o: Dictionary) -> bool:
-	return bag_used() + int(o["size"]) <= GameState.BAG_SLOTS
+	var need := 0
+	for g in group_of(o):
+		need += int(g["size"])
+	return bag_used() + need <= GameState.BAG_SLOTS
 
 
 func carrying_cargo() -> bool:
@@ -107,8 +202,9 @@ func accept(id: int) -> bool:
 	var o := get_order(id)
 	if o.is_empty() or o["status"] != "offered" or not can_accept(o):
 		return false
-	o["status"] = "accepted"
-	GameState.accepted += 1
+	for g in group_of(o):
+		g["status"] = "accepted"
+		GameState.accepted += 1
 	GameState.notice.emit("รับงาน: %s" % o["item"])
 	GameState.stats_changed.emit()
 	orders_changed.emit()
@@ -119,7 +215,8 @@ func decline(id: int) -> void:
 	var o := get_order(id)
 	if o.is_empty() or o["status"] != "offered":
 		return
-	GameState.orders.erase(o)
+	for g in group_of(o):
+		GameState.orders.erase(g)
 	orders_changed.emit()
 
 
@@ -449,6 +546,14 @@ func _deliver(id: int) -> bool:
 		GameState.add_money(int(o["cod"]), "cod_in")
 	GameState.add_rating(stars)
 	GameState.log_today["delivered"] = int(GameState.log_today.get("delivered", 0)) + 1
+	var p := policy()
+	if int(p["sys_fee"]) > 0:
+		GameState.add_money(-int(p["sys_fee"]), "platform_fee")
+	if not quest_paid() and delivered_today() >= int(p["target"]):
+		GameState.add_money(int(p["reward"]), "bonus")
+		GameState.notice.emit(
+			"ภารกิจสำเร็จ! โบนัส %d บาท (ระบบงงเล็กน้อยว่างานนี้มาได้ยังไง)" % int(p["reward"])
+		)
 	GameState.advance_minutes(2)
 	var who: String = o["customer"]
 	var lines: Array = []

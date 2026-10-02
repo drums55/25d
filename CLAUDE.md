@@ -80,7 +80,7 @@ scenes/rooms/location.tscn  สถานที่เดียวที่สร�
 scenes/characters/       character_view.tscn (sprite 8 ทิศ; ใช้จริง), cutout_rig.tscn (placeholder fallback)
 scenes/props/            prop_block, npc, interactable, patrol_bot, steam_vent
 scripts/autoload/        GameState (เงิน หนี้ น้ำมัน ดาว เวลา orders save slots), Dialog, SceneRouter, Settings, City, Orders
-scripts/core/            Iso, SaveData, DialogData, ArtLibrary, PickTest, CityGen, Weather, OrderGen — pure logic, unit-tested
+scripts/core/            Iso, SaveData, DialogData, ArtLibrary, PickTest, CityGen, Weather, OrderGen, RideTrack, PlatformPolicy — pure, unit-tested
 scripts/ride/            ride_scene (ช่วงขี่), ride_road (วาดถนน); scenes/ride/ride.tscn
 scripts/ui/              hud, phone, city_map_view, day_clock, rain_overlay, save_slots, settings_panel, main_menu, ui_kit, dialog_box
 tools/art/               gen_svg.py (svg เก่า), png/ (paint.py room.py props_th.py ...), 3d/ (ตัวละคร)
@@ -155,6 +155,22 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
     (บอท "น้องส่งไว": ทุกข้อความ +3 นาที, ขอคนจริง = คิว 3,482, หลักฐานเพิ่มโอกาส; สำเร็จ ~15–45% → ดาวนั้นกลายเป็น 5)
   - PatrolBot เพิ่ม `character_name` (sprite คน), `chases`, `needs_cargo`, `catch_kind`, `tamperable`, `talk_dialog`
   - IsoRoom ตั้ง z_index -20 (พื้น placeholder) + World +20 เพื่อให้กรวยสายตา (z -1) อยู่เหนือพื้น
+- **P2 แพลตฟอร์มโหด (2026-10-02)**:
+  - **นโยบายรายวัน** `PlatformPolicy.for_day(seed, day)` (pure, `scripts/core/platform_policy.gd`): วัน 1 = welcome, วัน 2–7 สุ่มไม่ซ้ำจาก
+    fee_cut (−6/งาน), surge_cut (ฝน +2), bundle_ai (งานพ่วง 50%), accept_rule (รับงาน <80% = ค่ารอบ ×0.75), selfie (ต้องเซลฟี่ทุก 2 ชม.
+    ไม่งั้นไม่มีงานเข้า, 25% หน้าไม่ตรง), fee_up (+2 แต่ค่าธรรมเนียมระบบ 3/งาน), mega_quest (เป้า +3 โบนัส ×1.5).
+    ประกาศของพรุ่งนี้อยู่ท้ายสลิปตอนนอน ("แจ้งล่วงหน้าคืนเดียว"), ของวันนี้เป็นการ์ดบนสุดแท็บงาน. `OrderGen.make(..., policy)` ใช้ fee_delta/surge
+  - **โบนัสหลอก**: ภารกิจรายวัน ส่งครบ `target` งาน รับ `reward` (log `bonus`); ขาดอีกงานเดียว = `Orders.teasing()` → ช่องว่างงานเข้า ×2.5
+  - **งานพ่วง**: `OrderGen.make_bundle` = จุดรับเดียวกัน ปลายทางไกลสุดจากงานแรก ค่ารอบเหมา 15 บาท, `bundle` = id งานแรก; รับ/ข้าม/หมดอายุพร้อมกัน
+    (`Orders.group_of`, `offer_groups` นับคู่เป็นหนึ่ง), ข้าม = นับปฏิเสธ 2 งาน. deadline คิดแบบ "แอปคิดเหมือนงานเดียว" (+ครึ่งขาเชื่อม)
+  - **ปิดบัญชี**: เรตติ้ง < 4.3 ครั้งแรก = `GameState.suspended` (signal `account_suspended` → overlay; งานที่ยังไม่รับของโดนโอนไปคนอื่น,
+    ไม่มีงานเข้า) → อุทธรณ์ AppealChat โหมด `{"kind": "suspension"}` ได้ครั้งเดียว (35%+หลักฐาน, สำเร็จ = `reinstate()` + ดูวิดีโอ 30 นาที)
+    ไม่งั้นปลดล็อกเช้าวันถัดไป หักค่าอบรม 199. `reinstate()` เปลี่ยนดาวแย่สุดในหน้าต่างเป็น 5 จนเฉลี่ย ≥ 4.45. ครั้งที่สอง = จบ "suspended" (ปิดถาวร)
+  - **ความล้า** `GameState.fatigue` 0–100: +0.05/นาที (ฝน ×1.3), ชน +4, นอน −12/ชม. (นอน 23:00 = 8 ชม. หายหมด, ตีสอง = 5 ชม.),
+    กาแฟ 15 บาท (−10 หารจำนวนแก้ววันนั้น), งีบ 30 นาที. ≥40 เพลีย: เปลี่ยนเลนช้าลงถึง ×0.6 (`RideScene.steer_factor`); ≥70 ง่วงมาก: สัปหงก รถส่ายเลนเองทุก 4–7 วิ
+  - **อุบัติเหตุ**: ชนในช่วงขี่ → โอกาส `City.accident_chance(fatigue, rain)` = 4% + 0.4%/แต้มล้าเกิน 30 + ฝน 5% → `City.accident()`:
+    คลินิก 40 นาที 300–600 บาท อาหารหก ล้า +10, เงินไม่พอ = ยืมเจ้าหนี้ (หนี้เพิ่ม); ประกันแพลตฟอร์ม "พิจารณา 14 วันทำการ" / "ไม่คุ้มครอง". ข้ามช่วงขี่ = ครึ่งโอกาส เมื่อล้า ≥ 40
+  - save เพิ่ม fatigue, coffees_today, suspended, suspensions, suspension_appealed, selfie_due (ยัง v5, ค่า default ถ้าไม่มี)
 - **ส่งไม่ทัน (เจ้าของ 2026-10-01: "ส่งช้าตลอด")**: deadline คิดจากเส้นทางจริง `OrderGen.set_deadline` = ขี่ไปจุดรับ + (รออาหาร) +
   ทางรับ→ส่ง ×1.25 + slack (อาหาร 15 / พัสดุ 90 / เอกสาร 30 นาที); อาหารร้อน <25 นาที อุ่น <50; นาฬิกาในสถานที่ช้าลง ปกติ 2 วิ/นาที
 - **สถานที่**: `scenes/rooms/location.tscn` + `LocationRoom` (extends IsoRoom) สร้างจาก `LocationTemplates.T[type]` ตอน `_ready`
@@ -240,11 +256,12 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
   Android cmdline-tools (`platform-tools`, `build-tools;34.0.0`) + ตั้ง `export/android/android_sdk_path`
 
 ## สถานะ / ยังไม่ได้ทำ
+- **P2 เสร็จ (2026-10-02)**: นโยบายรายวัน, โบนัสหลอก, งานพ่วง, ปิดบัญชี+อุทธรณ์, ความล้า, อุบัติเหตุ (89 tests)
 - **P1 เสร็จ (2026-10-01)**: ปักหมุดผิด, COD ไม่รับ, ยกเลิกหลังซื้อ, รปภ.คอนโด+ลิฟต์, เจ้าหนี้ตามหา, อุทธรณ์ 1 ดาว, deadline สมจริง
 - **ช่วงขี่เล่นได้ เสร็จ (2026-10-01)** — เจ้าของ: "ดีขึ้นแล้ว" หลังลดความเร็ว
 - **P0 เสร็จ (2026-10-01)**: เมนู/เซฟ 3 ช่อง+ออโต้/ตั้งค่า, เมืองสุ่ม+แผนที่+ขี่, ฝน/น้ำท่วม, แอป (งานเข้า/รับ/ข้าม/ยกเลิก/นำทาง),
   อาหาร/พัสดุ/เอกสาร, ดาว+รีวิว, เงิน/หนี้/ค่าเช่า/น้ำมัน/ปั๊ม, สลิปรายวัน, ตอนจบ 4 แบบ
-- ต่อไป (DESIGN 10.8): **P2** แพลตฟอร์มโหด (นโยบายรายวัน, โบนัสหลอก, งานซ้อนแปลก, ปิดบัญชี, ความล้า/อุบัติเหตุ);
+- ต่อไป (DESIGN 10.8): **P3** เนื้อหา absurd + ตอนจบ + ประเภทสถานที่เพิ่ม;
   **art กรุงเทพฯ ปัจจุบัน** (พื้น/ผนังต่อประเภท, prop: เซเว่น ตู้กดน้ำ โต๊ะสแตนเลส ป้อม รปภ. หัวจ่ายน้ำมัน ฯลฯ ด้วย paint.py)
 - ยังไม่มี: เสียง, sprite จริงของ NPC แต่ละแบบ, balance (ตัวเลขใน GameState/OrderGen ยังเดา)
 - ลบ save บนแท็บเล็ต = `adb shell run-as com.drums55.game25d rm files/save_0.json`
