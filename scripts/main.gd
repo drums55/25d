@@ -122,10 +122,12 @@ func open_travel() -> void:
 	_hud.show_choices("ขี่เรือเตอร์ไซค์ไปไหนดี", choices)
 
 
-## Ride the canal to `dest` (or arrive at once with Settings.skip_ride).
-func travel(dest: String) -> void:
+## Ride the canal to `dest`: a short skippable cutscene (owner 2026-10-02:
+## the playable ride "felt like padding" — hits never mattered). `play` =
+## the steerable runner, kept for story set pieces.
+func travel(dest: String, play := false) -> void:
 	_hud.hide_overlay()
-	if Settings.skip_ride:
+	if BoatRide.skip_all:
 		arrive(dest)
 		return
 	var seed := hash([GameState.room, dest, GameState.day, GameState.flags.size()])
@@ -133,15 +135,16 @@ func travel(dest: String) -> void:
 		"dest": dest,
 		"name": Rooms.TRAVEL.get(dest, {}).get("name", dest),
 		"track": BoatTrack.generate(seed),
+		"play": play,
+		"seed": seed,
+		"tint": NIGHT_TINT if GameState.chapter >= 3 else Color.WHITE,
 	}
 	SceneRouter.go_to(BOAT_SCENE, "")
 
 
 ## End of a ride (or a skipped one): into the destination room.
-func arrive(dest: String, bumps := 0) -> void:
+func arrive(dest: String, _bumps := 0) -> void:
 	go_room(dest, "from_bike")
-	if bumps >= 4:
-		GameState.notice.emit("ชนมา %d ครั้ง ... กล่องในกระเป๋าบ่นเป็นเสียงฟู่" % bumps)
 
 
 func load_room(room_path: String, spawn_id: String) -> bool:

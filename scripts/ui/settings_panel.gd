@@ -1,7 +1,7 @@
 class_name SettingsPanel
 extends VBoxContainer
-## Settings written in the notebook: text speed, volume, hints, skipping the
-## canal ride (Settings autoload).
+## Settings written in the notebook: text speed, volume, hints (Settings
+## autoload).
 
 
 func _init() -> void:
@@ -20,7 +20,6 @@ func refresh() -> void:
 	add_child(UiKit.hand_label("เสียง %d%%" % roundi(Settings.volume * 100), 30, UiKit.INK_FADED))
 	add_child(UiKit.ink_slider(Settings.volume, _set_volume))
 	add_child(UiKit.hand_check("แสดงคำแนะนำ", Settings.show_hints, _set_hints))
-	add_child(UiKit.hand_check("ข้ามช่วงขี่เรือเตอร์ไซค์", Settings.skip_ride, _set_skip))
 
 
 ## Options in a row; the chosen one is ticked in red.
@@ -50,9 +49,4 @@ func _set_volume(v: float) -> void:
 
 func _set_hints(on: bool) -> void:
 	Settings.show_hints = on
-	Settings.save_settings()
-
-
-func _set_skip(on: bool) -> void:
-	Settings.skip_ride = on
 	Settings.save_settings()

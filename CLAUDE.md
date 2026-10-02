@@ -164,7 +164,11 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   - **เรือเตอร์ไซค์** (ชื่อที่เจ้าของตั้ง 2026-10-02 แทน "รถลอยน้ำ" ที่ "ชื่อไม่เท่" — มอเตอร์ไซค์ที่ลอยน้ำได้; ใช้คำนี้ทุกที่ในเกม; art = `boat_bike` ใน props_2090.py: มอไซถอดล้อ ผูกบนถังพลาสติกน้ำเงินสองใบ ใบพัดหางยาว ปล่องไอน้ำ เป็ดยางหัวเรือ — `steam_bike` เก่าลบแล้ว) = prop `action: "travel"` (+exit_flag bike_ready) → `Main.open_travel()` → `Hud.show_choices` รายการ `Rooms.TRAVEL`
     (ปลดล็อกด้วย flag `know_<...>`) → `Main.travel(dest)` → `BoatRide` (`scripts/ride/boat_ride.gd` + pure `BoatTrack`; 3 เลนในคลอง
     เรือหางยาว ลัง โอ่ง ถังขยะ ผักตบชวา(ช้า) หุ่นบนแพ — ชน = แค่สะดุด + มุก ไม่มีบทลงโทษ) → `Main.arrive(dest)` = `go_room(dest, "from_bike")`.
-    ทุกห้องที่ไปได้ต้องมี spawn `from_bike`. ตั้งค่า "ข้ามช่วงขับเรือ" (`Settings.skip_ride`, test ตั้ง true เอง)
+    ทุกห้องที่ไปได้ต้องมี spawn `from_bike`.
+    **การเดินทาง = cutscene ~3 วิ (2026-10-02, เจ้าของ: "ตอนเดินทางเหมือนส่วนเกิน ไม่ให้คุณให้โทษ")**: เรือแล่นเลนกลาง ผ่านมุกคลอง 1 อย่าง
+    (`BoatRide.GAGS` เลือกจาก seed: ผักตบพันใบพัด, ชนลัง, หุ่นบนแพโบกมือ, โอ่งมังกร, ถังขยะ, เรือหางยาว) + ป้ายสังกะสี "→ ปลายทาง",
+    แตะที่ไหนก็ได้ = ข้าม (`skip()`), บท 3 ย้อมกลางคืน. ตัวเลือก "ข้ามช่วงขี่" ในตั้งค่าลบแล้ว. ช่วงบังคับเรือ 3 เลนเดิม = `travel(dest, true)`
+    เก็บไว้ทำฉากพิเศษที่การชนมีผลกับเรื่อง (เช่น คืนตีสามบท 3). test ใช้ `BoatRide.skip_all = true` (ถึงทันที)
   - **น้ำขึ้นลง**: `GameState.tide` เริ่ม "high"; entry ในห้อง/use มี `if_tide`; ม้านั่ง (dialog line `event: "wait_tide"`) สลับน้ำแล้ว
     Main โหลดห้องใหม่หลัง dialog จบ. HUD มุมซ้ายบนบอก น้ำขึ้น/น้ำลง
   - ห้องมี `enter: {dialog, flag}` = ฉากตอนเข้าห้องครั้งแรก (Main.load_room)
@@ -289,7 +293,7 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   `*.import` ก่อน pull (Godot สร้างใหม่เอง); `run.ps1` pull ให้เองทุกครั้ง (`-NoPull` ถ้าไม่ต้องการ), `update.ps1` ใช้ตัวเดียวกัน
 - SceneRouter.go_to ที่ค้าง await fade อยู่ตอน Main ถูก free (กลับหน้าแรก / test จบกลางทาง) เคยทำ `_busy` ค้างตลอดไป
   → ตรวจ `is_instance_valid(_host)` หลัง fade แล้วรีเซ็ต. test ที่เขียน settings ต้องใช้ path ชั่วคราว (`save_settings(path)`)
-  ไม่งั้นค่า skip_ride ของ test ไปติดใน `user://settings.cfg` จริง
+  ไม่งั้นค่าของ test ไปติดใน `user://settings.cfg` จริง
 - **adb wireless (2026-10-02)**: เจ้าของใช้ **Tailscale** และเครื่อง build อยู่คนละที่กับแท็บเล็ต → `update.ps1 -Device 190:40011`
   (สั้น = หา peer ใน `tailscale status` ที่ IP ลงท้าย .190 ก่อน ไม่เจอค่อยใช้ prefix LAN ของ PC; IP เต็ม/ชื่อ MagicDNS ก็ได้) → `adb connect`
   → จำไว้ใน `tools/.adb_device` (gitignored) รอบหน้าไม่ต้องใส่. พอร์ต wireless debugging เปลี่ยนทุกครั้งที่เปิดใหม่ → ใส่ -Device ใหม่

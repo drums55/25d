@@ -1,10 +1,12 @@
 class_name BoatRide
 extends Node2D
 ## Riding the floating bike along a canal to another place (DESIGN 11.5).
-## Main.travel() sets `pending` and loads this scene; tap above / below the
-## bike (W/S on PC) to change lane, dodge boats, crates, jars and the
-## collector robot on its raft; water hyacinth slows you. At the end
-## Main.arrive() loads the destination room.
+## Main.travel() sets `pending` and loads this scene. Normally a ~3 s
+## cutscene (owner 2026-10-02: the playable ride was padding): the bike
+## cruises down the middle lane past one canal gag with a line from the
+## rider; a tap anywhere skips it. `pending.play` = the steerable runner
+## (tap above / below the bike, W/S on PC, to change lane; hyacinth slows),
+## kept for story set pieces. At the end Main.arrive() loads the room.
 
 const VIEW_AHEAD := 24.0
 const VIEW_BEHIND := 8.0
@@ -16,6 +18,19 @@ const DECOR_GAP := 2.6
 const BUMP_STOP := 0.8
 ## Where the rider's feet go so that, sitting ("ride" pose), they land on the seat.
 const RIDER_SEAT := Vector2(-6, -30)
+## Cutscene length (s) and when the gag line shows.
+const CUT_TIME := 3.4
+const GAG_AT := 0.7
+## One of these drifts past on each trip: obstacle kind, x, lane, line.
+## Lane 0 = right in the bike's way (it bumps / slows, which is the joke).
+const GAGS := [
+	["hyacinth", 6.0, 0, "ผักตบชวาพันใบพัด! ... ศัตรูถาวรของคลองกรุงเทพฯ"],
+	["crate", 6.5, 0, "โป๊ก! ชนลังลอยน้ำ ... ขอโทษครับ ลังใครก็ไม่รู้"],
+	["robot", 7.0, 1, "หุ่นทวงหนี้บนแพโบกมือ ... หรือมันเล็งอยู่"],
+	["jar", 6.0, -1, "โอ่งมังกรลอยผ่าน มีปลาหมอนอนอยู่ข้างใน ไม่ต้องจ่ายค่าเช่า อิจฉา"],
+	["bin", 6.0, 1, 'ถังขยะลอยผ่าน ยังติดสติกเกอร์ "แยกขยะ ชีวิตดีขึ้น"'],
+	["longtail", 4.0, -1, "เรือหางยาวแซงไม่ได้ เพราะเรือเตอร์ไซค์มีเป็ดยางนำทาง"],
+]
 const LINES := {
 	"bump":
 	[
@@ -33,8 +48,12 @@ const LINES := {
 
 ## Set by Main.travel(): {"dest": room id, "name": shown name, "track": BoatTrack}.
 static var pending := {}
+## Tests: arrive at once without loading the ride scene.
+static var skip_all := false
 
 var dest := ""
+var play := false
+var gag_line := ""
 var track := {}
 var travelled := 0.0
 var t := 0.0
@@ -63,7 +82,9 @@ func _ready() -> void:
 		push_error("BoatRide: no pending trip")
 		return
 	dest = pending["dest"]
-	track = pending["track"]
+	play = bool(pending.get("play", false))
+	track = pending["track"] if play else cutscene_track(int(pending.get("seed", 0)))
+	modulate = pending.get("tint", Color.WHITE)
 	_rng.seed = hash([dest, "lines"])
 	_canal = Node2D.new()
 	_canal.z_index = -20
@@ -80,6 +101,17 @@ func _ready() -> void:
 	_cam.make_current()
 	_build_ui(str(pending.get("name", dest)))
 	_layout()
+
+
+## A short straight run with one gag (GAGS) placed from `seed`.
+func cutscene_track(seed: int) -> Dictionary:
+	var gag: Array = GAGS[posmod(seed, GAGS.size())]
+	gag_line = gag[3]
+	return {
+		"speed": BoatTrack.SPEED,
+		"length": BoatTrack.SPEED * (CUT_TIME - RAMP * 0.5),
+		"obstacles": [{"kind": gag[0], "x": gag[1], "lane": gag[2]}],
+	}
 
 
 func _sprite(art: String, scale_k := 1.0) -> Sprite2D:
@@ -135,25 +167,47 @@ func _build_ui(place: String) -> void:
 	box.position = Vector2(40, 960)
 	box.custom_minimum_size = Vector2(600, 0)
 	_ui.add_child(box)
+	_toast = UiKit.label("", 40, Color(1, 0.9, 0.6))
+	_toast.add_theme_color_override("font_outline_color", Color(0.1, 0.06, 0.04))
+	_toast.add_theme_constant_override("outline_size", 10)
+	_toast.position = Vector2(360, 230)
+	_toast.size = Vector2(1200, 120)
+	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_toast.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_ui.add_child(_toast)
+	if not play:
+		# where we're going on a little tin sign, and how to skip
+		var sign := Label.new()
+		sign.text = "→ %s" % place
+		sign.add_theme_font_override("font", UiKit.FONT_SIGN)
+		sign.add_theme_font_size_override("font_size", 34)
+		sign.add_theme_color_override("font_color", UiKit.SIGN_TEXT)
+		sign.add_theme_stylebox_override("normal", UiKit.nine("sign", 30, Vector4(34, 18, 34, 16)))
+		sign.position = Vector2(48, 40)
+		_ui.add_child(sign)
+		var skip := UiKit.label("แตะเพื่อข้าม", 26, Color(1, 1, 1, 0.55))
+		skip.autowrap_mode = TextServer.AUTOWRAP_OFF
+		_ui.add_child(skip)
+		var screen := get_viewport().get_visible_rect().size
+		skip.position = screen - skip.get_minimum_size() - Vector2(60, 40)
+		return
 	box.add_child(UiKit.label("ขี่เรือเตอร์ไซค์ไป %s" % place, 30, UiKit.ACCENT))
 	_progress = ProgressBar.new()
 	_progress.custom_minimum_size = Vector2(600, 26)
 	_progress.show_percentage = false
 	box.add_child(_progress)
 	box.add_child(UiKit.label("แตะเหนือรถ = เลนซ้าย · แตะใต้รถ = เลนขวา", 24, UiKit.MUTED))
-	_toast = UiKit.label("", 40, Color(1, 0.9, 0.6))
-	_toast.add_theme_color_override("font_outline_color", Color(0.1, 0.06, 0.04))
-	_toast.add_theme_constant_override("outline_size", 10)
-	_toast.position = Vector2(460, 260)
-	_toast.size = Vector2(1000, 120)
-	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_ui.add_child(_toast)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if done:
 		return
 	var touch := event as InputEventScreenTouch
+	if not play:
+		if (touch and touch.pressed) or event.is_action_pressed("ui_accept"):
+			get_viewport().set_input_as_handled()
+			skip()
+		return
 	if touch and touch.pressed:
 		var world := get_canvas_transform().affine_inverse() * touch.position
 		steer(-1 if Iso.world_to_grid(world).y < lane else 1)
@@ -162,6 +216,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		steer(-1)
 	elif event.is_action_pressed("move_down") or event.is_action_pressed("move_right"):
 		steer(1)
+
+
+## Cut the trip short (a tap during the cutscene).
+func skip() -> void:
+	if not done and not SceneRouter.is_busy():
+		_finish()
 
 
 func steer(dir: int) -> void:
@@ -177,6 +237,8 @@ func _process(delta: float) -> void:
 
 ## Advances the ride by `delta` seconds (tests call this directly).
 func step(delta: float) -> void:
+	if not play and not gag_line.is_empty() and t < GAG_AT and t + delta >= GAG_AT:
+		_say(gag_line)
 	t += delta
 	lane = move_toward(lane, float(target_lane), LANE_MOVE * delta)
 	var speed: float = float(track["speed"]) * clampf(t / RAMP, 0.2, 1.0)
@@ -207,8 +269,9 @@ func _check_hits() -> void:
 			_slow = 1.5
 		else:
 			_stopped = BUMP_STOP
-		var pool: Array = LINES[effect]
-		_say(pool[_rng.randi() % pool.size()])
+		if play:
+			var pool: Array = LINES[effect]
+			_say(pool[_rng.randi() % pool.size()])
 
 
 func _say(text: String) -> void:

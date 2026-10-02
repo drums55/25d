@@ -10,7 +10,7 @@ var _hud: Hud
 
 func before_each():
 	TestHelpers.start_in("home")
-	Settings.skip_ride = true
+	BoatRide.skip_all = true
 	Puzzles.rng.seed = 1
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	add_child_autofree(_main)
@@ -20,7 +20,7 @@ func before_each():
 
 
 func after_each():
-	Settings.skip_ride = false
+	BoatRide.skip_all = false
 	TestHelpers.finish_dialog()
 	_hud.hide_overlay()
 	GameState.delete_save(0)
@@ -498,10 +498,10 @@ func test_boat_track_and_ride():
 	var a := BoatTrack.generate(5)
 	assert_eq(a, BoatTrack.generate(5), "deterministic")
 	assert_gt(a["obstacles"].size(), 3)
-	Settings.skip_ride = false
+	BoatRide.skip_all = false
 	GameState.set_flag("bike_ready")
 	await _go("pier", "from_home")
-	_main.travel("noodle_boat")
+	_main.travel("noodle_boat", true)
 	await wait_seconds(0.8)
 	var ride: BoatRide = get_tree().get_first_node_in_group("ride")
 	assert_not_null(ride)
@@ -513,6 +513,36 @@ func test_boat_track_and_ride():
 	ride.step(0.05)
 	await wait_seconds(0.8)
 	assert_eq(_room().room_id, "noodle_boat")
+
+
+func test_trip_is_a_short_skippable_cutscene():
+	BoatRide.skip_all = false
+	GameState.set_flag("bike_ready")
+	await _go("pier", "from_home")
+	_main.travel("noodle_boat")
+	await wait_seconds(0.8)
+	var ride: BoatRide = get_tree().get_first_node_in_group("ride")
+	assert_not_null(ride)
+	assert_false(ride.play)
+	assert_false(ride.gag_line.is_empty(), "one canal gag per trip")
+	assert_eq(ride.track["obstacles"].size(), 1)
+	var tap := InputEventScreenTouch.new()
+	tap.pressed = true
+	ride._unhandled_input(tap)
+	assert_true(ride.done, "a tap skips the trip")
+	await wait_seconds(0.8)
+	assert_eq(_room().room_id, "noodle_boat")
+	# left alone, every gag finishes within a few seconds
+	for i in BoatRide.GAGS.size():
+		var r := BoatRide.new()
+		r.track = r.cutscene_track(i)
+		var secs := 0.0
+		while r.travelled < float(r.track["length"]) and secs < 10.0:
+			r.t += 0.05
+			secs += 0.05
+			r.travelled += float(r.track["speed"]) * clampf(r.t / BoatRide.RAMP, 0.2, 1.0) * 0.05
+		assert_lt(secs, 6.0, "gag %d" % i)
+		r.free()
 
 
 func test_collector_catch_pushes_and_talks():
