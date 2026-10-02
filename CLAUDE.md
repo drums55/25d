@@ -104,11 +104,12 @@ scenes/ui/main_menu.tscn เมนูหลัก; scenes/main.tscn = เกม:
 scenes/rooms/adventure_room.tscn  ห้องเดียวที่สร้างจาก Rooms.ROOMS[GameState.room]
 scenes/characters/       character_view.tscn (sprite 8 ทิศ; ใช้จริง), cutout_rig.tscn (placeholder fallback)
 scenes/props/            prop_block, npc, interactable, patrol_bot, steam_vent
-scripts/autoload/        GameState (flags กระเป๋า บท วัน น้ำ ห้อง เซฟ), Dialog, SceneRouter, Settings, Puzzles (ของ/ผสม/ใช้)
+scripts/autoload/        GameState (flags กระเป๋า บท วัน น้ำ ห้อง เซฟ), Dialog, SceneRouter, Settings, Puzzles (ของ/ผสม/ใช้), Audio
 scripts/core/            Iso, SaveData, DialogData, ArtLibrary, PickTest — pure, unit-tested
 scripts/world/           adventure_room, rooms (ข้อมูลห้อง), interactable, marker_spot, patrol_bot, prop_block, iso_room
 scripts/ui/              hud (กระเป๋า+เมนู), save_slots, settings_panel, main_menu, ui_kit, dialog_box
 assets/data/puzzles.json ของ สูตรผสม การใช้ของ คำตอบเมื่อผิด
+tools/audio/gen_audio.py เสียงทั้งหมด (สังเคราะห์ด้วยโค้ด) → assets/audio/
 tools/art/               gen_svg.py (svg เก่า), png/ (paint.py room.py props_th.py ...), 3d/ (ตัวละคร)
 assets/dialog/dialog.json  บทพูด/ดูของ (intro, look_*, talk_*, catch_*); format อยู่หัวไฟล์ scripts/core/dialog_data.gd
 test/unit/               GUT tests (test_helpers.gd = TestHelpers.start_in(room))
@@ -228,6 +229,16 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   ตึกแห้งหลังกำแพงกันทะเล "บจ. ป้องกันภัย", ยอดปรางค์จมน้ำครึ่งองค์, บ้านยกเสาไฟส้ม, เสาไฟสายระโยงระยาง, ป้ายนีออน "ส่งไว",
   ราวตากผ้า, เรือหางยาว, เงาสะท้อนในคลอง + ผักตบ; ซ้ายมือมืดไว้ให้ชื่อเกม/ปุ่ม. `main_menu.gd` วางไรเดอร์ท่า ride บนเรือเตอร์ไซค์
   (`BOAT_AT` สัดส่วนจอ, `BOAT_SCALE`) โยกด้วย tween + ไอน้ำ CPUParticles2D; พื้นหลัง `STRETCH_KEEP_ASPECT_COVERED` (จอกว้างตัดขอบ)
+- **เสียง (2026-10-02, เจ้าของ: "ทำเสียงต่อเลย")**: สังเคราะห์ด้วยโค้ดทั้งหมด `tools/audio/gen_audio.py [out] [ชื่อ...]` (numpy+scipy → ffmpeg libvorbis,
+  ~20 วิ) → `assets/audio/{music,ambience,sfx}/<name>.ogg` (mono). เครื่องดนตรี: ระนาด (partial ไม่ฮาร์มอนิก + รัวเมื่อโน้ตยาว), ขิม (Karplus-Strong),
+  ฉิ่ง/ฉาบ, ฆ้อง, โทน — **เพลงไทยใช้ 7-TET** (`p7`), ลูกทุ่งวิทยุ/งานแต่งใช้ 12-TET (`p12`). loop ต่อเนียนเพราะเรนเดอร์แบบวน (`place(loop=True)`,
+  reverb/filter แบบ FFT วงกลม). เพลง: title (ขิม+pad), day (ระนาด+ฉิ่งฉาบ+โทน), night (บท 3: drone + นาฬิกา + หัวใจ), radio (ท่าเรือเมื่อ `radio_on`),
+  wedding (ตอนจบห้าดาว), sting_chapter/good/sad. ambience: day (น้ำคลอง), night (+จิ้งหรีด กบ), engine (ระหว่างเดินทาง).
+  autoload **`Audio`** (`scripts/autoload/audio.gd`): `music()` crossfade 2 player, `ambience()`, `sfx(name, vary)` pool 8, `sting()` (duck เพลง),
+  `pick(room, chapter, flags, ending)` pure → Main.load_room เรียก `for_room`. ตั้ง loop ตอน runtime (ไม่แก้ .import). ระดับต่อไฟล์ใน `LEVELS`.
+  hook: ปุ่มป้ายสังกะสี (sign) / ปุ่มลายมือ+checkbox (pencil) ใน UiKit, สมุดเปิด/ปิด, ป้ายของ (tag), ได้ของ (`GameState.give_item`), ใช้ได้/ผิด/ผสม (Puzzles),
+  บทพูดขึ้นบรรทัด (line), น้ำขึ้นลง, เปลี่ยนห้อง (whoosh ใน SceneRouter), สตาร์ทเรือ, หุ่นเห็น (alert)/จับ (caught)/ดึงฟิวส์ (spark), ชนตอนขับเรือ.
+  `test_audio.gd` สแกน `Audio.xxx("ชื่อ")` ทุก script ว่ามีไฟล์จริง — เสียงใหม่ = เพิ่มฟังก์ชันใน `TRACKS` ของ gen_audio.py
 - `internationalization/locale/include_text_server_data=true` (ตัดคำไทยบน APK ต้องใช้ข้อมูล ICU)
 - **ห้องอัปเดตทันทีเมื่อ flag เปลี่ยน (2026-10-02, เจ้าของ: "ช่างแดงไม่ออกมาจากเรือ ทั้งที่ดึงฟิวส์แล้ว — ออกมาหลังไปที่อื่น")**:
   เดิมห้องสร้างครั้งเดียวตอนเข้า → อะไรที่ `if_flag`/`if_not_flag`/`if_flags` ผูกกับ flag ที่ตั้งในห้องเดียวกันไม่โผล่/ไม่หาย
@@ -317,5 +328,5 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
 ## สถานะ / ยังไม่ได้ทำ
 - **A0–A4 เสร็จ (2026-10-02)**: เกมเล่นจบได้ 3 บท 8 ห้อง ตอนจบ 4 แบบ, plot ย่อย 3 สาย (ลุงโต๊ะสาม×ป้านก → งานแต่ง, ลอตเตอรี่ป้าจุ๋ม, หุ่นเก้า), 66 tests
 - UI ขัดครบแล้ว (2026-10-02): เมนูในเกม, การ์ด, ตัวเลือก, แถบกระเป๋า, กล่อง dialog, หน้าแรก + key art
-- ยังไม่มี: เสียง
+- เสียงมีแล้ว (2026-10-02) — ยังไม่ได้ให้เจ้าของฟัง ปรับระดับ/เพลงตามที่ติ
 - ลบ save บนแท็บเล็ต = `adb shell run-as com.drums55.game25d rm files/save_0.json`
