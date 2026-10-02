@@ -287,6 +287,7 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   → จำไว้ใน `tools/.adb_device` (gitignored) รอบหน้าไม่ต้องใส่. พอร์ต wireless debugging เปลี่ยนทุกครั้งที่เปิดใหม่ → ใส่ -Device ใหม่
   ครั้งแรกจาก PC เครื่องไหน ต้อง `-Pair <พอร์ตจับคู่>:<รหัส 6 หลัก>` (หน้า "Pair device with pairing code"; คนละพอร์ตกับ connect).
   connect ล้มเหลว → สคริปต์ ping + เช็คพอร์ต แล้วบอกว่าเป็นที่ Tailscale / พอร์ตเปลี่ยน / ยังไม่ได้ pair
+  **ใช้ได้จริงแล้ว (2026-10-02)**: pair + connect ผ่าน IP Tailscale สำเร็จ (PC กับแท็บเล็ตอยู่คนละที่)
   Redmi Pad Pro ใน Tailscale = `100.90.8.123` (ใช้ `-Device 100.90.8.123:<พอร์ตจากหน้า Wireless debugging>` หรือสั้นๆ `123:<พอร์ต>`)
 - `adb` ไม่อ่าน `ADB_SERIAL` เอง (มันอ่าน `ANDROID_SERIAL`) — script ส่ง `-s $env:ADB_SERIAL` ให้
 - Export template มี 1.1 GB; dev_setup แตกเฉพาะไฟล์ android_* เก็บไว้
