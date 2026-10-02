@@ -8,7 +8,8 @@ class_name DialogData
 ##
 ## A plain array is an unconditional dialog. An object entry plays `lines` when
 ## all of its conditions hold, otherwise falls through to the dialog id named
-## in `else`. Conditions: `if_flag`, `if_not_flag`, `if_item` (in inventory),
+## in `else`. Conditions: `if_flag`, `if_not_flag`, `if_flags` (all), `if_not_flags`
+## (none), `if_item` (in inventory),
 ## `if_not_item`, `if_money_at_least` (int), `if_rep_at_least` / `if_rep_below`
 ## ({"faction": n}, every listed faction must hold; factions in GameState.FACTIONS).
 ## Line actions (applied when the line is shown): `set_flag`,
@@ -72,6 +73,12 @@ static func conditions_hold(
 	var not_flag := str(entry.get("if_not_flag", ""))
 	if not not_flag.is_empty() and flags.get(not_flag, false):
 		return false
+	for f in entry.get("if_flags", []):
+		if not flags.get(str(f), false):
+			return false
+	for f in entry.get("if_not_flags", []):
+		if flags.get(str(f), false):
+			return false
 	var item := str(entry.get("if_item", ""))
 	if not item.is_empty() and not inventory.has(item):
 		return false

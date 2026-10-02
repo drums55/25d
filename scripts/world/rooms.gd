@@ -22,7 +22,8 @@ extends RefCounted
 ##              (no character) face the rider and turn to a "noise" event
 ##   seized   [cells]  where items taken "for the debt" lie (เจ๊เกียว's raft)
 ##   enter    {dialog, flag}  played once on arrival (flag marks it seen)
-## Any entry may carry "if_flag" / "if_not_flag" / "if_flags" [all] / "if_tide"
+## Any entry may carry "if_flag" / "if_not_flag" / "if_flags" [all] / "if_not_flags"
+## [none] / "if_tide"
 ## (spawn only then). Chapter 2 people/things use "if_flag": "ch2".
 ## Places the bike can ride to are in TRAVEL (spawn "from_bike" there, a spot
 ## on the map).
@@ -112,7 +113,8 @@ const ROOMS := {
 		{
 			"default": Vector2(1.6, 2.6),
 			"from_home": Vector2(1.6, 2.6),
-			"from_bike": Vector2(8.0, 5.6)
+			# off the collector's zone: arriving by boat used to land inside it
+			"from_bike": Vector2(7.6, 6.4)
 		},
 		"props":
 		[
@@ -142,6 +144,14 @@ const ROOMS := {
 				"foot": Vector2(0.5, 0.3),
 				"h": 120.0,
 				"dialog": "look_pier_sign"
+			},
+			{
+				"id": "project_sign",
+				"art": "project_sign_14",
+				"pos": Vector2(4.2, 0.15),
+				"foot": Vector2(0.5, 0.3),
+				"h": 320.0,
+				"dialog": "look_project_sign_14"
 			},
 			{
 				"id": "radio",
@@ -597,7 +607,23 @@ const ROOMS := {
 			},
 		],
 		"bots":
+		# chapter 1: the company's old model stands on the sluice at low tide;
 		[
+			# it follows ลุงหมอน้ำ's board, not the water (DESIGN 12.6)
+			{
+				"id": "gate_bot",
+				"name": "หุ่นบริษัท (รุ่นเก่า)",
+				"art": "brass_automaton",
+				"pos": Vector2(6.0, 2.4),
+				"facing": Vector2(0, 1),
+				"zone_range": 170.0,
+				"turns_to_noise": false,
+				"tint": Color(0.75, 0.8, 0.9),
+				"catch_dialog": "catch_gate_bot",
+				"talk_dialog": "catch_gate_bot",
+				"if_not_flags": ["ch2", "forecast_high"],
+				"if_tide": "low"
+			},
 			{
 				"id": "company_bot",
 				"name": "หุ่นบริษัท ป้องกันภัย",
@@ -748,10 +774,434 @@ const ROOMS := {
 			},
 		],
 	},
+	"hall":
+	{
+		"title": "ศาลาพยากรณ์น้ำ · ที่ทำการชุมชนซอยส่งไว",
+		"grid": Vector2i(10, 8),
+		"floor": [Color(0.62, 0.6, 0.55), Color(0.58, 0.56, 0.5)],
+		"wall": Color(0.5, 0.6, 0.43),
+		"spawns": {"default": Vector2(6.0, 5.5), "from_bike": Vector2(6.0, 5.5)},
+		"enter": {"dialog": "enter_hall", "flag": "seen_hall"},
+		"props":
+		[
+			{
+				"id": "forecast_board",
+				"art": "forecast_board",
+				"pos": Vector2(2.0, 0.15),
+				"foot": Vector2(0.5, 0.3),
+				"h": 300.0,
+				"dialog": "look_forecast_board",
+				"prompt": "ป้ายพยากรณ์"
+			},
+			{
+				"id": "goldfish_jar",
+				"art": "goldfish_jar",
+				"pos": Vector2(4.4, 0.6),
+				"foot": Vector2(0.5, 0.5),
+				"h": 200.0,
+				"dialog": "look_goldfish_jar",
+				"prompt": "โหลปลาทอง"
+			},
+			{
+				"id": "project_sign",
+				"art": "project_sign_15",
+				"pos": Vector2(7.5, 0.15),
+				"foot": Vector2(0.5, 0.3),
+				"h": 320.0,
+				"dialog": "look_project_sign_15"
+			},
+			{
+				"id": "transistor",
+				"art": "transistor_radio",
+				"pos": Vector2(0.6, 3.0),
+				"foot": Vector2(0.5, 0.5),
+				"h": 150.0,
+				"dialog": "look_transistor"
+			},
+			{
+				"id": "hearing_notice",
+				"art": "hearing_notice",
+				"pos": Vector2(9.4, 2.0),
+				"foot": Vector2(0.4, 0.3),
+				"h": 290.0,
+				"dialog": "look_hearing_notice"
+			},
+			{
+				"id": "plant",
+				"art": "plant_pots",
+				"pos": Vector2(0.6, 6.5),
+				"foot": Vector2(0.6, 0.6),
+				"h": 60.0,
+				"dialog": "look_hall_plant"
+			},
+			{
+				"id": "float_bike",
+				"art": "boat_bike",
+				"pos": Vector2(8.6, 6.4),
+				"foot": Vector2(1.4, 0.7),
+				"h": 90.0,
+				"prompt": "เรือเตอร์ไซค์",
+				"action": "travel"
+			},
+		],
+		"npcs":
+		[
+			{
+				"id": "lung_mor_nam",
+				"name": "ลุงหมอน้ำ",
+				"pos": Vector2(3.2, 3.2),
+				"character": "lung_mor_nam",
+				"dialog": "talk_mor_nam"
+			},
+		],
+	},
+	"roof_market":
+	{
+		"title": "ตลาดน้ำบนดาดฟ้าตึกแถว",
+		"grid": Vector2i(12, 9),
+		"floor": [Color(0.66, 0.62, 0.56), Color(0.6, 0.56, 0.5)],
+		"wall": Color(0.6, 0.42, 0.33),
+		"spawns": {"default": Vector2(8.4, 5.8), "from_bike": Vector2(8.4, 5.8)},
+		"enter": {"dialog": "enter_market", "flag": "seen_market"},
+		"props":
+		[
+			{
+				"id": "dry_goods",
+				"art": "dry_goods_stall",
+				"pos": Vector2(2.0, 0.6),
+				"foot": Vector2(1.2, 0.7),
+				"h": 300.0,
+				"dialog": "look_dry_goods"
+			},
+			{
+				"id": "fish_grill",
+				"art": "fish_grill",
+				"pos": Vector2(5.5, 0.7),
+				"foot": Vector2(1.0, 0.6),
+				"h": 100.0,
+				"dialog": "look_fish_grill",
+				"prompt": "เตาย่าง"
+			},
+			{
+				"id": "lottery_stand",
+				"art": "lottery_stand",
+				"pos": Vector2(8.5, 0.5),
+				"foot": Vector2(0.6, 0.4),
+				"h": 250.0,
+				"dialog": "look_lottery_stand"
+			},
+			{
+				"id": "lottery_robot",
+				"art": "brass_automaton",
+				"pos": Vector2(9.6, 1.0),
+				"foot": Vector2(0.6, 0.6),
+				"h": 150.0,
+				"dialog": "look_lottery_robot",
+				"prompt": "หุ่นขายลอตเตอรี่"
+			},
+			{
+				"id": "market_stall",
+				"art": "market_stall",
+				"pos": Vector2(2.5, 4.0),
+				"foot": Vector2(1.2, 1.0),
+				"h": 200.0,
+				"dialog": "look_market_stall"
+			},
+			{
+				"id": "fruit_crates",
+				"art": "fruit_crates",
+				"pos": Vector2(5.6, 4.4),
+				"foot": Vector2(0.9, 0.7),
+				"h": 80.0,
+				"dialog": "look_fruit_crates"
+			},
+			{
+				"id": "no_parking",
+				"art": "no_parking_sign",
+				"pos": Vector2(11.85, 3.0),
+				"foot": Vector2(0.3, 0.3),
+				"h": 300.0,
+				"dialog": "look_no_parking"
+			},
+			{
+				"id": "project_sign",
+				"art": "project_sign_16",
+				"pos": Vector2(0.6, 7.2),
+				"foot": Vector2(0.5, 0.3),
+				"h": 320.0,
+				"dialog": "look_project_sign_16"
+			},
+			{
+				"id": "float_bike",
+				"art": "boat_bike",
+				"pos": Vector2(10.0, 7.3),
+				"foot": Vector2(1.4, 0.7),
+				"h": 90.0,
+				"prompt": "เรือเตอร์ไซค์",
+				"action": "travel"
+			},
+		],
+		"pickups": [{"item": "parking_ticket", "pos": Vector2(8.0, 3.6), "label": "ใบสั่ง"}],
+		"npcs":
+		[
+			{
+				"id": "lung_platu",
+				"name": "ลุงปลาทู",
+				"pos": Vector2(5.5, 2.0),
+				"character": "lung_pradit",
+				"dialog": "talk_platu"
+			},
+			{
+				"id": "je_muay",
+				"name": "เจ๊หมวย",
+				"pos": Vector2(4.2, 2.6),
+				"character": "je_muay",
+				"dialog": "talk_muay"
+			},
+		],
+	},
+	"temple":
+	{
+		"title": "วัดหอระฆัง · โบสถ์จมแล้ว เหลือแต่หอ",
+		"grid": Vector2i(10, 8),
+		"floor": [Color(0.55, 0.42, 0.3), Color(0.5, 0.38, 0.27)],
+		"wall": Color(0.85, 0.82, 0.75),
+		"spawns": {"default": Vector2(7.0, 5.8), "from_bike": Vector2(7.0, 5.8)},
+		"enter": {"dialog": "enter_temple", "flag": "seen_temple"},
+		"props":
+		[
+			{
+				"id": "bell_tower",
+				"art": "bell_tower",
+				"pos": Vector2(3.0, 2.6),
+				"foot": Vector2(1.2, 1.2),
+				"h": 600.0,
+				"dialog": "look_bell_tower",
+				"prompt": "หอระฆัง"
+			},
+			{
+				"id": "wetland_sign",
+				"art": "wetland_sign",
+				"pos": Vector2(6.5, 0.15),
+				"foot": Vector2(0.5, 0.3),
+				"h": 320.0,
+				"dialog": "look_wetland_sign"
+			},
+			{
+				"id": "project_sign",
+				"art": "project_sign_17",
+				"pos": Vector2(9.0, 0.15),
+				"foot": Vector2(0.5, 0.3),
+				"h": 320.0,
+				"dialog": "look_project_sign_17"
+			},
+			{
+				"id": "incense_pot",
+				"art": "incense_pot",
+				"pos": Vector2(3.0, 4.8),
+				"foot": Vector2(0.4, 0.4),
+				"h": 160.0,
+				"dialog": "look_incense_pot"
+			},
+			{
+				"id": "alms_boat",
+				"art": "alms_boat",
+				"pos": Vector2(8.4, 2.6),
+				"foot": Vector2(1.8, 0.5),
+				"h": 60.0,
+				"dialog": "look_alms_boat"
+			},
+			{
+				"id": "float_bike",
+				"art": "boat_bike",
+				"pos": Vector2(8.6, 6.4),
+				"foot": Vector2(1.4, 0.7),
+				"h": 90.0,
+				"prompt": "เรือเตอร์ไซค์",
+				"action": "travel"
+			},
+		],
+		"npcs":
+		[
+			{
+				"id": "luang_pee",
+				"name": "หลวงพี่น้ำ",
+				"pos": Vector2(5.4, 3.8),
+				"character": "luang_pee",
+				"dialog": "talk_luang_pee"
+			},
+		],
+	},
+	"boat_rank":
+	{
+		"title": "วินเรือซอยส่งไว · เดิมคือวินมอเตอร์ไซค์",
+		"grid": Vector2i(10, 7),
+		"floor": [Color(0.46, 0.36, 0.26), Color(0.42, 0.33, 0.24)],
+		"wall": Color(0.58, 0.6, 0.62),
+		"spawns": {"default": Vector2(7.0, 5.0), "from_bike": Vector2(7.0, 5.0)},
+		"enter": {"dialog": "enter_rank", "flag": "seen_rank"},
+		"props":
+		[
+			{
+				"id": "rank_sign",
+				"art": "rank_sign",
+				"pos": Vector2(2.0, 0.15),
+				"foot": Vector2(0.5, 0.3),
+				"h": 330.0,
+				"dialog": "look_rank_sign"
+			},
+			{
+				"id": "vest_rack",
+				"art": "vest_rack",
+				"pos": Vector2(4.6, 0.5),
+				"foot": Vector2(0.9, 0.3),
+				"h": 260.0,
+				"dialog": "look_vest_rack"
+			},
+			{
+				"id": "longtail",
+				"art": "longtail_boat",
+				"pos": Vector2(7.9, 0.7),
+				"foot": Vector2(2.6, 0.8),
+				"h": 80.0,
+				"dialog": "look_rank_boat"
+			},
+			{
+				"id": "fuel",
+				"art": "fuel_pump",
+				"pos": Vector2(0.6, 2.8),
+				"foot": Vector2(0.5, 0.5),
+				"h": 170.0,
+				"dialog": "look_rank_fuel"
+			},
+			{
+				"id": "stool",
+				"art": "red_stool",
+				"pos": Vector2(3.0, 3.2),
+				"foot": Vector2(0.4, 0.4),
+				"h": 30.0,
+				"dialog": "look_rank_stool"
+			},
+			{
+				"id": "trash",
+				"art": "trash_bin",
+				"pos": Vector2(0.8, 6.3),
+				"foot": Vector2(0.8, 0.8),
+				"h": 60.0,
+				"dialog": "look_rank_trash"
+			},
+			{
+				"id": "float_bike",
+				"art": "boat_bike",
+				"pos": Vector2(8.6, 5.4),
+				"foot": Vector2(1.4, 0.7),
+				"h": 90.0,
+				"prompt": "เรือเตอร์ไซค์",
+				"action": "travel"
+			},
+		],
+		"pickups": [{"item": "rope", "pos": Vector2(5.2, 3.4), "label": "เชือกผูกเรือ"}],
+		"npcs":
+		[
+			{
+				"id": "ple",
+				"name": "พี่เปิ้ล (วินเรือ เบอร์ 1)",
+				"pos": Vector2(4.2, 2.4),
+				"character": "ple",
+				"dialog": "talk_ple"
+			},
+		],
+	},
+	"cat_roof":
+	{
+		"title": "หลังคาสังกะสีหลังตลาด · ที่ของแมวส้มโอ",
+		"grid": Vector2i(8, 6),
+		"floor": [Color(0.62, 0.64, 0.62), Color(0.56, 0.58, 0.56)],
+		"wall": Color(0.5, 0.52, 0.52),
+		"spawns": {"default": Vector2(4.4, 4.8), "from_bike": Vector2(4.4, 4.8)},
+		"enter": {"dialog": "enter_cat_roof", "flag": "seen_cat_roof"},
+		"props":
+		[
+			{
+				"id": "roof_vent",
+				"art": "roof_vent",
+				"pos": Vector2(0.6, 0.6),
+				"foot": Vector2(0.5, 0.5),
+				"h": 130.0,
+				"dialog": "look_roof_vent"
+			},
+			{
+				"id": "cat",
+				"art": "cat_som_o",
+				"pos": Vector2(1.8, 1.4),
+				"foot": Vector2(0.6, 0.5),
+				"h": 140.0,
+				"dialog": "look_cat",
+				"prompt": "แมวส้มโอ"
+			},
+			{
+				"id": "hoard",
+				"art": "hoard",
+				"pos": Vector2(2.4, 2.6),
+				"foot": Vector2(1.0, 0.8),
+				"h": 60.0,
+				"dialog": "look_hoard",
+				"prompt": "กองสมบัติ"
+			},
+			{
+				"id": "tv_antenna",
+				"art": "tv_antenna",
+				"pos": Vector2(5.6, 0.15),
+				"foot": Vector2(0.3, 0.3),
+				"h": 320.0,
+				"dialog": "look_tv_antenna"
+			},
+			{
+				"id": "water_tank",
+				"art": "water_tank",
+				"pos": Vector2(7.2, 2.8),
+				"foot": Vector2(1.0, 1.0),
+				"h": 190.0,
+				"dialog": "look_roof_tank"
+			},
+			{
+				"id": "float_bike",
+				"art": "boat_bike",
+				"pos": Vector2(6.6, 5.0),
+				"foot": Vector2(1.4, 0.7),
+				"h": 90.0,
+				"prompt": "เรือเตอร์ไซค์",
+				"action": "travel"
+			},
+		],
+		# the hoard opens once the cat is busy with the fish
+		"pickups":
+		[
+			{
+				"item": "curler",
+				"pos": Vector2(3.6, 3.6),
+				"label": "ที่ม้วนผม",
+				"if_flag": "cat_lured"
+			},
+			{
+				"item": "goldfish",
+				"pos": Vector2(1.2, 3.8),
+				"label": "ถุงปลาทอง",
+				"if_flag": "cat_lured"
+			},
+			{
+				"item": "amulet",
+				"pos": Vector2(2.6, 4.6),
+				"label": "พระเครื่อง",
+				"if_flag": "cat_lured"
+			},
+		],
+	},
 }
 
 ## Where the floating bike can go: room id -> {name, flag needed, map}.
 ## `map` = where the place sits on the hand-drawn map (fraction of the sheet);
+## `tide` + `closed` = only reachable at that tide (the pin says why otherwise);
 ## the same numbers as PLACES in tools/art/png/map_2090.py (test_map_view).
 const TRAVEL := {
 	"pier": {"name": "ท่าเรือหน้าซอย", "flag": "", "map": Vector2(0.26, 0.835)},
@@ -761,6 +1211,19 @@ const TRAVEL := {
 	"old_gate":
 	{"name": "ประตูระบายน้ำเก่าใต้สะพาน", "flag": "know_gate", "map": Vector2(0.68, 0.27)},
 	"kiao_raft": {"name": "เรือนแพเจ๊เกียว", "flag": "know_kiao", "map": Vector2(0.86, 0.80)},
+	"boat_rank": {"name": "วินเรือ", "flag": "", "map": Vector2(0.37, 0.90)},
+	"hall": {"name": "ศาลาพยากรณ์น้ำ", "flag": "know_hall", "map": Vector2(0.42, 0.21)},
+	"roof_market": {"name": "ตลาดดาดฟ้า", "flag": "know_market", "map": Vector2(0.60, 0.76)},
+	"temple": {"name": "วัดหอระฆัง", "flag": "know_temple", "map": Vector2(0.78, 0.56)},
+	# the boat only reaches the roof when the water is up
+	"cat_roof":
+	{
+		"name": "หลังคาแมวส้มโอ",
+		"flag": "know_cat_roof",
+		"map": Vector2(0.31, 0.32),
+		"tide": "high",
+		"closed": "น้ำลง เรือลอยไม่ถึงหลังคา"
+	},
 }
 
 
@@ -781,7 +1244,7 @@ static func condition_flags(room: Dictionary) -> Dictionary:
 			for k in ["if_flag", "if_not_flag"]:
 				if e.has(k):
 					out[str(e[k])] = true
-			for f in e.get("if_flags", []):
+			for f in e.get("if_flags", []) + e.get("if_not_flags", []):
 				out[str(f)] = true
 	return out
 
@@ -798,6 +1261,9 @@ static func present(entry: Dictionary, flags: Dictionary) -> bool:
 		return false
 	for f in entry.get("if_flags", []):
 		if not flags.get(f, false):
+			return false
+	for f in entry.get("if_not_flags", []):
+		if flags.get(f, false):
 			return false
 	return true
 

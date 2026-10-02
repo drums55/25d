@@ -9,7 +9,8 @@ extends Control
 ## usual canal cutscene (Main.travel). Tap off the sheet / "ไม่ไปแล้ว" = close.
 ##
 ## setup(current_at, places, on_pick, on_close, tint) — places =
-## [{id, name, at (fraction of the sheet)}], current_at = fraction too.
+## [{id, name, at (fraction of the sheet), closed? (why it cannot be reached
+## now, e.g. the tide)}], current_at = fraction too.
 
 ## The sheet is the 1920x1200 design space (the painting is 2560x1600 of it).
 const SHEET := Vector2(1920, 1200)
@@ -97,7 +98,14 @@ func _add_pin(place: Dictionary) -> void:
 	l.add_theme_constant_override("outline_size", 8)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(l)
-	b.pressed.connect(_sail.bind(str(place["id"]), at))
+	var closed := str(place.get("closed", ""))
+	if closed.is_empty():
+		b.pressed.connect(_sail.bind(str(place["id"]), at))
+	else:
+		# reachable only at the other tide: greyed, tapping says why
+		pin.modulate = Color(0.75, 0.75, 0.75, 0.8)
+		l.add_theme_color_override("font_color", UiKit.INK_FADED)
+		b.pressed.connect(func(): GameState.notice.emit(closed))
 	UiKit.juice(b)
 	_sheet.add_child(b)
 	_pins[str(place["id"])] = b

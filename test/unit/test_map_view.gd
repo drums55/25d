@@ -80,3 +80,21 @@ func test_map_is_dark_at_night():
 	GameState.chapter = 3
 	_main.open_travel()
 	assert_eq(_map()._sheet.get_node("Art").modulate, _main.NIGHT_TINT)
+
+
+func test_a_place_closed_by_the_tide_shows_greyed_and_does_not_sail():
+	GameState.set_flag("know_cat_roof")
+	GameState.tide = "low"
+	_main.open_travel()
+	var map := _map()
+	assert_true(map._pins.has("cat_roof"), "still on the map")
+	(map._pins["cat_roof"] as Button).pressed.emit()
+	assert_false(map.busy, "no sailing to a roof the boat cannot reach")
+	assert_true(GameState.ui_open)
+	_hud.hide_overlay()
+	GameState.tide = "high"
+	_main.open_travel()
+	(_map()._pins["cat_roof"] as Button).pressed.emit()
+	assert_true(_map().busy, "at high tide the boat goes")
+	await wait_seconds(MapView.SAIL_TIME + 0.9)
+	assert_eq(GameState.room, "cat_roof")

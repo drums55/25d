@@ -1,3 +1,4 @@
+# gdlint: disable=max-file-lines
 extends GutTest
 ## Bag, using and combining things (DESIGN 11.5), the puzzle data's integrity,
 ## travel, the tide, hints, and a walkthrough of all of chapter 1:
@@ -51,6 +52,7 @@ func _go(room: String, spawn := "default") -> void:
 	_main.go_room(room, spawn)
 	await wait_seconds(0.8)
 	assert_eq(_room().room_id, room)
+	TestHelpers.finish_dialog()  # a room's first-visit scene would swallow the next tap
 
 
 func _all_lines() -> Array:
@@ -160,6 +162,7 @@ func _ride_to(room: String) -> void:
 	_main.travel(room)
 	await wait_seconds(0.8)
 	assert_eq(_room().room_id, room)
+	TestHelpers.finish_dialog()
 
 
 func test_walkthrough_chapter_one():
@@ -174,55 +177,111 @@ func test_walkthrough_chapter_one():
 	GameState.held_item = "hook"
 	_tap("floor_gap")
 	assert_true(GameState.has_item("float_key"))
-	# pier: the collector, the radio, the bike
+	# pier: the collector, the radio (batteries, then the dial), the bike
 	await _go("pier", "from_home")
 	var collector := _room().get_world().get_node("Collector") as PatrolBot
 	assert_ne(collector.state, PatrolBot.State.OFF)
-	_tap("float_bike")
-	assert_false(GameState.ui_open, "no key in the bike yet")
-	TestHelpers.finish_dialog()
 	GameState.held_item = "float_key"
 	_tap("float_bike")
 	assert_false(GameState.has_flag("bike_ready"), "พี่หนวด won't let the bike go")
-	assert_true(GameState.has_item("float_key"))
-	TestHelpers.finish_dialog()
 	GameState.held_item = "air_remote"
+	_tap("radio")
+	assert_true(GameState.has_flag("radio_powered"))
+	assert_false(GameState.has_flag("radio_on"), "static: the dial needs a station")
+	_tap("radio")
+	assert_false(GameState.has_flag("radio_on"), "no station known yet")
+	_tap("pier_sign")
+	assert_true(GameState.has_flag("know_freq"))
 	_tap("radio")
 	assert_true(GameState.has_flag("radio_on"))
 	assert_eq(collector.state, PatrolBot.State.OFF, "พี่หนวด dances")
 	GameState.held_item = "float_key"
 	_tap("float_bike")
 	assert_true(GameState.has_flag("bike_ready"))
+	# noodle boat: ป้านก gives the box only to whoever orders what the sender ordered
 	await _ride_to("noodle_boat")
-	# noodle boat: ป้านก cannot hear, so write it down
 	_tap("pa_nok")
-	assert_false(GameState.has_item("brass_box"))
+	assert_true(GameState.has_flag("met_nok"))
 	_tap("lung_table3")
 	assert_true(GameState.has_item("sauce_packs"))
 	GameState.held_item = "debt_book"
 	_tap("pa_nok")
+	assert_true(GameState.has_flag("nok_asked"))
+	assert_false(GameState.has_item("brass_box"), "the order is not known yet")
+	GameState.held_item = "debt_book"
+	_tap("pa_nok")
+	assert_false(GameState.has_item("brass_box"), "a wrong guess is a bowl of noodles")
+	_tap("lung_table3")
+	assert_true(GameState.has_flag("lung_told_order"))
+	GameState.held_item = "debt_book"
+	_tap("pa_nok")
 	assert_true(GameState.has_item("brass_box"))
-	assert_true(GameState.has_item("debt_book"), "the debt book stays (sadly)")
+	GameState.held_item = "sauce_packs"
+	_tap("pa_nok")
+	assert_true(GameState.has_item("sauce_empty"), "one empty pack comes back")
 	_tap("pa_nok")
 	assert_true(GameState.has_flag("know_stilts"))
-	# stilts: ป้าจุ๋ม trades what she knows for gossip
+	# boat rank: พี่เปิ้ล's gossip and a rope
+	await _ride_to("boat_rank")
+	_tap("ple")
+	assert_true(GameState.has_flag("know_market") and GameState.has_flag("know_hall"))
+	_tap("rope")
+	assert_true(GameState.has_item("rope"))
+	# stilts: ป้าจุ๋ม wants three pieces of news
 	await _ride_to("stilts")
 	_tap("jum")
-	assert_false(GameState.has_flag("jum_friend"))
+	assert_true(GameState.has_flag("met_jum"))
 	GameState.held_item = "letter"
+	_tap("jum")
+	assert_true(GameState.has_flag("news_letter"))
+	GameState.held_item = "sauce_empty"
+	_tap("jum")
+	assert_true(GameState.has_flag("news_lung"))
+	_tap("jum")
+	assert_false(GameState.has_flag("jum_friend"), "one piece of news missing")
+	# rooftop market: fish for the cat
+	await _ride_to("roof_market")
+	_tap("lung_platu")
+	assert_true(GameState.has_item("platu") and GameState.has_flag("know_cat_roof"))
+	_tap("parking_ticket")
+	# the cat's roof (high tide): the hoard opens
+	assert_eq(GameState.tide, "high")
+	await _ride_to("cat_roof")
+	GameState.held_item = "platu"
+	_tap("cat")
+	assert_true(GameState.has_flag("cat_lured"))
+	await _go("cat_roof", "from_bike")
+	_tap("curler")
+	_tap("goldfish")
+	_tap("amulet")
+	assert_true(GameState.has_item("curler") and GameState.has_item("goldfish"))
+	await _ride_to("stilts")
+	GameState.held_item = "curler"
+	_tap("jum")
+	assert_true(GameState.has_flag("news_curler"))
 	_tap("jum")
 	assert_true(GameState.has_flag("jum_friend"))
 	assert_true(GameState.has_flag("know_garage") and GameState.has_flag("know_gate"))
-	# boat garage: pull the robot's fuse, ช่างแดง comes out
+	# boat garage: the robot faces the rider; ช่างแดง under the boat knows a louder noise
 	await _ride_to("boat_garage")
 	assert_null(_thing("chang_daeng"), "hiding under the boat")
+	_tap("upturned_boat")
+	assert_true(GameState.has_flag("know_temple"))
+	# temple: a rope for the bell, firecrackers in return
+	await _ride_to("temple")
+	_tap("luang_pee")
+	GameState.held_item = "rope"
+	_tap("bell_tower")
+	assert_true(GameState.has_flag("bell_fixed"))
+	_tap("luang_pee")
+	assert_true(GameState.has_item("firecracker"))
+	# garage again: bang, turn, fuse
+	await _ride_to("boat_garage")
 	var robot := _room().get_world().get_node("No9") as PatrolBot
-	_player.global_position = robot.global_position + Vector2(70, 0)
-	robot.tamper(_player)
-	TestHelpers.finish_dialog()
-	assert_false(GameState.has_flag("no9_fused"), "it faces the rider: caught, not fused")
-	_tap("crate")  # a kick: the robot turns to the noise
+	GameState.held_item = "firecracker"
+	_tap("tires")
 	await wait_physics_frames(2)
+	assert_true(robot.heard_noise)
 	_player.global_position = robot.global_position + Vector2(70, 0)
 	robot.tamper(_player)
 	TestHelpers.finish_dialog()
@@ -235,7 +294,13 @@ func test_walkthrough_chapter_one():
 	_hud.tap_item("tape")
 	TestHelpers.finish_dialog()
 	assert_true(GameState.has_item("crank"))
-	# old gate: under water until the tide turns
+	# the forecast pavilion: the goldfish decides, the company obeys the board
+	await _ride_to("hall")
+	_tap("lung_mor_nam")
+	GameState.held_item = "goldfish"
+	_tap("lung_mor_nam")
+	assert_true(GameState.has_flag("forecast_high"))
+	# old gate: under water until the tide turns; the old robot is gone
 	await _ride_to("old_gate")
 	assert_eq(GameState.tide, "high")
 	GameState.held_item = "crank"
@@ -244,6 +309,9 @@ func test_walkthrough_chapter_one():
 	_tap("bench")
 	await wait_seconds(0.8)
 	assert_eq(GameState.tide, "low")
+	assert_null(
+		_room().get_world().get_node_or_null("GateBot"), "back to base on a 'high' forecast"
+	)
 	GameState.held_item = "crank"
 	_tap("sluice_gate")
 	assert_true(GameState.has_flag("gate_open"))
@@ -260,9 +328,21 @@ func test_walkthrough_chapter_one():
 	assert_true(GameState.ui_open, "chapter card is up")
 
 
+func test_old_gate_robot_guards_the_sluice_until_the_forecast_says_high():
+	GameState.tide = "low"
+	await _go("old_gate", "default")
+	var bot := _room().get_world().get_node_or_null("GateBot") as PatrolBot
+	assert_not_null(bot, "the company's old robot stands on the sluice at low tide")
+	GameState.set_flag("forecast_high")
+	await wait_seconds(0.5)
+	assert_null(_room().get_world().get_node_or_null("GateBot"))
+
+
 func test_walkthrough_chapter_two():
 	for f in [
 		"got_float_key",
+		"radio_powered",
+		"know_freq",
 		"radio_on",
 		"bike_ready",
 		"got_box",
@@ -298,22 +378,22 @@ func test_walkthrough_chapter_two():
 	assert_null(_room().get_world().get_node_or_null("No9"), "no patrol in chapter 2")
 	GameState.held_item = "debt_book"
 	_tap("no9_awake")
-	assert_true(GameState.has_item("memory_chip"))
+	assert_true(GameState.has_item("memory_chip"), "chip")
 	# น้องเก่ง reads it
 	await _ride_to("stilts")
 	GameState.held_item = "memory_chip"
 	_tap("keng")
-	assert_true(GameState.has_item("debt_list"))
+	assert_true(GameState.has_item("debt_list"), "list")
 	# ป้าจุ๋ม almost sold her house for a lottery prize
 	_tap("jum")
 	GameState.held_item = "debt_list"
 	_tap("jum")
-	assert_true(GameState.has_flag("jum_saved"))
+	assert_true(GameState.has_flag("jum_saved"), "jum saved")
 	assert_true(GameState.has_item("reading_glasses"))
 	# ลุงโต๊ะสาม's thirty-year-old letter
 	await _ride_to("noodle_boat")
 	_tap("lung_table3")
-	assert_true(GameState.has_item("love_letter"))
+	assert_true(GameState.has_item("love_letter"), "ลุง gives the letter")
 	GameState.held_item = "love_letter"
 	_tap("pa_nok")
 	assert_false(GameState.has_flag("nok_love"), "cannot read it without glasses")
@@ -322,7 +402,7 @@ func test_walkthrough_chapter_two():
 	_tap("pa_nok")
 	GameState.held_item = "love_letter"
 	_tap("pa_nok")
-	assert_true(GameState.has_flag("nok_love"))
+	assert_true(GameState.has_flag("nok_love"), "ป้านก read it")
 	# คุณนายวรรณ waits at บ้านเลขที่ 0
 	await _ride_to("old_gate")
 	_tap("bench")
@@ -341,6 +421,8 @@ func test_walkthrough_chapter_two():
 func _start_chapter_three() -> void:
 	for f in [
 		"got_float_key",
+		"radio_powered",
+		"know_freq",
 		"radio_on",
 		"bike_ready",
 		"got_box",

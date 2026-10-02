@@ -153,14 +153,30 @@ func _build_navigation() -> void:
 	if min_edge < NAV_MIN_EDGE:
 		push_warning(
 			(
-				"IsoRoom %s: navmesh edge %.2f px < %.1f; two obstacles nearly touch"
-				% [name, min_edge, NAV_MIN_EDGE]
+				"IsoRoom %s: navmesh edge %.2f px < %.1f at cell %s; two obstacles nearly touch"
+				% [name, min_edge, NAV_MIN_EDGE, Iso.world_to_grid(shortest_nav_edge_at(nav))]
 			)
 		)
 	var region := NavigationRegion2D.new()
 	region.name = "Navigation"
 	region.navigation_polygon = nav
 	add_child(region)
+
+
+## Where the shortest edge sits (to find the two things that nearly touch).
+static func shortest_nav_edge_at(nav: NavigationPolygon) -> Vector2:
+	var verts := nav.get_vertices()
+	var shortest := INF
+	var at := Vector2.ZERO
+	for i in nav.get_polygon_count():
+		var poly := nav.get_polygon(i)
+		for k in poly.size():
+			var a := verts[poly[k]]
+			var b := verts[poly[(k + 1) % poly.size()]]
+			if a.distance_to(b) < shortest:
+				shortest = a.distance_to(b)
+				at = (a + b) * 0.5
+	return at
 
 
 static func shortest_nav_edge(nav: NavigationPolygon) -> float:

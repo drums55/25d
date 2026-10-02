@@ -123,7 +123,10 @@ func open_travel() -> void:
 		var need := str(place["flag"])
 		if not need.is_empty() and not GameState.has_flag(need):
 			continue
-		places.append({"id": id, "name": place["name"], "at": place["map"]})
+		var closed := ""
+		if place.has("tide") and place["tide"] != GameState.tide:
+			closed = str(place.get("closed", "ตอนนี้ไปไม่ได้"))
+		places.append({"id": id, "name": place["name"], "at": place["map"], "closed": closed})
 	var here: Vector2 = Rooms.TRAVEL.get(GameState.room, Rooms.TRAVEL["pier"])["map"]
 	_hud.show_map(here, places, travel, NIGHT_TINT if GameState.chapter >= 3 else Color.WHITE)
 
@@ -371,16 +374,20 @@ func go_title() -> void:
 	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
 
 
-## Zoom so the room's painting fills the screen, then clamp the camera to it.
+## Zoom so the room's painting fills the screen above the bag strip, then
+## clamp the camera to it; the camera may run on below the painting by the
+## strip's height, so the room's bottom edge can rise above the bag.
 func _fit_camera(room: IsoRoom) -> void:
 	var cam := _player.camera
 	var rect := room.get_view_rect()
-	var zoom := Iso.fill_zoom(rect.size, get_viewport().get_visible_rect().size)
+	var screen := get_viewport().get_visible_rect().size
+	var bag := _hud.bottom_reserved()
+	var zoom := Iso.fill_zoom(rect.size, screen - Vector2(0, bag))
 	cam.zoom = Vector2(zoom, zoom)
-	var view := get_viewport().get_visible_rect().size / cam.zoom
+	var view := screen / zoom
 	var r := Iso.fit_camera_rect(rect, view)
 	cam.limit_left = floori(r.position.x)
 	cam.limit_top = floori(r.position.y)
 	cam.limit_right = ceili(r.end.x)
-	cam.limit_bottom = ceili(r.end.y)
+	cam.limit_bottom = ceili(maxf(r.end.y, rect.end.y + bag / zoom))
 	cam.reset_smoothing()

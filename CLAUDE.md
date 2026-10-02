@@ -25,6 +25,8 @@
 - **กล้องซูมห้องเต็มจอ (C1, 2026-10-02, เจ้าของ: "ขอบดำเยอะ")**: `Main._fit_camera` → `Iso.fill_zoom(rect, view)` = max(กว้าง/กว้าง, สูง/สูง) clamp 1–2 (art วาดที่ 2x ไม่เบลอ)
   กรอบกล้อง = `IsoRoom.get_view_rect()` (= backdrop rect ถ้ามีภาพ) เลื่อนตามไรเดอร์ในแนวที่ภาพสูงกว่าจอ. ภาพฉากต้องเต็ม rect ของมัน: `rooms_2090.skyline()` วาดท้องฟ้า+ตึกบริษัท+ปรางค์+หลังคาเพื่อนบ้าน+เสาไฟ
   ไว้ชั้นแรกสุดเหนือผนัง (สถานี = `underground`) — ห้องใหม่ทุกห้องต้องเรียกอันใดอันหนึ่งก่อนวาดผนัง
+- **แถบกระเป๋าห้ามบังของ (2026-10-02, เจ้าของ: "inventory บัง item บนจอ เช่น บังมอไซเรา")**: `Hud.bottom_reserved()` (= ความสูงแถบกระเป๋า, 0 ตอนขี่เรือ) →
+  `Main._fit_camera` ซูมให้ภาพฉากเต็มจอ**เหนือแถบ** และขยาย `limit_bottom` ลงอีกเท่าความสูงแถบ/zoom → เดินลงล่างสุด เรือเตอร์ไซค์โผล่เหนือแถบ (ใต้ภาพเป็นดำแต่แถบบัง)
 - **แผนที่เดินทาง (2026-10-02, เจ้าของ: "study repo แล้วทำ map")**: เรือเตอร์ไซค์เปิด `MapView` (`scripts/ui/map_view.gd`) แทนรายการป้าย:
   แผ่นกระดาษพับ เปื้อนน้ำ วาดซอยส่งไวทั้งซอยด้วยหมึก+ดินสอสี (`tools/art/png/map_2090.py` → `assets/art/ui/map.png` 2560×1600 + `map_pin.png`, ~2 นาที)
   ภาพมี**ทุกที่ของซอย 15 ที่โดยไม่มีชื่อ** (รวมที่ยังไม่มีในเกม) เกมวางหมุดแดง+ชื่อลายมือเฉพาะที่รู้จัก (`Rooms.TRAVEL[id].map` = สัดส่วนของแผ่น
@@ -212,6 +214,15 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   Main ตั้ง `_choice_after_dialog` แล้วเปิดการ์ดหลัง dialog จบ. `end_game(id)` = flag `ending_<id>` + ออโต้เซฟ + การ์ด (เล่นใหม่/หน้าแรก).
   ตอนจบ: sold / sunk (<3) / wet (3–5) / five_stars (ครบ 6). dialog บท 3 ใช้หัว chain ใหม่ `talk_x_ch3` → else หัวเดิม (rooms.gd ชี้หัวใหม่).
   test: `test_walkthrough_chapter_three_best_ending`, `test_chapter_three_sell_the_box`, `test_endings.gd`, tap audit มีชุด flag บท 3
+- **คำใบ้ห้ามใบ้ล่วงหน้า (เจ้าของ 2026-10-02: "hint ป้านกเขียนตั้งแต่ยังไม่เจอป้านก = ใบ้เกิน")**: hint ทุกข้อใน puzzles.json ต้องมี `if_flag` เป็น flag ที่แปลว่า
+  ผู้เล่นเจอสิ่งนั้นแล้ว (`met_<npc>` ตั้งใน talk_*_first, `met_gate_bot` ใน catch dialog, หรือ flag ของขั้นก่อนหน้า) — hint แรกที่เงื่อนไขผ่านคือที่โชว์ จึงเรียงตามลำดับเล่น
+- **B1 บท 1 ยืด (2026-10-02)**: ห้องใหม่ hall/roof_market/temple/boat_rank/cat_roof (`props_b1.py` 21 prop, `rooms_2090.py`, items.py +8 ของ), ตัวละครใหม่ lung_mor_nam/ple/luang_pee
+  (char_q.py NPCS) + ใช้ชีตเก่า lung_pradit = ลุงปลาทู, je_muay = เจ๊หมวย. สาย: A วิทยุต้องรู้คลื่น 90.9 (`radio_powered` → `know_freq` จากป้ายท่าเรือ/พี่เปิ้ล/ทรานซิสเตอร์ → แตะวิทยุอีกที = `radio_on`);
+  B ป้านกให้กล่องเฉพาะคนสั่งเมนูเดียวกับคนฝาก (`nok_asked` → ลุงโต๊ะสาม `lung_told_order` → สมุด → กล่อง; ซองน้ำจิ้มเปล่า `sauce_empty` คืนมาจากป้านก);
+  C ป้าจุ๋มขอข่าว 3 (`news_letter`/`news_lung`/`news_curler` → คุยอีกที = `jum_friend` ใช้ `if_flags` ใน dialog); แมว: ลุงปลาทูให้ `platu` + `know_cat_roof`,
+  หลังคาไปได้เฉพาะน้ำขึ้น (TRAVEL `tide`+`closed` → หมุดเทาบนแผนที่), `platu`→cat = `cat_lured` → กองสมบัติเปิด (curler, goldfish, amulet);
+  D เชือกจากวินเรือ → หอระฆัง `bell_fixed` → หลวงพี่ให้ `firecracker` → ใช้กับกองยาง (event noise) → เบอร์ 9 หัน → ฟิวส์; ด่านใหญ่: `gate_bot` หุ่นรุ่นเก่าเฝ้าประตูน้ำตอนน้ำลง
+  (`if_not_flags` [ch2, forecast_high]) → ปลาทอง → ลุงหมอน้ำ = `forecast_high` หุ่นกลับฐาน. ของหลอกหยิบได้: amulet, parking_ticket. `Rooms.present` รองรับ `if_not_flags`
 - **ใบ้ในเกม**: ยื่นของผิดให้คนที่เป็นด่านสำคัญ ให้มี use เฉพาะที่พูดใบ้ (เช่น จดหมาย → ป้านก = "เขียนตัวโตๆ ใส่สมุดมา") — เจ้าของติดตรงกล่องป้านก 2026-10-02
 - **ฉาก + ภาพของ (2026-10-02, เจ้าของ: "ทำฉากให้เรียบร้อย ก่อนไป A4 / ทำ item ที่ตกให้เป็นภาพ และ item ใน inventory ด้วย")**:
   - backdrop ทุกห้อง = `tools/art/png/rooms_2090.py all` → `assets/art/rooms/<room id>.png` (ใช้ helper ของ room.py: teak_wall,
@@ -270,6 +281,7 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   (flag `<id>_off_d<day>` + `<id>_fused`); แตะจากด้านหน้า = โดนจับ. คน (`character`) เดิน `patrol` โซนรอบตัว `tamperable=false`. `distract_flag` หยุดถาวร (เดิม).
   ตัดออก: STARE/CHASE/STUNNED, `steam_valve` event, `chases`, `view_range`, `chase_speed`. บท 1: เตะลังอะไหล่ในอู่ (`look_garage_crate` มี event noise) → เบอร์ 9 หัน
   → อ้อมไปดึงฟิวส์ (B1 จะเปลี่ยนเป็นประทัดจากวัด); บท 3 หุ่นบริษัทที่ประตูน้ำ `zone_range 240` ครอบแหวน (แหวนย้ายไป (2.8,5.4)) จนกว่าเก้าจะไปคุย
+- navmesh sliver บอกตำแหน่งแล้ว: warning "navmesh edge ... at cell (x, y)" — ป้ายใกล้ผนังขวา/ซ้ายต้องแนบผนัง (เหลือ 0.15) ไม่งั้นมุม inflate ชนกับผนัง
 - Gotcha: script ที่รันด้วย `godot -s` (shot/tool) ห้ามอ้าง class ที่อ้าง autoload ตอน compile (เช่น `Rooms` → `GameState` → `Puzzles`)
   → "Identifier not found" — ใช้ `load("res://...")` ตอน runtime แทน
 - **Dialog**: JSON-driven; เงื่อนไขต่อ entry: `if_flag`/`if_not_flag`/`if_item`/`if_not_item` (+`else` chain);
@@ -348,7 +360,7 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
   Android cmdline-tools (`platform-tools`, `build-tools;34.0.0`) + ตั้ง `export/android/android_sdk_path`
 
 ## สถานะ / ยังไม่ได้ทำ
-- **A0–A4 เสร็จ (2026-10-02)**: เกมเล่นจบได้ 3 บท 8 ห้อง ตอนจบ 4 แบบ, plot ย่อย 3 สาย (ลุงโต๊ะสาม×ป้านก → งานแต่ง, ลอตเตอรี่ป้าจุ๋ม, หุ่นเก้า), 76 tests
+- **A0–A4 เสร็จ (2026-10-02)**: เกมเล่นจบได้ 3 บท ตอนจบ 4 แบบ, plot ย่อย 3 สาย; **B1 (2026-10-02)**: บท 1 ยืดเป็น 13 ห้อง ~25 ขั้น, 88 tests
 - UI ขัดครบแล้ว (2026-10-02): เมนูในเกม, การ์ด, ตัวเลือก, แถบกระเป๋า, กล่อง dialog, หน้าแรก + key art
 - เสียงมีแล้ว (2026-10-02) — เจ้าของฟังแล้ว: "เชยหน่อย แต่ ok"
 - **ลำดับงานทั้งเกม = `docs/DESIGN.md` ข้อ 13** (เจ้าของ 2026-10-02: "ไล่แผนดีๆ" = แผนทั้งเกม) — ตอบว่า "ทำอะไรต่อ" จากตารางนั้นเสมอ; งานแทรกจดเข้าแผนก่อน ไม่ทำทันทีเว้นแต่เจ้าของสั่ง

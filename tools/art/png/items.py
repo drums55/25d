@@ -199,9 +199,81 @@ def ring(c):
         c.disc(x + dx * s, y + dy * s, 8 * s, 5 * s, hexc("#5B4636"), dome=False)
 
 
+# --- chapter-1 stretch (DESIGN 12.6) ------------------------------------------------
+def platu(c):
+    """ปลาทูย่างเสียบไม้ จากเตาลุงปลาทู: the cat's price."""
+    p = c.p
+    c.stroke([p(-0.3, 0.0, 10), p(0.34, 0.0, 10)], 3.0, hexc("#B07A42"))
+    c.disc(*p(0.0, 0.0, 14), 42 * c.ss, 20 * c.ss, hexc("#B88040"), outline=1.6, rim=0.5)
+    c.disc(*p(0.0, 0.0, 16), 26 * c.ss, 11 * c.ss, hexc("#D9A066"), outline=0.6, rim=0.2)
+    c.stroke([p(0.26, 0.0, 14), p(0.36, 0.0, 26), p(0.36, 0.0, 2)], 2.4, hexc("#B88040"))
+    c.disc(*p(-0.2, 0.0, 18), 3 * c.ss, 3 * c.ss, INK, outline=0.4)
+    for x in (-0.1, 0.0, 0.1):
+        c.stroke([p(x, 0.0, 22), p(x + 0.03, 0.0, 14)], 1.2, hexc("#6E4A2A"), 0.6)
+
+
+def firecracker(c):
+    """ประทัดงานวัดหนึ่งพวง: red tubes, a fuse."""
+    p = c.p
+    for k, x in enumerate((-0.16, -0.05, 0.06, 0.17)):
+        c.cylinder(x, 0.0, 0.05, 0, 70 + (k % 2) * 10, RED, spec=0.5, rim=0.6, top_c=hexc("#F0C080"))
+    c.stroke([p(0.0, 0.0, 80), p(0.1, 0.0, 110), p(0.04, 0.0, 130)], 2.0, hexc("#B8B8A0"))
+    c.disc(*p(0.04, 0.0, 132), 4 * c.ss, 4 * c.ss, YELLOW, outline=0.4, spec=1.0)
+    c.text("โชค", p(-0.2, 0.051, 50), p(0.2, 0.051, 50), 10, YELLOW)
+
+
+def sauce_empty(c):
+    """ซองน้ำจิ้มไก่เปล่า ที่ป้านกคืนมา: "โต๊ะ 3" written on the back."""
+    p = c.p
+    c.box(-0.26, -0.18, 0.26, 0.18, 0, 6, hexc("#E8E0D0"), rim=0.3)
+    c.box(-0.22, -0.14, 0.22, 0.14, 6, 8, hexc("#F2A23A"), rim=0.1, outline=0.8)
+    c.text("โต๊ะ 3", p(-0.2, 0.0, 10), p(0.2, 0.0, 10), 14, RED)
+    c.stroke([p(0.2, -0.18, 6), p(0.28, -0.1, 6)], 1.6, INK)
+
+
+def curler(c):
+    """ที่ม้วนผมของป้าจุ๋ม (หายไปตั้งแต่เดือนก่อน): a blue roller with a pin."""
+    p = c.p
+    c.cylinder(0.0, 0.0, 0.16, 0, 60, hexc("#7FC8E8"), spec=0.6, rim=0.5)
+    for k in range(6):
+        a = k * 3.1416 / 3
+        c.disc(*p(0.16 * math.cos(a) * 0.9, 0.16 * math.sin(a) * 0.9, 60), 3 * c.ss, 2 * c.ss, hexc("#5AA0C8"), outline=0.4)
+    c.stroke([p(-0.25, 0.0, 70), p(0.25, 0.0, 70)], 2.0, hexc("#E8E4DC"))
+
+
+def goldfish(c):
+    """น้องพยากรณ์ ปลาทองของลุงหมอน้ำ ในถุงพลาสติก: forecasts by swimming."""
+    p = c.p
+    c.disc(*p(0.0, 0.0, 40), 40 * c.ss, 48 * c.ss, hexc("#9ED8E0"), outline=1.4, rim=0.3, spec=0.6)
+    c.glaze(c.mask_ellipse(*p(0.0, 0.0, 30), 34 * c.ss, 30 * c.ss), hexc("#3E7F8C"), 0.35)
+    c.disc(*p(0.02, 0.0, 34), 14 * c.ss, 9 * c.ss, ORANGE, outline=1.2, rim=0.3)
+    c.stroke([p(0.1, 0.0, 34), p(0.17, 0.0, 44), p(0.17, 0.0, 24)], 2.0, ORANGE)
+    c.disc(*p(-0.05, 0.0, 38), 2 * c.ss, 2 * c.ss, INK, outline=0.4)
+    c.stroke([p(-0.05, 0.0, 86), p(0.05, 0.0, 86), p(0.0, 0.0, 100)], 2.0, RED)
+
+
+def amulet(c):
+    """พระเครื่องกันน้ำ (ใบรับประกันไม่ครอบคลุมน้ำท่วม): a brass pendant on a cord."""
+    p = c.p
+    c.disc(*p(0.0, 0.0, 10), 30 * c.ss, 38 * c.ss, BRASS, outline=1.6, rim=0.6, spec=0.9)
+    c.disc(*p(0.0, 0.0, 14), 18 * c.ss, 24 * c.ss, BRASS_D, outline=0.8, rim=0.2)
+    c.disc(*p(0.0, 0.0, 16), 8 * c.ss, 10 * c.ss, BRASS, outline=0.6, spec=1.0)
+    c.stroke([p(-0.2, 0.0, 60), p(0.0, 0.0, 48), p(0.2, 0.0, 60)], 2.0, hexc("#3A2A22"))
+
+
+def parking_ticket(c):
+    """ใบเสร็จค่าปรับจอดเรือในที่ห้ามจอด (ดาดฟ้า): the fine scales with the water."""
+    p = c.p
+    c.box(-0.22, -0.3, 0.22, 0.3, 0, 4, PAPER, rim=0.2)
+    c.text("ใบสั่ง", p(-0.18, 0.0, 8), p(0.18, 0.0, 8), 12, hexc("#2E5E9E"))
+    for k in range(4):
+        c.stroke([p(-0.16, -0.2 + k * 0.1, 5), p(0.16, -0.2 + k * 0.1, 5)], 1.2, INK, 0.5)
+    c.disc(*p(0.1, 0.18, 6), 8 * c.ss, 8 * c.ss, RED, outline=0.6, dome=False)
+
+
 ITEMS = {f.__name__: f for f in (debt_book, gum, hanger, hook, float_key, air_remote, letter,
                                  sauce_packs, brass_box, broken_crank, tape, crank, memory_chip,
-                                 debt_list, reading_glasses, love_letter, megaphone, ring)}
+                                 debt_list, reading_glasses, love_letter, megaphone, ring, platu, firecracker, sauce_empty, curler, goldfish, amulet, parking_ticket)}
 
 
 def render(name, out):

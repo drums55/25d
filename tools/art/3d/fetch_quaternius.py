@@ -23,8 +23,13 @@ def main(qdir):
         req = urllib.request.Request(base + "/download_url", data=("csrf_token=" + csrf).encode(), method="POST")
         page = op.open(json.loads(op.open(req).read())["url"]).read().decode()
         csrf2 = re.search(r'name="csrf_token" value="([^"]+)"', page).group(1)
-        for uid, name in zip(re.findall(r'data-upload_id="(\d+)"', page), re.findall(r'class="name" title="([^"]+)"', page)):
-            if "Standard" not in name:
+        # itch's download page markup moves around; find each upload's zip name
+        # near its id (2026-10-02: the old class="name" lookup found nothing)
+        for uid in re.findall(r'data-upload_id="(\d+)"', page):
+            seg = page[page.index('data-upload_id="%s"' % uid):][:3000]
+            title = re.search(r'title="([^"]+\.zip)"', seg) or re.search(r'>([^<]+\.zip)<', seg)
+            name = title.group(1) if title else uid + ".zip"
+            if title and "Standard" not in name:
                 continue
             req = urllib.request.Request("%s/file/%s?source=game_download" % (base, uid),
                                          data=("csrf_token=" + csrf2).encode(), method="POST")

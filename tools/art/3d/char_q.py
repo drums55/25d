@@ -628,6 +628,20 @@ NPCS = {
                  arms="short", legs="long", feet="Female_Peasant_Feet.gltf", feet_tint="#1A1619",
                  pal={"torso": ("#B8221E", 0.4, 0.2), "legs": ("#1E1C22", 0.35, 0), "gold": ("#E2B54A", 0.6, 1.0),
                       "trim": ("#E2B54A", 0.5, 0.6)}),
+    # chapter-1 stretch (DESIGN 12.5)
+    "lung_mor_nam": dict(female=False, hair=["Hair_SimpleParted.gltf", "Hair_Beard.gltf"], hair_tint="#DEDAD2",
+                         skin="#C99068", arms="short", legs="long", feet="Male_Peasant_Feet.gltf",
+                         feet_tint="#4A3A2A", hunch=True,
+                         pal={"torso": ("#D8D0B8", 0.3, 0), "legs": ("#5A5A62", 0.3, 0), "vest": ("#6B7A3A", 0.35, 0),
+                              "hat": ("#C8A868", 0.35, 0), "frame": ("#2A2224", 0.3, 0.4), "pen": ("#D93A2E", 0.5, 0.6)}),
+    "ple": dict(female=True, hair=["Hair_BuzzedFemale.gltf"], hair_tint="#1A1618", skin="#C98A5E",
+                arms="short", legs="long", feet="Female_Peasant_Feet.gltf", feet_tint="#1A1619",
+                pal={"torso": ("#2B2629", 0.35, 0), "legs": ("#3B5578", 0.35, 0), "vest": ("#F07A1E", 0.4, 0),
+                     "badge": ("#F2EEE4", 0.3, 0), "whistle": ("#C0C8D0", 0.5, 0.9)}),
+    "luang_pee": dict(female=False, hair=[], hair_tint="#C99068", skin="#C99068",
+                      arms="bare", legs="skirt", feet="Male_Peasant_Feet.gltf", feet_tint="#C99068",
+                      pal={"torso": ("#E88A1E", 0.35, 0), "legs": ("#E88A1E", 0.35, 0), "sash": ("#C8641A", 0.35, 0),
+                           "bowl": ("#2A2E30", 0.5, 0.6), "glass": ("#2A2224", 0.3, 0.4)}),
     "wan": dict(female=True, hair=["Hair_Buns.gltf"], hair_tint="#141016", skin="#EFC6A0",
                 arms="long", legs="long", feet="Female_Peasant_Feet.gltf", feet_tint="#141218",
                 pal={"torso": ("#2A3550", 0.4, 0.1), "legs": ("#2A3550", 0.4, 0.1), "collar": ("#F2EEE4", 0.3, 0),
@@ -724,6 +738,32 @@ def npc_accessories(name, B, arm, head, top, neck, hc):
             B.torus("Bangle", bone_world(arm, "hand_" + side), 0.04, 0.01, "gold", "lowerarm_" + side,
                     rot=(0, math.radians(90), 0), ink=0.0)
             B.torus("Hoop", head + Vector((sx * 0.075, 0.0, 0.06)), 0.026, 0.005, "gold", "Head", rot=(0, math.radians(90), 0), ink=0.0)
+    elif name == "lung_mor_nam":
+        # a field vest full of pockets, a woven palm-leaf hat, reading glasses and a red pen
+        garment(B, BODY, "Vest", "vest", "spine_02", 1.0, 1.36, arc=200, pad=0.03)
+        B.cyl("Hat", hc + Vector((0, 0.0, 0.07)), 0.2, 0.012, "hat", "Head", r2=0.19, ink=0.004)
+        B.cyl("HatTop", hc + Vector((0, 0.0, 0.1)), 0.11, 0.07, "hat", "Head", r2=0.07, ink=0.004)
+        for sx in (1, -1):
+            B.torus("Glass", hc + Vector((sx * 0.042, -0.122, 0.005)), 0.026, 0.004, "frame", "Head",
+                    rot=(math.radians(90), 0, 0), ink=0.0)
+        hx, fy, by = body_section(BODY, neck.z - 0.22)
+        B.cyl("Pen", Vector((0.07, fy - 0.03, neck.z - 0.2)), 0.008, 0.12, "pen", "spine_03", ink=0.003)
+    elif name == "ple":
+        # the orange rank vest with her number, a whistle on a cord
+        garment(B, BODY, "Vest", "vest", "spine_02", 1.0, 1.36, arc=200, pad=0.03)
+        hx, fy, by = body_section(BODY, neck.z - 0.2)
+        B.box("Badge", Vector((0.0, fy - 0.035, neck.z - 0.22)), (0.09, 0.012, 0.09), "badge", "spine_03", bevel=0.006, ink=0.004)
+        B.torus("Cord", neck + Vector((0, -0.01, -0.03)), 0.07, 0.005, "whistle", "spine_03", scale=(1.0, 1.0, 0.8), ink=0.0)
+        B.cyl("Whistle", neck + Vector((0, -0.09, -0.12)), 0.014, 0.05, "whistle", "spine_03", rot=(0, math.radians(90), 0), ink=0.004)
+    elif name == "luang_pee":
+        # the robe's sash over the left shoulder, glasses, the alms bowl in the left hand
+        B.torus("Sash", neck + Vector((0.06, 0.0, -0.1)), 0.17, 0.03, "sash", "spine_03",
+                rot=(math.radians(60), math.radians(30), 0), scale=(1.0, 1.0, 1.4), ink=0.005)
+        for sx in (1, -1):
+            B.torus("Glass", hc + Vector((sx * 0.042, -0.122, 0.005)), 0.024, 0.004, "glass", "Head",
+                    rot=(math.radians(90), 0, 0), ink=0.0)
+        B.sphere("Bowl", bone_world(arm, "hand_l") + Vector((0.0, -0.02, -0.08)), 0.09, "bowl", "hand_l",
+                 scale=(1.0, 1.0, 0.8), rot=(math.pi, 0, 0), cut=0.2, ink=0.006)
     elif name == "wan":
         B.torus("Collar", neck + Vector((0, 0.005, -0.01)), 0.072, 0.016, "collar", "spine_03", scale=(1.0, 1.0, 0.6), ink=0.004)
         hx, fy, by = body_section(BODY, neck.z - 0.18)

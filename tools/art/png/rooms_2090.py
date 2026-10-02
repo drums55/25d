@@ -350,7 +350,108 @@ def kiao_raft(out):
     c.finish(out, sil=0)
 
 
-ROOMS = {f.__name__: f for f in (home, pier, noodle_boat, stilts, boat_garage, old_gate, station, kiao_raft)}
+# ---- chapter-1 stretch rooms (DESIGN 12.6) -----------------------------------------
+def zinc_roof_floor(c, gw, gh, seed=61):
+    """A corrugated zinc roof as the floor (the cat's place): ridges along gx,
+    rust bloom, a few patched sheets."""
+    s = c.ss
+    rng = np.random.default_rng(seed)
+    floor = c.mask_poly([c.p(0, 0), c.p(gw, 0), c.p(gw, gh), c.p(0, gh)])
+    field = c.grad(hexc("#A8ACA6"), 1.05, 0.85, c.p(0, 0)[1], c.p(gw, gh)[1])
+    c.paint(floor, field, outline=0, tex=0.05)
+    k = 0
+    while k * 0.18 < gh:
+        gy = k * 0.18
+        c.stroke([c.p(0, gy), c.p(gw, gy)], 1.6, hexc("#7A7E7A"), 0.45)
+        c.stroke([c.p(0, gy + 0.07), c.p(gw, gy + 0.07)], 1.2, hexc("#D0D4CE"), 0.35)
+        k += 1
+    for _ in range(14):
+        gx, gy = rng.uniform(0.3, gw - 0.3), rng.uniform(0.3, gh - 0.3)
+        c.glaze(c.mask_ellipse(*c.p(gx, gy), rng.uniform(20, 60) * s, rng.uniform(10, 30) * s) * floor, hexc("#9A4A26"), rng.uniform(0.15, 0.4))
+    for _ in range(3):
+        gx, gy = rng.uniform(1, gw - 2), rng.uniform(1, gh - 2)
+        patch = c.mask_poly([c.p(gx, gy), c.p(gx + 1.2, gy), c.p(gx + 1.2, gy + 0.9), c.p(gx, gy + 0.9)])
+        c.paint(patch, c.grad(hexc("#8A8E88"), 1.0, 0.9), outline=1.4, tex=0.05)
+    c.glaze(floor, SOOT, 0.08)
+
+
+def hall(out):
+    """ศาลาพยากรณ์น้ำ / ที่ทำการชุมชน: government green plaster, a concrete floor."""
+    gw, gh = 10, 8
+    c = _room(gw, gh, 161)
+    skyline(c, gw, gh, seed=211)
+    plaster_wall(c, "R", gw, hexc("#7E9A6E"), windows=(2.6, 6.8), poster=(8.4, "ห้ามสูบ ห้ามจอด ห้ามท่วม", hexc("#2E5E9E")), seed=161)
+    plaster_wall(c, "L", gh, hexc("#7E9A6E"), windows=(4.0,), seed=162)
+    flood_line(c, "R", gw, z=120)
+    flood_line(c, "L", gh, z=120)
+    wall_edge(c, gw, gh, WH)
+    concrete_floor(c, gw, gh, hexc("#A8A49A"), seed=163)
+    flood_surround(c, gw, gh, seed=164)
+    c.finish(out, sil=0)
+
+
+def roof_market(out):
+    """ตลาดน้ำบนดาดฟ้าตึกแถว: the taller block next door as the back walls, a
+    tiled roof deck underfoot."""
+    gw, gh = 12, 9
+    c = _room(gw, gh, 171)
+    skyline(c, gw, gh, seed=221)
+    brick_wall(c, "R", gw, WH, hexc("#B07A5A"), hexc("#D8C8B0"), seed=171)
+    brick_wall(c, "L", gh, WH, hexc("#B07A5A"), hexc("#D8C8B0"), seed=172)
+    wall_edge(c, gw, gh, WH)
+    tile_floor(c, gw, gh, hexc("#B8B0A0"), hexc("#A8A090"), seed=173)
+    flood_surround(c, gw, gh, seed=174)
+    c.finish(out, sil=0)
+
+
+def temple(out):
+    """วัดหอระฆัง: white temple walls with red trim, a wooden deck around the tower."""
+    gw, gh = 10, 8
+    c = _room(gw, gh, 181)
+    skyline(c, gw, gh, seed=231)
+    plaster_wall(c, "R", gw, hexc("#E8E2D0"), windows=(), poster=(7.0, "ขึ้นทะเบียนแล้ว", hexc("#2E7A4A")), seed=181)
+    plaster_wall(c, "L", gh, hexc("#E8E2D0"), windows=(), seed=182)
+    for side, length in (("R", gw), ("L", gh)):
+        c.stroke([c.wp(side, 0, 2 * WH - 20), c.wp(side, length, 2 * WH - 20)], 14, hexc("#B8322A"), 0.9)
+        c.stroke([c.wp(side, 0, 2 * WH - 40), c.wp(side, length, 2 * WH - 40)], 4, hexc("#E2B54A"), 0.9)
+    flood_line(c, "R", gw, z=140)
+    flood_line(c, "L", gh, z=140)
+    wall_edge(c, gw, gh, WH)
+    plank_floor(c, gw, gh, hexc("#8B6038"), seed=183)
+    flood_surround(c, gw, gh, seed=184)
+    c.finish(out, sil=0)
+
+
+def boat_rank(out):
+    """วินเรือ: a zinc shed by the canal, plank deck."""
+    gw, gh = 10, 7
+    c = _room(gw, gh, 191)
+    skyline(c, gw, gh, seed=241)
+    zinc_wall(c, "R", gw, WH, hexc("#9AA0A4"), seed=191)
+    zinc_wall(c, "L", gh, WH, hexc("#9AA0A4"), seed=192)
+    flood_line(c, "R", gw, z=100)
+    flood_line(c, "L", gh, z=100)
+    wall_edge(c, gw, gh, WH)
+    plank_floor(c, gw, gh, hexc("#7E5634"), seed=193)
+    flood_surround(c, gw, gh, seed=194)
+    c.finish(out, sil=0)
+
+
+def cat_roof(out):
+    """หลังคาสังกะสีของแมวส้มโอ: zinc underfoot, the neighbours' upper walls behind."""
+    gw, gh = 8, 6
+    c = _room(gw, gh, 201)
+    skyline(c, gw, gh, seed=251)
+    zinc_wall(c, "R", gw, WH, hexc("#8E9496"), seed=201)
+    teak_wall(c, "L", gh, WH, seed=202)
+    wall_edge(c, gw, gh, WH)
+    zinc_roof_floor(c, gw, gh, seed=203)
+    flood_surround(c, gw, gh, seed=204)
+    c.finish(out, sil=0)
+
+
+ROOMS = {f.__name__: f for f in (home, pier, noodle_boat, stilts, boat_garage, old_gate, station, kiao_raft,
+                                 hall, roof_market, temple, boat_rank, cat_roof)}
 
 if __name__ == "__main__":
     name = sys.argv[1]

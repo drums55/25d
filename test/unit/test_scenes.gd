@@ -105,13 +105,17 @@ func test_camera_zooms_each_room_to_fill_the_screen():
 	await wait_physics_frames(3)
 	var player: Player = get_tree().get_first_node_in_group("player")
 	var room := player.get_parent().get_parent() as IsoRoom
+	var hud: Hud = get_tree().get_first_node_in_group("hud")
 	var view := get_viewport().get_visible_rect().size
-	var want := Iso.fill_zoom(room.get_view_rect().size, view)
+	var bag := hud.bottom_reserved()
+	assert_gt(bag, 100.0, "the bag strip takes room at the bottom")
+	var want := Iso.fill_zoom(room.get_view_rect().size, view - Vector2(0, bag))
 	assert_almost_eq(player.camera.zoom.x, want, 0.001)
 	assert_gt(want, 1.3, "the pier's painting is zoomed in")
-	# the camera never leaves the painting
+	# the camera never leaves the painting sideways, and can run on below it
+	# by the bag's height so the bike at the bottom edge shows above the bag
 	var r := room.get_view_rect()
 	assert_eq(player.camera.limit_left, floori(r.position.x))
 	assert_eq(player.camera.limit_right, ceili(r.end.x))
-	assert_true(player.camera.limit_bottom - player.camera.limit_top >= view.y / want - 1.0)
+	assert_true(player.camera.limit_bottom >= r.end.y + bag / want - 1.0)
 	GameState.new_game()

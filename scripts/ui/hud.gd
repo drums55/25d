@@ -13,6 +13,8 @@ const TITLE_HOLD := 1.6
 const TITLE_FADE := 0.6
 const NOTICE_HOLD := 2.2
 const SLOT_SIZE := Vector2(156, 200)
+## The bag strip's height before it has laid out (slots + held-item line + padding).
+const BAG_HEIGHT := 290.0
 
 var _title_tween: Tween
 var _notices: Array[String] = []
@@ -184,6 +186,15 @@ func set_riding(on: bool) -> void:
 	_tide_label.visible = not on
 	GameState.held_item = ""
 	_refresh_bag()
+
+
+## Height of the bag strip along the bottom of the screen (design px): the
+## camera keeps that much of the room below the rider so nothing hides under
+## it (owner 2026-10-02: "inventory บัง item บนจอ เช่น บังมอไซเรา").
+func bottom_reserved() -> float:
+	if _riding or _bag == null:
+		return 0.0
+	return maxf(_bag.size.y, BAG_HEIGHT)
 
 
 ## True when a screen point is on a HUD control (the world must ignore it).
