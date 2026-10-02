@@ -489,8 +489,15 @@ func test_special_poses_follow_flags():
 func test_hints_follow_the_story():
 	var flags := {}
 	assert_string_contains(Puzzles.hint_text(Puzzles.data, flags), "กุญแจ")
+	assert_string_contains(
+		Puzzles.hint_text(Puzzles.data, flags, 2), "หมากฝรั่ง", "level 3 = answer"
+	)
 	flags["got_float_key"] = true
-	assert_string_contains(Puzzles.hint_text(Puzzles.data, flags), "พี่หนวด")
+	assert_string_contains(Puzzles.hint_text(Puzzles.data, flags, 1), "พี่หนวด")
+	assert_string_contains(Puzzles.hint_text(Puzzles.data, flags, 9), "รีโมท", "clamped")
+	for h in Puzzles.data["hints"]:
+		if h.has("if_flag") or h.has("if_not_flag"):
+			assert_eq(h["text"].size(), 3, "nudge / clearer / answer: %s" % h["text"][0])
 	Puzzles.hint()
 	assert_true(Dialog.is_active())
 

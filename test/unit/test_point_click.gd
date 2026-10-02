@@ -104,7 +104,18 @@ func test_notebook_menu_pages_and_close():
 	for c in book._right.get_children():
 		if c is Label:
 			texts.append((c as Label).text)
-	assert_has(texts, Puzzles.hint_text(Puzzles.data, GameState.flags), "the hint is written in")
+	assert_has(texts, Puzzles.hint_text(Puzzles.data, GameState.flags), "the nudge is written in")
+	var answer := Puzzles.hint_text(Puzzles.data, GameState.flags, 2)
+	assert_does_not_have(texts, "· " + answer, "the answer waits until asked")
+	for i in 2:
+		(book._right.get_node("MoreHint") as Button).pressed.emit()
+	texts.clear()
+	for c in book._right.get_children():
+		if c is Label:
+			texts.append((c as Label).text)
+	assert_has(texts, "· " + answer, "two more taps = the answer")
+	assert_null(book._right.get_node_or_null("MoreHint"))
+	MenuBook.revealed.clear()
 	book.close()
 	await wait_physics_frames(1)
 	assert_false(GameState.ui_open, "closing the book frees the world")

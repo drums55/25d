@@ -7,7 +7,9 @@ extends Node
 ##   "combos": [{"a", "b", "result", "lines": [...]}],      # a + b -> result
 ##   "uses":   [{"item", "target", "lines": [...], "consume": bool,
 ##               "if_flag"?, "if_not_flag"?, "if_tide"?}],   # item on a thing
-##   "hints":  [{"if_not_flag"?, "if_flag"?, "text"}]         # first that holds
+##   "hints":  [{"if_not_flag"?, "if_flag"?, "text": [nudge, clearer, answer]}]
+##             # first that holds; one level at a time (owner 2026-10-02: a
+##             # hint that gives the answer straight away "isn't fun")
 ##   "fail":   {"<target or item id>" | "combine" | "*": [line, ...]}
 ## }
 ##
@@ -125,9 +127,9 @@ func _fail(keys: Array) -> void:
 	Dialog.start_lines([line], "fail")
 
 
-## The first hint whose flags hold (DESIGN 11.5: ป้าจุ๋ม on the phone once she
-## is a friend, otherwise the rider thinking out loud).
-static func hint_text(d: Dictionary, flags: Dictionary) -> String:
+## The levels of the first hint whose flags hold: a nudge, then clearer, then
+## the answer (a plain string = one level).
+static func hint_levels(d: Dictionary, flags: Dictionary) -> Array:
 	for h in d.get("hints", []):
 		var need := str(h.get("if_flag", ""))
 		var never := str(h.get("if_not_flag", ""))
@@ -135,10 +137,20 @@ static func hint_text(d: Dictionary, flags: Dictionary) -> String:
 			continue
 		if not never.is_empty() and flags.get(never, false):
 			continue
-		return str(h["text"])
-	return ""
+		var t = h["text"]
+		return t if t is Array else [str(t)]
+	return []
 
 
+static func hint_text(d: Dictionary, flags: Dictionary, level := 0) -> String:
+	var levels := hint_levels(d, flags)
+	if levels.is_empty():
+		return ""
+	return str(levels[clampi(level, 0, levels.size() - 1)])
+
+
+## The nudge as a line of dialogue (DESIGN 11.5: ป้าจุ๋ม on the phone once she
+## is a friend, otherwise the rider thinking out loud).
 func hint() -> void:
 	var text := hint_text(data, GameState.flags)
 	if GameState.has_flag("jum_friend"):

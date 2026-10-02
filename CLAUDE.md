@@ -173,7 +173,11 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   - **น้ำขึ้นลง**: `GameState.tide` เริ่ม "high"; entry ในห้อง/use มี `if_tide`; ม้านั่ง (dialog line `event: "wait_tide"`) สลับน้ำแล้ว
     Main โหลดห้องใหม่หลัง dialog จบ. HUD มุมซ้ายบนบอก น้ำขึ้น/น้ำลง
   - ห้องมี `enter: {dialog, flag}` = ฉากตอนเข้าห้องครั้งแรก (Main.load_room)
-  - **คำใบ้**: puzzles.json `hints` (อันแรกที่ flag ผ่าน) → เมนู > "คำใบ้"; เป็นป้าจุ๋มโทรมาเมื่อ `jum_friend` ไม่งั้นไรเดอร์คิดในใจ
+  - **คำใบ้**: puzzles.json `hints` (อันแรกที่ flag ผ่าน) → เมนู > "คำใบ้"; เป็นป้าจุ๋มโทรมาเมื่อ `jum_friend` ไม่งั้นไรเดอร์คิดในใจ.
+    **3 ขั้น (2026-10-02, เจ้าของ: "hint มันโชว์เลย ไม่สนุก")**: `text` = [นัยๆ, ชัดขึ้น, เฉลย]; สมุดเขียนขั้นแรก แตะ "ใบ้อีก ..." / "ใบ้อีก (เฉลยเลย)"
+    ถึงเขียนขั้นถัดไป (`MenuBook.revealed` จำต่อ hint ใน session ไม่เซฟ). hint ใหม่ต้องมีครบ 3 ขั้น (test เช็ค)
+  - ข้อความตอนแตะของที่ยังใช้ไม่ได้ ต้องพูดถึงสิ่งที่ขาด**ตอนนี้**เท่านั้น (เจ้าของ: เรือเตอร์ไซค์ตอนไม่มีกุญแจพูดเรื่องพี่หนวด → คนงง ไม่ไปหากุญแจ):
+    `look_bike_locked` แยกตาม `if_item float_key`; เรื่องพี่หนวดขวางโผล่ตอนเอากุญแจไปเสียบเท่านั้น
   - **กดค้าง 0.45 วิ** (ไม่ลาก) = `Player.highlight_things()` วาง `HotspotPing` รอบของที่แตะได้ทุกชิ้น
   - PatrolBot ที่ถูกดึงฟิวส์ตั้ง flag `<bot_id>_fused` (ถาวร) — ใช้คู่ `distract_flag` ให้หลับข้ามวัน/ข้ามการโหลดห้อง
   - art ใหม่ `tools/art/png/props_2090.py`: steam_radio, wardrobe, floor_gap, upturned_boat, sluice_gate, sluice_flooded, tide_gauge,

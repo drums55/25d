@@ -20,6 +20,9 @@ const PAGES := [
 	["ตั้งค่า", "settings"],
 ]
 
+## How many levels of each hint were asked for (by its nudge), this session.
+static var revealed := {}
+
 var page := ""
 var _book: Control
 var _right: VBoxContainer
@@ -133,15 +136,35 @@ func open_page(id: String) -> void:
 	create_tween().tween_property(_right, "modulate:a", 1.0, 0.18)
 
 
-## The hint, written in the book (ป้าจุ๋ม's voice once she is a friend).
+## The hint, written in the book (ป้าจุ๋ม's voice once she is a friend): the
+## nudge first; "ใบ้อีก" writes the next, clearer line, the last one is the
+## answer.
 func _page_hint() -> void:
 	var friend := GameState.has_flag("jum_friend")
 	_right.add_child(UiKit.hand_label("คำใบ้", 46, UiKit.RED_INK))
 	var who := "ป้าจุ๋มโทรมาบอกว่า ..." if friend else "จดไว้กันลืม ..."
 	_right.add_child(UiKit.hand_label(who, 30, UiKit.INK_FADED))
-	var text := UiKit.hand_label(Puzzles.hint_text(Puzzles.data, GameState.flags), 38)
-	text.custom_minimum_size = Vector2(RIGHT.size.x, 0)
-	_right.add_child(text)
+	var levels := Puzzles.hint_levels(Puzzles.data, GameState.flags)
+	if levels.is_empty():
+		return
+	var key := str(levels[0])
+	var shown := clampi(int(revealed.get(key, 1)), 1, levels.size())
+	for i in shown:
+		var color := UiKit.RED_INK if i == levels.size() - 1 and i > 0 else UiKit.INK
+		var text := UiKit.hand_label(("· " if i > 0 else "") + str(levels[i]), 36, color)
+		text.custom_minimum_size = Vector2(RIGHT.size.x, 0)
+		_right.add_child(text)
+	if shown < levels.size():
+		var more := "ใบ้อีก (เฉลยเลย)" if shown == levels.size() - 1 else "ใบ้อีก ..."
+		var b := UiKit.hand_button(more, _reveal_more.bind(key), 34, UiKit.INK_FADED)
+		b.name = "MoreHint"
+		b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		_right.add_child(b)
+
+
+func _reveal_more(key: String) -> void:
+	revealed[key] = int(revealed.get(key, 1)) + 1
+	open_page("hint")
 
 
 func _on_loaded(_slot: int) -> void:
