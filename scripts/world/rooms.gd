@@ -24,9 +24,6 @@ extends RefCounted
 ## Gap rule as before: nothing 0.85-1.15 cells from a wall or another solid
 ## thing (navmesh slivers) — test_rooms checks every recipe.
 
-const LUNG := "lung_pradit"
-const JE := "je_muay"
-
 const ROOMS := {
 	"home":
 	{
@@ -184,8 +181,7 @@ const ROOMS := {
 				"name": "พี่หนวด (คนทวงหนี้)",
 				"pos": Vector2(7.0, 4.5),
 				"patrol": [Vector2(-2.5, 0.0), Vector2(2.0, 0.0)],
-				"character": LUNG,
-				"tint": Color(0.8, 0.5, 0.45),
+				"character": "nuad",
 				"catch_dialog": "catch_nuad",
 				"talk_dialog": "talk_nuad",
 				"distract_flag": "radio_on",
@@ -199,8 +195,7 @@ const ROOMS := {
 				"id": "nuad",
 				"name": "พี่หนวด (ตกงาน)",
 				"pos": Vector2(5.6, 4.5),
-				"character": LUNG,
-				"tint": Color(0.8, 0.5, 0.45),
+				"character": "nuad",
 				"dialog": "talk_nuad_ch3",
 				"if_flag": "ch2"
 			},
@@ -272,16 +267,14 @@ const ROOMS := {
 				"id": "pa_nok",
 				"name": "ป้านก",
 				"pos": Vector2(4.5, 2.0),
-				"character": JE,
-				"tint": Color(1, 0.9, 0.85),
+				"character": "pa_nok",
 				"dialog": "talk_pa_nok_ch3"
 			},
 			{
 				"id": "lung_table3",
 				"name": "ลุงโต๊ะสาม",
 				"pos": Vector2(3.0, 4.8),
-				"character": LUNG,
-				"tint": Color(1, 0.92, 0.8),
+				"character": "lung_table3",
 				"dialog": "talk_lung_ch3"
 			},
 		],
@@ -351,16 +344,14 @@ const ROOMS := {
 				"id": "jum",
 				"name": "ป้าจุ๋ม",
 				"pos": Vector2(5.0, 3.6),
-				"character": JE,
-				"tint": Color(1, 0.8, 0.95),
+				"character": "jum",
 				"dialog": "talk_jum_ch3"
 			},
 			{
 				"id": "keng",
 				"name": "น้องเก่ง",
 				"pos": Vector2(2.4, 6.0),
-				"character": JE,
-				"tint": Color(0.8, 0.9, 1),
+				"character": "keng",
 				"dialog": "talk_keng_ch3"
 			},
 		],
@@ -438,8 +429,7 @@ const ROOMS := {
 				"id": "chang_daeng",
 				"name": "ช่างแดง",
 				"pos": Vector2(7.0, 3.8),
-				"character": LUNG,
-				"tint": Color(1, 0.8, 0.7),
+				"character": "chang_daeng",
 				"dialog": "talk_chang_daeng_ch3",
 				"if_flag": "no9_fused"
 			},
@@ -658,8 +648,7 @@ const ROOMS := {
 				"id": "kiao",
 				"name": "เจ๊เกียว",
 				"pos": Vector2(5.0, 2.0),
-				"character": JE,
-				"tint": Color(1, 0.85, 0.5),
+				"character": "kiao",
 				"dialog": "talk_kiao_ch3"
 			},
 		],
@@ -708,8 +697,7 @@ const ROOMS := {
 				"id": "wan",
 				"name": "คุณนายวรรณ",
 				"pos": Vector2(5.5, 3.0),
-				"character": JE,
-				"tint": Color(0.75, 0.8, 0.95),
+				"character": "wan",
 				"dialog": "talk_wan_ch3",
 				"if_flags": ["ch2", "got_debt_list", "nok_love"]
 			},

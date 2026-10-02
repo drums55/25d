@@ -174,7 +174,7 @@ func _name_tag(node: Node2D, text: String) -> void:
 		return
 	var label := Label.new()
 	label.text = text
-	label.position = Vector2(-140, -250)
+	label.position = Vector2(-140, -222)
 	label.size = Vector2(280, 40)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 26)

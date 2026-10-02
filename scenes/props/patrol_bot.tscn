@@ -31,10 +31,10 @@ color = Color(0.8, 0.4, 0.3, 1)
 polygon = PackedVector2Array(-26, -60, 26, -60, 32, -100, 26, -140, 0, -150, -26, -140, -32, -100)
 
 [node name="Mark" type="Label" parent="."]
-offset_left = -60.0
-offset_top = -250.0
-offset_right = 60.0
-offset_bottom = -180.0
+offset_left = -160.0
+offset_top = -300.0
+offset_right = 160.0
+offset_bottom = -230.0
 theme_override_colors/font_outline_color = Color(0.1, 0.06, 0.04, 1)
 theme_override_constants/outline_size = 10
 theme_override_font_sizes/font_size = 56

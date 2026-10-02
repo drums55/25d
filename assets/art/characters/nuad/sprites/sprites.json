@@ -27,12 +27,8 @@
    "frames": 8,
    "fps": 12
   },
-  "attack": {
-   "frames": 6,
-   "fps": 18
-  },
-  "ride": {
-   "frames": 4,
+  "dance": {
+   "frames": 8,
    "fps": 8
   }
  }

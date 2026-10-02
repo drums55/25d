@@ -48,6 +48,17 @@
     เป็น cooldown ขั้นต่ำ). วางเท้าบน origin ด้วย `offset = frame_size/2 - pivot` + `scale = 1/ART_SCALE` (centered)
     ทิศเลือกแถวตรงๆ ไม่ mirror. ตัวที่ไม่มีโฟลเดอร์ `sprites/` → fallback instantiate CutoutRig (placeholder polygon)
     Player/NPC ใช้ `character_view.tscn` แล้ว; cut-out .svg ของ rider/lung_pradit/je_muay ลบแล้ว, `gen_svg.py` ไม่สร้างตัวละครอีก
+- **ตัวละครแต่ละคนแต่งตัวต่างกัน + ท่าพิเศษ + ย่อขนาด (2026-10-02, เจ้าของ: "ทำท่านั่งขี่ / ควรลดขนาดทุก characters ไหม / แต่ละคนแต่งตัวต่างกัน / ท่า achievement อย่างพี่หนวดเต้น")**:
+  - NPC ทุกคนมีชีตของตัวเอง (`assets/art/characters/<npc id>/sprites`): nuad, lung_table3, pa_nok, jum, keng, chang_daeng, kiao, wan —
+    สเปกอยู่ใน `NPCS` ของ `char_q.py` (เพศ, ผม, สีผิว, แขนกุด/สั้น/ยาว, ขายาว/ขาสั้น/ผ้าถุง, รองเท้า, scale (น้องเก่ง 0.78), palette)
+    + ของประจำตัวใน `npc_accessories` (หนวด+แว่นดำ+สร้อยทอง, แว่น+ผ้าเช็ดหน้า+พุง, ผ้ากันเปื้อน+ที่คาดผม, ที่ม้วนผม+ดอกไม้+มือถือ,
+    หูฟังเกมมิ่ง, หมวกกลับหลัง+แว่นช่าง+ผ้าเช็ดมือ, สร้อย+กำไลทอง, ปกเสื้อ+บัตรพนักงาน). rooms.gd ใช้ `"character": "<id>"` ไม่ย้อมสีแล้ว
+  - ท่าพิเศษ = anim เสริมในชีต: rider `ride` (นั่งขี่ 4f@8, ถอดกล่องหลัง+ประแจตอน render), nuad `dance` (รำวง 8f@8).
+    `CharacterView.set_pose(anim)` ค้างท่า (loop, ชนะ walk; ตั้งก่อน _ready ได้). BoatRide ใช้ `ride` ที่ `RIDER_SEAT`,
+    PatrolBot ที่ถูก distract เล่น `distract_pose` (default "dance") ถ้าตัวนั้นมี. ท่าใหม่ = เพิ่ม kind ใน `pose_frame` + ใส่ชื่อใน `LOOPING_ANIMS`
+  - ขนาด: `CharacterView.SIZE = 0.84` (เดิมคนสูงกว่าประตู); ป้ายชื่อ NPC -222, เครื่องหมายหุ่น (! ? ~เต้น~) -300
+  - render: `pip install bpy==4.2.0` + `python3 tools/art/3d/fetch_quaternius.py <QDIR>` (โหลดชุดฟรีจาก itch.io) แล้ว
+    `QDIR=<QDIR> python3 char_q.py <name> <out>` + `pack.py <out>` (~2 นาที/ตัว, segfault ตอนปิด bpy ไม่เป็นไร)
 - **Prop PNG แบบลงสีด้วยโค้ด** (2026-10-01): `tools/art/png/paint.py` (numpy+PIL+scipy: เงา/rim light/เส้นขอบ/texture พู่กัน, supersample 3x) + สคริปต์ต่อชิ้น เช่น `tools/art/png/noodle_cart.py <out.png>`. ไม่มี AI image gen — PNG พวกนี้แทน .svg ทีละชิ้น; `gen_svg.py` ข้ามชิ้นที่มี .png แล้ว
 - **ฉาก/prop ลงสีด้วยโค้ด** (2026-10-01): `tools/art/png/room.py` (backdrop ทั้งห้อง, RoomCanvas crop ต่อ op), `props_th.py`
   (prop ไทย + `Canvas.text()` ป้ายไทยบนหน้า iso: หน้า +x ต้องให้ p0 อยู่ฝั่ง +gy). backdrop ห้องเดิม 4 ห้องลบไปพร้อมย่านเก่า;
@@ -271,5 +282,5 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
 ## สถานะ / ยังไม่ได้ทำ
 - **A0–A4 เสร็จ (2026-10-02)**: เกมเล่นจบได้ 3 บท 8 ห้อง ตอนจบ 4 แบบ, plot ย่อย 3 สาย (ลุงโต๊ะสาม×ป้านก → งานแต่ง, ลอตเตอรี่ป้าจุ๋ม, หุ่นเก้า), 66 tests
 - UI: เมนูในเกม + การ์ด + ตัวเลือก + ปุ่มหน้าแรก ขัดแล้ว (2026-10-02); เหลือแถบกระเป๋า, กล่อง dialog, ฉากหลังหน้าแรก
-- ยังไม่มี: เสียง, sprite จริงของ NPC แต่ละแบบ (ป้านก/ป้าจุ๋ม/เจ๊เกียว/คุณนายวรรณ ใช้ร่างเดียวกันย้อมสี)
+- ยังไม่มี: เสียง; ท่าพิเศษอื่น (ป้าจุ๋มตะโกนโทรโข่ง, งานแต่ง, ตอนจบ)
 - ลบ save บนแท็บเล็ต = `adb shell run-as com.drums55.game25d rm files/save_0.json`

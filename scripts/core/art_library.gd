@@ -27,7 +27,7 @@ const ART_SCALE := 2.0
 const PROP_FOOT_MARGIN := 160.0
 const PARTS := ["head", "torso", "arm_l", "arm_r", "leg_l", "leg_r", "head_back", "torso_back"]
 ## Animations that loop; anything else (attack...) plays once.
-const LOOPING_ANIMS := ["idle", "walk"]
+const LOOPING_ANIMS := ["idle", "walk", "ride", "dance"]
 
 
 ## Reads <root>/characters/<name>/sprites/sprites.json (+ one sheet per anim).

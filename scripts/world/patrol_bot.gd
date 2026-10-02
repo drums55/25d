@@ -52,6 +52,8 @@ const CONE_RAYS := 14
 @export var distract_flag := ""
 @export var distract_dir := Vector2(1, 0)
 @export var distract_mark := "~ เต้น ~"
+## Special animation a person plays once distracted (if their sheet has it).
+@export var distract_pose := "dance"
 ## Can its fuse be pulled from behind (machines only)?
 @export var tamperable := true
 ## Dialog when tapped while not tamperable.
@@ -108,6 +110,7 @@ func _distract() -> void:
 	if _rig:
 		_rig.set_facing(Iso.dir8(distract_dir))
 		_rig.set_walk(0.0)
+		_rig.set_pose(distract_pose)
 	_update_cone()
 
 

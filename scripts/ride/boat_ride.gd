@@ -14,6 +14,8 @@ const WATER_HALF := 1.7
 const BANK := 1.2
 const DECOR_GAP := 2.6
 const BUMP_STOP := 0.8
+## Where the rider's feet go so that, sitting ("ride" pose), they land on the seat.
+const RIDER_SEAT := Vector2(-6, -30)
 const LINES := {
 	"bump":
 	[
@@ -100,9 +102,10 @@ func _build_rider() -> void:
 		_rider.add_child(bike)
 	var who := (load("res://scenes/characters/character_view.tscn") as PackedScene).instantiate()
 	who.character_name = "rider"
-	who.position = Vector2(-6, -38)
+	who.position = RIDER_SEAT
 	_rider.add_child(who)
 	who.set_facing(Iso.Dir.SE)
+	who.set_pose("ride")
 	_world.add_child(_rider)
 
 

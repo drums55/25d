@@ -2,7 +2,7 @@
 Modular Character Outfits), dressed for 25d and rendered with our toon/ink
 shader to 8-direction sprite sheets (same output contract as char3d.py).
 
-Run: python3 char_q.py <rider|lung_pradit|je_muay> <out_dir> [--still]
+Run: python3 char_q.py <rider|lung_pradit|je_muay|npc id from NPCS> <out_dir> [--still]
 """
 import sys, os, math, json
 sys_argv = list(sys.argv)
@@ -333,6 +333,11 @@ ORDER = ["pelvis", "spine_01", "spine_02", "spine_03", "neck_01", "Head",
          "thigh_l", "calf_l", "foot_l", "thigh_r", "calf_r", "foot_r"]
 FINGER_SIGN = float(os.environ.get('FSIGN', '1'))
 X, Y, Z = (1, 0, 0), (0, 1, 0), (0, 0, 1)   # model faces -Y; its left is +X
+RIDE_DROP = float(os.environ.get("RIDE_DROP", "-0.3"))
+## The rider's extra animation: sitting on the bike (BoatRide).
+RIDE = (4, 8)
+## พี่หนวด dancing to the steam radio (owner: special moments get their own move).
+DANCE = (8, 8)
 
 
 def base_pose(arm, akimbo=False, weapon=False):
@@ -358,8 +363,11 @@ def base_pose(arm, akimbo=False, weapon=False):
         aim_bone(arm, "lowerarm_r", (0.55, -0.05, -0.8))
 
 
-def pose_frame(arm, kind, t, weapon=False, akimbo=False):
+def pose_frame(arm, kind, t, weapon=False, akimbo=False, hunch=False):
     base_pose(arm, akimbo=akimbo)
+    if hunch:
+        rot_bone(arm, "spine_02", X, -10)
+        rot_bone(arm, "neck_01", X, 8)
     s = math.sin(2 * math.pi * t)
     c = math.cos(2 * math.pi * t)
     bob = 0.0
@@ -388,6 +396,37 @@ def pose_frame(arm, kind, t, weapon=False, akimbo=False):
         rot_bone(arm, "spine_01", X, -5)
         rot_bone(arm, "spine_02", Z, 5 * s)
         bob = -0.022 * abs(c)
+    elif kind == "dance":
+        # รำวงลูกทุ่ง: hands up turning at the wrist, hips swaying, knees bouncing
+        for sx, side, ph in ((1, "l", 0.0), (-1, "r", math.pi)):
+            w = math.sin(2 * math.pi * t + ph)
+            aim_bone(arm, "upperarm_" + side, (sx * 0.75, -0.25, 0.35 + 0.25 * w))
+            aim_bone(arm, "lowerarm_" + side, (sx * 0.1, -0.35, 1.0))
+            aim_bone(arm, "hand_" + side, (sx * (0.6 + 0.5 * w), -0.4, 0.6))
+        rot_bone(arm, "pelvis", Y, 9 * s)
+        rot_bone(arm, "spine_02", Y, -7 * s)
+        rot_bone(arm, "Head", Y, 6 * s)
+        rot_bone(arm, "Head", X, 6)
+        knee = 14 + 10 * abs(c)
+        for side in ("l", "r"):
+            rot_bone(arm, "thigh_" + side, X, -knee * 0.6)
+            rot_bone(arm, "calf_" + side, X, knee)
+        bob = -0.03 - 0.02 * abs(c)
+    elif kind == "ride":
+        # sitting astride the เรือเตอร์ไซค์: thighs forward, shins down, leaning
+        # into the bars; the engine shakes the rider a little
+        for sx, side in ((1, "l"), (-1, "r")):
+            aim_bone(arm, "thigh_" + side, (sx * 0.22, -1.0, float(os.environ.get("TZ", "0.3"))))
+            aim_bone(arm, "calf_" + side, (sx * 0.05, -0.15, -1.0))
+            aim_bone(arm, "foot_" + side, (0, -1.0, -0.2))
+        rot_bone(arm, "spine_01", X, -10)
+        rot_bone(arm, "spine_02", X, -6 + 1.2 * s)
+        rot_bone(arm, "Head", X, 8)
+        for sx, side in ((1, "l"), (-1, "r")):
+            aim_bone(arm, "upperarm_" + side, (sx * 0.3, -0.75, -0.55))
+            aim_bone(arm, "lowerarm_" + side, (sx * 0.05, -0.95, -0.1))
+            aim_bone(arm, "hand_" + side, (sx * 0.05, -1.0, -0.15))
+        bob = RIDE_DROP + 0.004 * s
     else:  # attack (weapon only)
         if t < 0.34:
             u = t / 0.34
@@ -452,26 +491,164 @@ SKIN_TONE = None
 SKIN_TONES = {'rider': '#EDC29A', 'lung_pradit': '#D7A273', 'je_muay': '#F6D7B8'}
 
 
+# NPCs of the flooded soi (owner 2026-10-02: every character dressed differently).
+# body: which base; arms: "bare" (tank top) / "short" (short sleeves) / "long";
+# legs: "long" / "short" (shorts, bare shins) / "skirt" (ผ้าถุง to the ankle);
+# feet: Quaternius part (trimmed to shoes); scale: 1 = adult.
+NPCS = {
+    "nuad": dict(female=False, hair=["Hair_Buzzed.gltf"], hair_tint="#1A1618", skin="#B98058",
+                 arms="bare", legs="long", feet="Male_Peasant_Feet.gltf", feet_tint="#5A4632",
+                 pal={"torso": ("#1E1C22", 0.35, 0), "legs": ("#3B5578", 0.35, 0), "gold": ("#E2B54A", 0.6, 1.0),
+                      "shade": ("#141218", 0.6, 1.0)}),
+    "lung_table3": dict(female=False, hair=["Hair_Buzzed.gltf", "Hair_Beard.gltf"], hair_tint="#E8E4DC",
+                        skin="#C99068", arms="short", legs="long", feet="Male_Peasant_Feet.gltf",
+                        feet_tint="#3A2E26", hunch=True,
+                        pal={"torso": ("#F2EEE4", 0.3, 0), "legs": ("#7A6448", 0.3, 0), "frame": ("#2A2224", 0.3, 0.4),
+                             "hanky": ("#E58FB0", 0.3, 0)}),
+    "pa_nok": dict(female=True, hair=["Hair_Buns.gltf"], hair_tint="#BDB6AE", skin="#D9A57C",
+                   arms="short", legs="skirt", feet="Female_Peasant_Feet.gltf", feet_tint="#2E2A30",
+                   pal={"torso": ("#C0392B", 0.35, 0), "legs": ("#2E5E4E", 0.3, 0), "apron": ("#F2EEE4", 0.3, 0),
+                        "band": ("#E8B83A", 0.4, 0)}),
+    "jum": dict(female=True, hair=["Hair_Buns.gltf"], hair_tint="#141016", skin="#E8B890",
+                arms="short", legs="skirt", feet="Female_Peasant_Feet.gltf", feet_tint="#C0392B",
+                pal={"torso": ("#F2A23A", 0.35, 0), "legs": ("#7A3A8A", 0.3, 0), "flower": ("#E8457A", 0.4, 0),
+                     "gold": ("#E2B54A", 0.6, 1.0), "phone": ("#2B2629", 0.5, 0.8), "curler": ("#7FC8E8", 0.4, 0.4)}),
+    "keng": dict(female=False, hair=["Hair_SimpleParted.gltf"], hair_tint="#141016", skin="#E0AE84",
+                 arms="short", legs="short", feet="Male_Peasant_Feet.gltf", feet_tint="#E8E4DC", scale=0.78,
+                 pal={"torso": ("#3A6FD8", 0.4, 0), "legs": ("#2B2629", 0.3, 0), "headset": ("#1E1C22", 0.5, 0.6),
+                      "led": ("#4AE0C8", 0.6, 1.0)}),
+    "chang_daeng": dict(female=False, hair=["Hair_Buzzed.gltf"], hair_tint="#2A2224", skin="#C08860",
+                        arms="long", legs="long", feet="Male_Ranger_Feet_Boots.gltf", feet_tint="#FFFFFF",
+                        pal={"torso": ("#B8322A", 0.35, 0), "legs": ("#B8322A", 0.35, 0), "cap": ("#2B2629", 0.35, 0.1),
+                             "lens": ("#F0A13A", 0.6, 1.0), "grease": ("#2B2629", 0.2, 0)}),
+    "kiao": dict(female=True, hair=["Hair_Long.gltf"], hair_tint="#100C10", skin="#F2CDA8",
+                 arms="short", legs="long", feet="Female_Peasant_Feet.gltf", feet_tint="#1A1619",
+                 pal={"torso": ("#B8221E", 0.4, 0.2), "legs": ("#1E1C22", 0.35, 0), "gold": ("#E2B54A", 0.6, 1.0),
+                      "trim": ("#E2B54A", 0.5, 0.6)}),
+    "wan": dict(female=True, hair=["Hair_Buns.gltf"], hair_tint="#141016", skin="#EFC6A0",
+                arms="long", legs="long", feet="Female_Peasant_Feet.gltf", feet_tint="#141218",
+                pal={"torso": ("#2A3550", 0.4, 0.1), "legs": ("#2A3550", 0.4, 0.1), "collar": ("#F2EEE4", 0.3, 0),
+                     "badge": ("#E8762D", 0.4, 0), "card": ("#F2EEE4", 0.3, 0)}),
+}
+
+
+def npc_region(spec):
+    arms, legs = spec["arms"], spec["legs"]
+
+    def region(bone, p):
+        if bone in ("Head", "neck_01") or bone.startswith(("hand", "index", "middle", "ring", "pinky", "thumb")):
+            return "skin"
+        if bone.startswith("lowerarm"):
+            return "torso" if arms == "long" else "skin"
+        if bone.startswith("upperarm"):
+            if arms == "bare":
+                return "skin"
+            if arms == "short" and p.z < 1.28:
+                return "skin"
+            return "torso"
+        if bone.startswith("ball") or p.z < 0.06:
+            return "hide"
+        if bone.startswith("calf") and legs == "short":
+            return "skin"
+        if bone.startswith(("thigh", "calf")) or bone == "pelvis" or p.z < 0.97:
+            return "legs"
+        return "torso"
+    return region
+
+
+def npc_accessories(name, B, arm, head, top, neck, hc):
+    pelvis = bone_world(arm, "pelvis")
+    if NPCS[name]["legs"] == "skirt":
+        # ผ้าถุง: a tube of cloth from the waist to the ankles
+        garment(B, BODY, "Skirt", "legs", "pelvis", 0.1, 0.98, arc=360, pad=0.03, flare=0.07)
+    if name == "nuad":
+        B.box("Mustache", hc + Vector((0, -0.118, -0.055)), (0.1, 0.03, 0.022), "hair", "Head", bevel=0.01, ink=0.004)
+        for sx in (1, -1):
+            B.box("Shade", hc + Vector((sx * 0.042, -0.122, 0.0)), (0.06, 0.012, 0.03), "shade", "Head", bevel=0.006, ink=0.003)
+        B.torus("Chain", neck + Vector((0, -0.01, -0.04)), 0.075, 0.009, "gold", "spine_03", scale=(1.0, 1.0, 0.75), ink=0.0)
+    elif name == "lung_table3":
+        for sx in (1, -1):
+            B.torus("Glass", hc + Vector((sx * 0.042, -0.122, 0.005)), 0.026, 0.004, "frame", "Head",
+                    rot=(math.radians(90), 0, 0), ink=0.0)
+        B.box("Hanky", bone_world(arm, "hand_l") + Vector((0.02, -0.03, -0.06)), (0.06, 0.02, 0.09), "hanky", "hand_l", bevel=0.01)
+        B.sphere("Belly", pelvis + Vector((0, -0.05, 0.2)), 0.14, "torso", "spine_01", scale=(1.0, 0.75, 0.9), ink=0.008)
+    elif name == "pa_nok":
+        garment(B, BODY, "Apron", "apron", "pelvis", 0.42, 1.0, arc=140, pad=0.035, flare=0.04)
+        B.torus("Band", hc + Vector((0, 0.005, 0.015)), 0.112, 0.014, "band", "Head", scale=(1.0, 1.12, 1.0), ink=0.004)
+    elif name == "jum":
+        B.sphere("Flower", hc + Vector((0.09, -0.02, 0.06)), 0.035, "flower", "Head", ink=0.004)
+        for k, sx in enumerate((1, -1)):
+            B.cyl("Curler", hc + Vector((sx * 0.06, 0.07, 0.07)), 0.022, 0.07, "curler", "Head",
+                  rot=(0, math.radians(90), 0), ink=0.004)
+            B.torus("Hoop", head + Vector((sx * 0.075, 0.0, 0.06)), 0.022, 0.004, "gold", "Head", rot=(0, math.radians(90), 0), ink=0.0)
+        hR = bone_world(arm, "hand_r")
+        B.box("Phone", hR + Vector((-0.06, -0.03, 0)), (0.05, 0.012, 0.1), "phone", "hand_r", bevel=0.006)
+    elif name == "keng":
+        B.torus("Headset", hc + Vector((0, 0.0, -0.005)), 0.118, 0.012, "headset", "Head", rot=(0, math.radians(90), 0),
+                scale=(1.0, 1.0, 1.15), ink=0.004)
+        for sx in (1, -1):
+            B.cyl("Cup", hc + Vector((sx * 0.118, 0.0, 0.0)), 0.045, 0.03, "headset", "Head", rot=(0, math.radians(90), 0))
+            B.cyl("Led", hc + Vector((sx * 0.135, 0.0, 0.0)), 0.02, 0.006, "led", "Head", rot=(0, math.radians(90), 0), ink=0.0)
+    elif name == "chang_daeng":
+        B.sphere("Cap", hc + Vector((0, 0.01, 0.06)), 0.118, "cap", "Head", scale=(1.0, 1.08, 0.8), cut=0.1)
+        B.box("Visor", hc + Vector((0, 0.14, 0.072)), (0.14, 0.11, 0.012), "cap", "Head", rot=(math.radians(8), 0, 0), bevel=0.02)
+        for sx in (1, -1):
+            B.cyl("Goggle", hc + Vector((sx * 0.045, -0.105, 0.075)), 0.03, 0.03, "lens", "Head", rot=(math.radians(80), 0, 0))
+        B.box("Rag", pelvis + Vector((0.12, -0.09, 0.0)), (0.05, 0.02, 0.14), "grease", "pelvis", bevel=0.01)
+    elif name == "kiao":
+        B.torus("Necklace", neck + Vector((0, -0.01, -0.05)), 0.08, 0.008, "gold", "spine_03", scale=(1.0, 1.0, 0.75), ink=0.0)
+        B.torus("Collar", neck + Vector((0, 0.005, -0.01)), 0.07, 0.014, "trim", "spine_03", scale=(1.0, 1.0, 0.6), ink=0.004)
+        for sx, side in ((1, "l"), (-1, "r")):
+            B.torus("Bangle", bone_world(arm, "hand_" + side), 0.04, 0.01, "gold", "lowerarm_" + side,
+                    rot=(0, math.radians(90), 0), ink=0.0)
+            B.torus("Hoop", head + Vector((sx * 0.075, 0.0, 0.06)), 0.026, 0.005, "gold", "Head", rot=(0, math.radians(90), 0), ink=0.0)
+    elif name == "wan":
+        B.torus("Collar", neck + Vector((0, 0.005, -0.01)), 0.072, 0.016, "collar", "spine_03", scale=(1.0, 1.0, 0.6), ink=0.004)
+        hx, fy, by = body_section(BODY, neck.z - 0.18)
+        B.box("Badge", Vector((0.0, fy - 0.012, neck.z - 0.2)), (0.07, 0.012, 0.09), "card", "spine_03", bevel=0.006, ink=0.004)
+        B.box("BadgeLogo", Vector((0.0, fy - 0.02, neck.z - 0.18)), (0.04, 0.006, 0.02), "badge", "spine_03", bevel=0.002, ink=0.0)
+
+
 def build(name):
     global PAL, INK
     sc = reset()
     INK = outline_material()
-    PAL = PALETTES[name]
+    npc = NPCS.get(name)
+    if npc:
+        PAL = dict(PALETTES["je_muay" if npc["female"] else "lung_pradit"])
+        PAL.update(npc["pal"])
+        PAL["hair"] = (npc["hair_tint"], 0.3, 0.2)
+    else:
+        PAL = PALETTES[name]
     B = Builder(PAL)
     B.ink = INK
-    female = name == "je_muay"
+    female = npc["female"] if npc else name == "je_muay"
     objs = import_gltf(BASE + ("Superhero_Female_FullBody.gltf" if female else "Superhero_Male_FullBody.gltf"))
     arm = [o for o in objs if o.type == "ARMATURE"][0]
     arm.rotation_mode = "XYZ"
     body = [o for o in objs if o.type == "MESH" and o.name.lower().startswith("superhero")][0]
     global BODY, SKIN_TONE
     BODY = body
-    SKIN_TONE = SKIN_TONES[name]
+    SKIN_TONE = npc["skin"] if npc else SKIN_TONES[name]
     tex_dir = UBC + "/Base Characters/Textures/"
     LIGHT_SKIN[body.name[:20]] = tex_dir + ("T_Superhero_Female_Light_BaseColor.png" if female else "T_Superhero_Male_Ligh.png")
     for o in objs:
         if o.type == "MESH" and o is not body:
             toonify(o)
+    if npc:
+        for hf in npc["hair"]:
+            for o in rebind(import_gltf(HAIR + hf), arm):
+                toonify(o, npc["hair_tint"])
+        paint_regions(body, npc_region(npc))
+        finish_body(body, [])
+        for o in rebind(import_gltf(OUTF + npc["feet"]), arm):
+            if "Boots" not in npc["feet"]:
+                trim_above(o, 0.12)
+            toonify(o, npc["feet_tint"])
+        if npc.get("scale"):
+            arm.scale = (npc["scale"],) * 3
+            bpy.context.view_layer.update()  # accessories read bone positions
+        return sc, arm, B, dict(akimbo=npc["female"] and name == "kiao", hunch=npc.get("hunch", False))
     hair = {"rider": "Hair_Buzzed.gltf", "lung_pradit": "Hair_Beard.gltf", "je_muay": "Hair_Buns.gltf"}[name]
     tints = {"rider": "#2A2224", "lung_pradit": "#E8E4DC", "je_muay": "#1C1620"}
     hobjs = import_gltf(HAIR + hair)
@@ -542,7 +719,9 @@ def accessories(name, B, arm):
     top = bone_world(arm, "Head", tail=True)
     neck = bone_world(arm, "neck_01")
     hc = head + Vector((0, 0.0, 0.11))
-    if name == "rider":
+    if name in NPCS:
+        npc_accessories(name, B, arm, head, top, neck, hc)
+    elif name == "rider":
         full_face_helmet(B, hc + Vector((0, 0.012, 0.0)), 0.152)
         # fold-down collar: band round the back of the neck + two lapels opening at the front
         B.torus("Collar", neck + Vector((0, 0.012, -0.012)), 0.082, 0.02, "jacket", "spine_03", scale=(1.1, 1.0, 0.7), ink=0.007)
@@ -595,21 +774,38 @@ def main():
     sc, arm, B, opts = build(name)
     accessories(name, B, arm)
     ranges, frame = {}, 1
-    for anim, (n, fps) in ANIMS.items():
+    anims = dict(ANIMS)
+    if name == "rider":
+        anims["ride"] = RIDE
+    if name == "nuad":
+        anims["dance"] = DANCE
+    only = os.environ.get("ONLY")
+    if only:
+        anims = {k: v for k, v in anims.items() if k in only.split(",")}
+    for anim, (n, fps) in anims.items():
         if anim == "attack" and not opts.get("weapon"):
             continue
         ranges[anim] = (frame, n, fps)
         for i in range(n):
-            pose_frame(arm, anim, i / n, weapon=opts.get("weapon", False), akimbo=opts.get("akimbo", False))
+            pose_frame(arm, anim, i / n, weapon=opts.get("weapon", False), akimbo=opts.get("akimbo", False),
+                       hunch=opts.get("hunch", False))
             key_all(arm, frame + i)
         frame += n
     tmp = os.path.join(out, "_frames")
     os.makedirs(tmp, exist_ok=True)
     dirs = [2, 1, 0, 6] if still else range(8)
+    # on the bike the backpack box and the wrench come off (the bike has its own box)
+    off_bike = ("Box", "Lid", "BoxStrip", "Corner", "Strap", "Chimney", "ChimCap", "BoxGauge",
+                "BoxGaugeFace", "WHandle", "WJaw", "WHook", "WNut")
     for anim, (f0, n, fps) in ranges.items():
+        for o in bpy.data.objects:
+            if o.name.split(".")[0] in off_bike:
+                o.hide_render = anim == "ride"
         for d in dirs:
             arm.rotation_euler = (0, 0, yaw_for(d))
-            idx = range(n) if not still else ([0] if anim == "idle" else [0, n // 2])
+            idx = range(n) if not still else ([0] if anim in ("idle", "ride") else [0, n // 2])
+            if still and anim == "walk":
+                idx = []
             for i in idx:
                 sc.frame_set(f0 + i)
                 sc.render.filepath = os.path.join(tmp, "%s_%d_%02d.png" % (anim, d, i))

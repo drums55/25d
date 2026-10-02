@@ -1,7 +1,9 @@
 class_name CharacterView
 extends Node2D
 ## Visual of a character, origin = feet (Y-sort point). Same API as CutoutRig:
-## set_facing(dir), set_walk(amount), play_attack(), is_attacking().
+## set_facing(dir), set_walk(amount), play_attack(), is_attacking(); plus
+## set_pose(anim) for held special moves (the rider sitting on the bike = "ride",
+## พี่หนวด dancing to the radio = "dance") when the sheet has them.
 ##
 ## Uses the 8-direction sprite sheets under
 ## assets/art/characters/<character_name>/sprites/ when present (one row per
@@ -12,12 +14,17 @@ signal attack_finished
 
 const CUTOUT_RIG := preload("res://scenes/characters/cutout_rig.tscn")
 const WALK_THRESHOLD := 0.05
+## Everyone drawn a bit smaller than the renders (owner 2026-10-02: people stood
+## taller than the doors).
+const SIZE := 0.84
 
 @export var character_name := ""
 
 var facing: int = Iso.Dir.S
 var _walk := 0.0
 var _attacking := false
+## Held special animation ("" = idle/walk as usual).
+var _pose := ""
 var _sprite: AnimatedSprite2D
 var _rig: CutoutRig
 
@@ -27,6 +34,7 @@ func _ready() -> void:
 	if data.is_empty():
 		_rig = CUTOUT_RIG.instantiate()
 		_rig.character_name = character_name
+		_rig.scale = Vector2.ONE * SIZE
 		add_child(_rig)
 		return
 	_sprite = AnimatedSprite2D.new()
@@ -35,14 +43,29 @@ func _ready() -> void:
 	# centered=true draws the frame around the node; shift so the pivot
 	# (feet, in frame pixels) lands on the origin, then scale to game size.
 	_sprite.offset = data["frame_size"] * 0.5 - data["pivot"]
-	_sprite.scale = Vector2.ONE / ArtLibrary.ART_SCALE
+	_sprite.scale = Vector2.ONE / ArtLibrary.ART_SCALE * SIZE
 	_sprite.animation_finished.connect(_on_animation_finished)
 	add_child(_sprite)
+	if not _pose.is_empty() and not _has_anim(_pose):
+		_pose = ""
 	_play_state()
 
 
 func has_sprites() -> bool:
 	return _sprite != null
+
+
+## Hold a special animation (true when this character has it); "" ends it.
+func set_pose(anim: String) -> bool:
+	if not is_node_ready():
+		# not built yet: _ready keeps it if the sheet has it
+		_pose = anim
+		return true
+	if not anim.is_empty() and not _has_anim(anim):
+		return false
+	_pose = anim
+	_play_state()
+	return true
 
 
 func set_facing(dir: int) -> void:
@@ -102,6 +125,8 @@ func _play_state() -> void:
 		_sprite.play("attack_%d" % facing)
 		return
 	var anim := "walk" if _walk > WALK_THRESHOLD else "idle"
+	if not _pose.is_empty():
+		anim = _pose
 	if not _has_anim(anim):
 		anim = "idle"
 	var name := "%s_%d" % [anim, facing]
