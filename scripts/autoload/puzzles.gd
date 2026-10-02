@@ -104,7 +104,7 @@ func use(item: String, target: String) -> bool:
 	if u.is_empty():
 		_fail([target, item])
 		return false
-	Audio.sfx("use_ok")
+	Audio.sfx(str(u.get("sfx", "use_ok")))
 	if u.get("consume", false):
 		GameState.take_item(item)
 	Dialog.start_lines(u.get("lines", []), "use_%s_%s" % [item, target])

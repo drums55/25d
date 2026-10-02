@@ -343,6 +343,11 @@ func test_old_gate_robot_guards_the_sluice_until_the_forecast_says_high():
 		TestHelpers.finish_dialog()
 		assert_false(GameState.has_flag("gate_open"), "the robot stands in the way at %s" % side)
 	assert_true(GameState.has_flag("met_gate_bot"))
+	# and from anywhere at all: the robot guards the thing, not a circle
+	_player.global_position = Iso.grid_to_world(Vector2(2.0, 5.5))
+	GameState.held_item = "crank"
+	_tap("sluice_gate")
+	assert_false(GameState.has_flag("gate_open"), "guarded wherever the tap came from")
 	GameState.set_flag("forecast_high")
 	await wait_seconds(0.5)
 	assert_null(_room().get_world().get_node_or_null("GateBot"))
@@ -616,6 +621,8 @@ func test_walkthrough_chapter_three_best_ending():
 	# ที่ไป (2): the guard post is the last living gate
 	await _ride_to("guard_post")
 	assert_not_null(_room().get_world().get_node_or_null("GuardA"), "robots guard the post")
+	_tap("beam")
+	assert_false(GameState.has_flag("met_beam"), "the robots guard คุณบีม")
 	GameState.held_item = "vest"
 	_tap("ton")
 	assert_true(GameState.has_flag("disguised"))

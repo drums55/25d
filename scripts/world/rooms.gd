@@ -669,7 +669,9 @@ const ROOMS := {
 				"pos": Vector2(2.8, 5.4),
 				"label": "แหวน",
 				"text": 'ล้วงโคลนหน้าประตูน้ำ ... แหวนทองเล็กๆ ด้านในสลักว่า "นก 2060"',
-				"if_flag": "lung_ring_told",
+				# the company robot stands over the mud until เก้า talks it down: a
+				# rule in the data, not a reach check (owner 2026-10-02)
+				"if_flags": ["lung_ring_told", "ally_nine"],
 				"if_tide": "low"
 			},
 		],
@@ -1390,7 +1392,7 @@ const ROOMS := {
 				"pos": Vector2(9.3, 2.4),
 				"foot": Vector2(0.4, 0.4),
 				"h": 290.0,
-				"dialog": "look_survey_kiosk_ch3",
+				"dialog": "look_survey_kiosk_ch3_guarded",
 				"prompt": "ตู้แบบสอบถาม"
 			},
 			{
@@ -1426,7 +1428,7 @@ const ROOMS := {
 				"name": "คุณบีม (ลูกค้าสัมพันธ์)",
 				"pos": Vector2(5.2, 2.8),
 				"character": "beam",
-				"dialog": "talk_beam_ch3"
+				"dialog": "talk_beam_ch3_guarded"
 			},
 			{
 				"id": "ton",

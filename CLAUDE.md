@@ -305,6 +305,10 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
 - **ประตูมีชีวิตต้องทึบ (2026-10-02, เจ้าของ: "ไปสถานีสูบน้ำ มีหุ่นนะ แต่ไขประตูแล้วเข้าได้")**: เดิม `caught_by` ผลักแค่ ~27px แล้วหุ่น "ใจเย็น" 3 วิ → เดินทะลุไปไขประตูได้.
   ตอนนี้ `Player.shoved_by(bot)` ดันออกไปนอกโซน (`zone_range` + 26) ด้วย move_and_slide (ผนังยังกั้น) และระหว่าง `_calm` หุ่นยังดันทุกเฟรมโดยไม่พูด (`PatrolBot._physics_process`).
   gate_bot ประตูน้ำ zone 210 คลุมปลายประตูน้ำทั้งสองข้าง (เดิม 170 เข้าทางซ้ายได้). test: `test_the_zone_stays_solid_while_it_calms_down`, gate test เดินจริงด้วย `click_at` ทั้งสองฝั่ง
+- **ด่าน = กฎในข้อมูล ไม่ใช่ระยะ/hit test (เจ้าของ 2026-10-02: "ก็ยังผ่านหุ่นได้ เพราะคลิกได้ ... ควร guard state ไม่ใช่ hit test / state x ห้ามเข้า")**:
+  ของที่หุ่นเฝ้าต้องมีเงื่อนไข flag ตรงๆ — มือหมุน→ประตูน้ำ: entry แรก `if_not_flag forecast_high` = หุ่นก้าวมาขวาง (sfx caught, set met_gate_bot), entry จริง `if_flag forecast_high`;
+  แหวน pickup `if_flags [lung_ring_told, ally_nine]`; ป้อมยามบท 3: `talk_beam_ch3_guarded` / `look_survey_kiosk_ch3_guarded` (`if_not_flag disguised`) = หุ่นขวาง, star_card→beam `if_flag disguised`.
+  โซนจับของ PatrolBot เป็นแค่ฉาก/บทพูด ห้ามใช้เป็นตัวกันผ่านด่าน. uses รองรับ `"sfx"` (default use_ok)
 - navmesh sliver บอกตำแหน่งแล้ว: warning "navmesh edge ... at cell (x, y)" — ป้ายใกล้ผนังขวา/ซ้ายต้องแนบผนัง (เหลือ 0.15) ไม่งั้นมุม inflate ชนกับผนัง
 - Gotcha: script ที่รันด้วย `godot -s` (shot/tool) ห้ามอ้าง class ที่อ้าง autoload ตอน compile (เช่น `Rooms` → `GameState` → `Puzzles`)
   → "Identifier not found" — ใช้ `load("res://...")` ตอน runtime แทน
