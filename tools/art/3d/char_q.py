@@ -333,11 +333,17 @@ ORDER = ["pelvis", "spine_01", "spine_02", "spine_03", "neck_01", "Head",
          "thigh_l", "calf_l", "foot_l", "thigh_r", "calf_r", "foot_r"]
 FINGER_SIGN = float(os.environ.get('FSIGN', '1'))
 X, Y, Z = (1, 0, 0), (0, 1, 0), (0, 0, 1)   # model faces -Y; its left is +X
+WAI_IN = 0.45  # how far the forearms turn in for the wai (wider shoulders = more)
 RIDE_DROP = float(os.environ.get("RIDE_DROP", "-0.3"))
 ## The rider's extra animation: sitting on the bike (BoatRide).
 RIDE = (4, 8)
-## พี่หนวด dancing to the steam radio (owner: special moments get their own move).
-DANCE = (8, 8)
+## Special moments get their own move (owner 2026-10-02): extra animations per character.
+EXTRA_ANIMS = {
+    "nuad": {"dance": (8, 8)},        # พี่หนวด dancing to the steam radio
+    "jum": {"shout": (6, 8)},         # ป้าจุ๋ม waking the soi with the megaphone
+    "pa_nok": {"wai": (6, 5)},        # the wedding on the noodle boat
+    "lung_table3": {"wai": (6, 5)},
+}
 
 
 def base_pose(arm, akimbo=False, weapon=False):
@@ -397,21 +403,44 @@ def pose_frame(arm, kind, t, weapon=False, akimbo=False, hunch=False):
         rot_bone(arm, "spine_02", Z, 5 * s)
         bob = -0.022 * abs(c)
     elif kind == "dance":
-        # รำวงลูกทุ่ง: hands up turning at the wrist, hips swaying, knees bouncing
+        # รำวงลูกทุ่ง: elbows out, forearms up, wrists flicking back; the weight
+        # steps from foot to foot (one knee bends at a time), feet stay on the deck
+        ground = feet_z(arm)
         for sx, side, ph in ((1, "l", 0.0), (-1, "r", math.pi)):
             w = math.sin(2 * math.pi * t + ph)
-            aim_bone(arm, "upperarm_" + side, (sx * 0.75, -0.25, 0.35 + 0.25 * w))
-            aim_bone(arm, "lowerarm_" + side, (sx * 0.1, -0.35, 1.0))
-            aim_bone(arm, "hand_" + side, (sx * (0.6 + 0.5 * w), -0.4, 0.6))
-        rot_bone(arm, "pelvis", Y, 9 * s)
-        rot_bone(arm, "spine_02", Y, -7 * s)
-        rot_bone(arm, "Head", Y, 6 * s)
-        rot_bone(arm, "Head", X, 6)
-        knee = 14 + 10 * abs(c)
-        for side in ("l", "r"):
-            rot_bone(arm, "thigh_" + side, X, -knee * 0.6)
-            rot_bone(arm, "calf_" + side, X, knee)
-        bob = -0.03 - 0.02 * abs(c)
+            aim_bone(arm, "upperarm_" + side, (sx * 0.5, -0.3 - 0.3 * w, -0.8))
+            aim_bone(arm, "lowerarm_" + side, (sx * 0.3, -0.7 - 0.2 * w, 0.65))
+            aim_bone(arm, "hand_" + side, (sx * 0.25, 0.45, 0.85))
+        open_hands(arm)
+        rot_bone(arm, "pelvis", Y, 7 * s)
+        rot_bone(arm, "spine_02", Y, -9 * s)
+        rot_bone(arm, "spine_02", Z, 6 * s)
+        rot_bone(arm, "Head", Y, 7 * s)
+        for side, k in (("l", max(0.0, s)), ("r", max(0.0, -s))):
+            rot_bone(arm, "thigh_" + side, X, -22 * k)
+            rot_bone(arm, "calf_" + side, X, 40 * k)
+        bob = ground - feet_z(arm)
+    elif kind == "shout":
+        # ป้าจุ๋ม on top of the water tank: megaphone at her mouth, other hand on her hip,
+        # leaning back and shaking with every word
+        rot_bone(arm, "spine_02", X, 6 + 3 * abs(s))
+        rot_bone(arm, "Head", X, -8 - 4 * abs(s))
+        rot_bone(arm, "spine_03", Z, 3 * s)
+        aim_bone(arm, "upperarm_r", (-0.45, -0.6, -0.15))
+        aim_bone(arm, "lowerarm_r", (0.55, -0.35, 0.75))
+        aim_bone(arm, "hand_r", (0.4, -0.6, 0.6))
+        aim_bone(arm, "upperarm_l", (0.75, 0.2, -0.65))
+        aim_bone(arm, "lowerarm_l", (-0.55, -0.05, -0.8))
+    elif kind == "wai":
+        # the wedding: hands pressed together at the chest, bowing a little
+        b = 0.5 - 0.5 * c
+        rot_bone(arm, "spine_02", X, -4 - 6 * b)
+        rot_bone(arm, "Head", X, 6 + 6 * b)
+        for sx, side in ((1, "l"), (-1, "r")):
+            aim_bone(arm, "upperarm_" + side, (sx * 0.25, -0.3, -0.9))
+            aim_bone(arm, "lowerarm_" + side, (-sx * WAI_IN, -0.6, 0.68))
+            aim_bone(arm, "hand_" + side, (-sx * 0.05, -0.15, 1.0))
+        open_hands(arm)
     elif kind == "ride":
         # sitting astride the เรือเตอร์ไซค์: thighs forward, shins down, leaning
         # into the bars; the engine shakes the rider a little
@@ -449,6 +478,22 @@ def pose_frame(arm, kind, t, weapon=False, akimbo=False, hunch=False):
     root = arm.pose.bones["root"] if "root" in arm.pose.bones else None
     arm.location.z = bob
     return bob
+
+
+def open_hands(arm, deg=6):
+    """Flat hands (dancing, the wai) instead of base_pose's loose fists."""
+    for s_ in ("l", "r"):
+        for f in ("index", "middle", "ring", "pinky"):
+            for k in (1, 2, 3):
+                pb = arm.pose.bones["%s_0%d_%s" % (f, k, s_)]
+                pb.rotation_quaternion = Quaternion(Vector((0, 0, 1)), math.radians(FINGER_SIGN * deg))
+    bpy.context.view_layer.update()
+
+
+def feet_z(arm):
+    """Height of the lower foot (armature space), to keep feet planted."""
+    bpy.context.view_layer.update()
+    return min(arm.pose.bones[b].head.z for b in ("ball_l", "ball_r") if b in arm.pose.bones)
 
 
 def key_all(arm, frame):
@@ -504,15 +549,18 @@ NPCS = {
                         skin="#C99068", arms="short", legs="long", feet="Male_Peasant_Feet.gltf",
                         feet_tint="#3A2E26", hunch=True,
                         pal={"torso": ("#F2EEE4", 0.3, 0), "legs": ("#7A6448", 0.3, 0), "frame": ("#2A2224", 0.3, 0.4),
-                             "hanky": ("#E58FB0", 0.3, 0)}),
+                             "hanky": ("#E58FB0", 0.3, 0), "garland": ("#F4F0E6", 0.4, 0),
+                             "marigold": ("#F2A23A", 0.4, 0), "thread": ("#F8F6F0", 0.5, 0.3)}),
     "pa_nok": dict(female=True, hair=["Hair_Buns.gltf"], hair_tint="#BDB6AE", skin="#D9A57C",
                    arms="short", legs="skirt", feet="Female_Peasant_Feet.gltf", feet_tint="#2E2A30",
                    pal={"torso": ("#C0392B", 0.35, 0), "legs": ("#2E5E4E", 0.3, 0), "apron": ("#F2EEE4", 0.3, 0),
-                        "band": ("#E8B83A", 0.4, 0)}),
+                        "band": ("#E8B83A", 0.4, 0), "garland": ("#F4F0E6", 0.4, 0),
+                        "marigold": ("#F2A23A", 0.4, 0), "thread": ("#F8F6F0", 0.5, 0.3)}),
     "jum": dict(female=True, hair=["Hair_Buns.gltf"], hair_tint="#141016", skin="#E8B890",
                 arms="short", legs="skirt", feet="Female_Peasant_Feet.gltf", feet_tint="#C0392B",
                 pal={"torso": ("#F2A23A", 0.35, 0), "legs": ("#7A3A8A", 0.3, 0), "flower": ("#E8457A", 0.4, 0),
-                     "gold": ("#E2B54A", 0.6, 1.0), "phone": ("#2B2629", 0.5, 0.8), "curler": ("#7FC8E8", 0.4, 0.4)}),
+                     "gold": ("#E2B54A", 0.6, 1.0), "phone": ("#2B2629", 0.5, 0.8), "curler": ("#7FC8E8", 0.4, 0.4),
+                     "megaphone": ("#D93A2E", 0.5, 0.6), "bell": ("#F2EEE6", 0.4, 0.3)}),
     "keng": dict(female=False, hair=["Hair_SimpleParted.gltf"], hair_tint="#141016", skin="#E0AE84",
                  arms="short", legs="short", feet="Male_Peasant_Feet.gltf", feet_tint="#E8E4DC", scale=0.78,
                  pal={"torso": ("#3A6FD8", 0.4, 0), "legs": ("#2B2629", 0.3, 0), "headset": ("#1E1C22", 0.5, 0.6),
@@ -556,6 +604,16 @@ def npc_region(spec):
     return region
 
 
+def wedding_dress(B, arm, neck, hc):
+    """Thai wedding: a jasmine-and-marigold garland and the มงคลแฝด thread crown
+    (only drawn in the "wai" animation)."""
+    B.torus("Onlywai_Garland", neck + Vector((0, -0.07, -0.13)), 0.13, 0.026, "garland", "spine_03",
+            scale=(1.0, 1.3, 1.0), rot=(math.radians(-50), 0, 0), ink=0.004)
+    B.sphere("Onlywai_Tassel", neck + Vector((0, -0.17, -0.3)), 0.036, "marigold", "spine_03", ink=0.004)
+    B.torus("Onlywai_Mongkol", hc + Vector((0, 0.0, 0.05)), 0.112, 0.008, "thread", "Head",
+            scale=(1.0, 1.1, 1.0), ink=0.003)
+
+
 def npc_accessories(name, B, arm, head, top, neck, hc):
     pelvis = bone_world(arm, "pelvis")
     if NPCS[name]["legs"] == "skirt":
@@ -567,12 +625,14 @@ def npc_accessories(name, B, arm, head, top, neck, hc):
             B.box("Shade", hc + Vector((sx * 0.042, -0.122, 0.0)), (0.06, 0.012, 0.03), "shade", "Head", bevel=0.006, ink=0.003)
         B.torus("Chain", neck + Vector((0, -0.01, -0.04)), 0.075, 0.009, "gold", "spine_03", scale=(1.0, 1.0, 0.75), ink=0.0)
     elif name == "lung_table3":
+        wedding_dress(B, arm, neck, hc)
         for sx in (1, -1):
             B.torus("Glass", hc + Vector((sx * 0.042, -0.122, 0.005)), 0.026, 0.004, "frame", "Head",
                     rot=(math.radians(90), 0, 0), ink=0.0)
         B.box("Hanky", bone_world(arm, "hand_l") + Vector((0.02, -0.03, -0.06)), (0.06, 0.02, 0.09), "hanky", "hand_l", bevel=0.01)
         B.sphere("Belly", pelvis + Vector((0, -0.05, 0.2)), 0.14, "torso", "spine_01", scale=(1.0, 0.75, 0.9), ink=0.008)
     elif name == "pa_nok":
+        wedding_dress(B, arm, neck, hc)
         garment(B, BODY, "Apron", "apron", "pelvis", 0.42, 1.0, arc=140, pad=0.035, flare=0.04)
         B.torus("Band", hc + Vector((0, 0.005, 0.015)), 0.112, 0.014, "band", "Head", scale=(1.0, 1.12, 1.0), ink=0.004)
     elif name == "jum":
@@ -581,8 +641,15 @@ def npc_accessories(name, B, arm, head, top, neck, hc):
             B.cyl("Curler", hc + Vector((sx * 0.06, 0.07, 0.07)), 0.022, 0.07, "curler", "Head",
                   rot=(0, math.radians(90), 0), ink=0.004)
             B.torus("Hoop", head + Vector((sx * 0.075, 0.0, 0.06)), 0.022, 0.004, "gold", "Head", rot=(0, math.radians(90), 0), ink=0.0)
+        # พี่หนวด's debt megaphone, held at the mouth (on the head bone so it stays put)
+        mouth = hc + Vector((0, -0.12, -0.06))
+        B.cyl("Onlyshout_Mega", mouth + Vector((0, -0.12, 0)), 0.04, 0.2, "megaphone", "Head",
+              rot=(math.radians(90), 0, 0), r2=0.1, ink=0.006)
+        B.torus("Onlyshout_Bell", mouth + Vector((0, -0.22, 0)), 0.1, 0.012, "bell", "Head",
+                rot=(math.radians(90), 0, 0), ink=0.004)
+        B.cyl("Onlyshout_Grip", mouth + Vector((-0.02, -0.1, -0.08)), 0.018, 0.1, "phone", "Head", ink=0.004)
         hR = bone_world(arm, "hand_r")
-        B.box("Phone", hR + Vector((-0.06, -0.03, 0)), (0.05, 0.012, 0.1), "phone", "hand_r", bevel=0.006)
+        B.box("Notshout_Phone", hR + Vector((-0.06, -0.03, 0)), (0.05, 0.012, 0.1), "phone", "hand_r", bevel=0.006)
     elif name == "keng":
         B.torus("Headset", hc + Vector((0, 0.0, -0.005)), 0.118, 0.012, "headset", "Head", rot=(0, math.radians(90), 0),
                 scale=(1.0, 1.0, 1.15), ink=0.004)
@@ -645,6 +712,8 @@ def build(name):
             if "Boots" not in npc["feet"]:
                 trim_above(o, 0.12)
             toonify(o, npc["feet_tint"])
+        global WAI_IN
+        WAI_IN = 0.36 if npc["female"] else 0.55
         if npc.get("scale"):
             arm.scale = (npc["scale"],) * 3
             bpy.context.view_layer.update()  # accessories read bone positions
@@ -777,8 +846,7 @@ def main():
     anims = dict(ANIMS)
     if name == "rider":
         anims["ride"] = RIDE
-    if name == "nuad":
-        anims["dance"] = DANCE
+    anims.update(EXTRA_ANIMS.get(name, {}))
     only = os.environ.get("ONLY")
     if only:
         anims = {k: v for k, v in anims.items() if k in only.split(",")}
@@ -799,8 +867,15 @@ def main():
                 "BoxGaugeFace", "WHandle", "WJaw", "WHook", "WNut")
     for anim, (f0, n, fps) in ranges.items():
         for o in bpy.data.objects:
-            if o.name.split(".")[0] in off_bike:
+            base = o.name.split(".")[0]
+            if base in off_bike:
                 o.hide_render = anim == "ride"
+            elif base.startswith("Only"):
+                # "Only<anim>_..." props exist for one animation (megaphone, garland),
+                # "Not<anim>_..." ones are put away for it (the phone while shouting)
+                o.hide_render = base[4:].split("_")[0] != anim
+            elif base.startswith("Not"):
+                o.hide_render = base[3:].split("_")[0] == anim
         for d in dirs:
             arm.rotation_euler = (0, 0, yaw_for(d))
             idx = range(n) if not still else ([0] if anim in ("idle", "ride") else [0, n // 2])

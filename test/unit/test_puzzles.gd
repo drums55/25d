@@ -441,6 +441,31 @@ func test_chapter_three_sell_the_box():
 	assert_true(GameState.ui_open, "ending card")
 
 
+func test_room_updates_when_a_flag_changes_while_inside():
+	# owner 2026-10-02: ช่างแดง only came out after riding away and back
+	GameState.set_flag("know_garage")
+	await _go("boat_garage")
+	assert_null(_thing("chang_daeng"), "hiding under the boat")
+	assert_true(Rooms.condition_flags(Rooms.get_room("boat_garage")).has("no9_fused"))
+	_player.global_position += Vector2(30, 10)
+	var spot := _player.global_position
+	GameState.set_flag("no9_fused")
+	await wait_physics_frames(3)
+	assert_not_null(_thing("chang_daeng"), "out from under the boat at once")
+	assert_eq(_room().room_id, "boat_garage")
+	assert_almost_eq(_player.global_position, spot, Vector2(1, 1), "the rider stays put")
+
+
+func test_special_poses_follow_flags():
+	GameState.set_flag("know_stilts")
+	await _go("stilts")
+	var jum := _thing("jum").get_parent().get_node("Rig") as CharacterView
+	var sprite := jum.get_node("Sprite") as AnimatedSprite2D
+	assert_true(sprite.animation.begins_with("idle"))
+	GameState.set_flag("ally_jum")
+	assert_true(sprite.animation.begins_with("shout"), "ป้าจุ๋ม grabs the megaphone")
+
+
 func test_hints_follow_the_story():
 	var flags := {}
 	assert_string_contains(Puzzles.hint_text(Puzzles.data, flags), "กุญแจ")

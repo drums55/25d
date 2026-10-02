@@ -327,8 +327,9 @@ def notebook_icon(out_dir):
     # pages peeking on the right, elastic band, label
     d.rectangle((bw - 7 * SS, 6 * SS, bw - 3 * SS, bh - 6 * SS), fill=(236, 226, 200, 255))
     d.rectangle((bw - 26 * SS, 0, bw - 18 * SS, bh), fill=(30, 26, 30, 255))
-    d.rounded_rectangle((14 * SS, 30 * SS, bw - 34 * SS, 64 * SS), 4 * SS, fill=(240, 232, 210, 255))
-    text(d, ((14 + bw / SS - 34) / 2 * SS, 47 * SS), "หนี้", FONT_HAND, 26 * SS, rgba(RED_INK), "mm")
+    # tall label: Thai tone marks sit well above the letters (หนี้ lost its ้ before)
+    d.rounded_rectangle((12 * SS, 24 * SS, bw - 32 * SS, 72 * SS), 4 * SS, fill=(240, 232, 210, 255))
+    text(d, ((12 + bw / SS - 32) / 2 * SS, 62 * SS), "หนี้", FONT_HAND, 24 * SS, rgba(RED_INK), "ms")
     book = book.rotate(-8, resample=Image.BICUBIC, expand=True)
     out = shadow(book, (0, 4 * SS), 5 * SS, 0.6, 10 * SS)
     im.alpha_composite(out, ((w - out.width) // 2, (h - out.height) // 2))

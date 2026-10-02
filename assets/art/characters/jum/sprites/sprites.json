@@ -26,6 +26,10 @@
   "walk": {
    "frames": 8,
    "fps": 12
+  },
+  "shout": {
+   "frames": 6,
+   "fps": 8
   }
  }
 }

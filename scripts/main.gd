@@ -30,6 +30,8 @@ const CHAPTERS := {
 		3,
 	],
 }
+## Spawn id for rebuilding the room around the rider where they stand.
+const KEEP_SPOT := "keep"
 ## Spoken when a chapter starts.
 const CHAPTER_INTROS := {2: "intro_ch2", 3: "intro_ch3"}
 ## Chapter 3 happens at night.
@@ -37,6 +39,7 @@ const NIGHT_TINT := Color(0.62, 0.66, 0.92)
 
 var _card_pending := ""
 var _reload_after_dialog := false
+var _kept_position := Vector2.ZERO
 ## "sell" / "valve": the big choice card waiting for the dialog to end.
 var _choice_after_dialog := ""
 var _dialog_after_load := ""
@@ -138,7 +141,10 @@ func load_room(room_path: String, spawn_id: String) -> bool:
 	room.modulate = NIGHT_TINT if GameState.chapter >= 3 else Color.WHITE
 	_room_holder.add_child(room)
 	room.get_world().add_child(_player)
-	_player.global_position = room.get_spawn_position(spawn_id)
+	if spawn_id == KEEP_SPOT:
+		_player.global_position = _kept_position
+	else:
+		_player.global_position = room.get_spawn_position(spawn_id)
 	_player.cancel_order()
 	_player.camera.make_current()
 	_fit_camera(room)
@@ -153,6 +159,23 @@ func load_room(room_path: String, spawn_id: String) -> bool:
 	return true
 
 
+## A flag changed what this room holds: rebuild it once the talking is over,
+## the rider staying where they are.
+func refresh_room() -> void:
+	if Dialog.is_active():
+		_reload_after_dialog = true
+	else:
+		_refresh_now.call_deferred()
+
+
+func _refresh_now() -> void:
+	if _room_holder.get_child_count() == 0 or not _room_holder.get_child(0) is AdventureRoom:
+		return
+	# GameState.spawn keeps the real door used, so a save loads somewhere sane
+	_kept_position = _player.global_position
+	SceneRouter.go_to(GameState.ROOM_SCENE, KEEP_SPOT, false)
+
+
 func _on_flag(flag: String, value: bool) -> void:
 	if value and CHAPTERS.has(flag):
 		_card_pending = flag
@@ -165,6 +188,9 @@ func _on_dialog_event(event_name: String) -> void:
 		# other way round once the dialog ends
 		GameState.set_tide("low" if GameState.tide == "high" else "high")
 		_reload_after_dialog = true
+	elif event_name == "reload_room":
+		# the room changes after this scene (the wedding moves ลุงโต๊ะสาม)
+		_reload_after_dialog = true
 	elif event_name == "offer_sell":
 		_choice_after_dialog = "sell"
 	elif event_name == "open_valve":
@@ -174,7 +200,7 @@ func _on_dialog_event(event_name: String) -> void:
 func _on_dialog_finished(_id: String) -> void:
 	if _reload_after_dialog:
 		_reload_after_dialog = false
-		go_room(GameState.room, "default")
+		_refresh_now()
 	if not _choice_after_dialog.is_empty():
 		var choice := _choice_after_dialog
 		_choice_after_dialog = ""

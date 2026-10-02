@@ -9,7 +9,17 @@ const CH2_FLAGS := ["ch2", "got_debt_list", "nok_love", "no9_fused", "gate_open"
 const CH3_FLAGS := [
 	"ch2", "got_debt_list", "nok_love", "no9_fused", "gate_open", "ch3", "lung_ring_told"
 ]
-const CH3_LATE := ["ch2", "got_debt_list", "nok_love", "no9_fused", "gate_open", "ch3", "ally_nine"]
+const CH3_LATE := [
+	"ch2",
+	"got_debt_list",
+	"nok_love",
+	"no9_fused",
+	"gate_open",
+	"ch3",
+	"ally_nine",
+	"ally_nok",
+	"ally_jum"
+]
 ## A prop is fine when at least this share of its opaque art picks it.
 const MIN_PROP_SHARE := 0.35
 

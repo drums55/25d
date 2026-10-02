@@ -11,7 +11,9 @@ extends RefCounted
 ##            action "travel" = the floating bike (opens the trip menu)
 ##            `id` = thing id for item uses; no art = placeholder block
 ##   pickups  [{item, pos, label, text?}]  gone once "got_<item>" is set
-##   npcs     [{id, name, pos, character, tint?, dialog}]
+##   npcs     [{id, name, pos, character, tint?, dialog, poses?}]
+##            poses {flag: anim} = special animation once the flag is set
+##            (ป้าจุ๋ม shouting, the wedding wai)
 ##   exits    [{to, spawn, pos, label}]
 ##   bots     [{id, name, pos, patrol [cells, offsets], character, tint,
 ##              catch_dialog, talk_dialog, distract_flag?, distract_dir?,
@@ -268,14 +270,26 @@ const ROOMS := {
 				"name": "ป้านก",
 				"pos": Vector2(4.5, 2.0),
 				"character": "pa_nok",
-				"dialog": "talk_pa_nok_ch3"
+				"dialog": "talk_pa_nok_ch3",
+				"poses": {"ally_nok": "wai"}
 			},
 			{
 				"id": "lung_table3",
 				"name": "ลุงโต๊ะสาม",
 				"pos": Vector2(3.0, 4.8),
 				"character": "lung_table3",
-				"dialog": "talk_lung_ch3"
+				"dialog": "talk_lung_ch3",
+				"if_not_flag": "ally_nok"
+			},
+			# the wedding: ลุงโต๊ะสาม finally leaves table three to stand by ป้านก
+			{
+				"id": "lung_table3",
+				"name": "ลุงโต๊ะสาม (เจ้าบ่าว)",
+				"pos": Vector2(3.2, 2.0),
+				"character": "lung_table3",
+				"dialog": "talk_lung_ch3",
+				"if_flag": "ally_nok",
+				"poses": {"ally_nok": "wai"}
 			},
 		],
 	},
@@ -345,7 +359,8 @@ const ROOMS := {
 				"name": "ป้าจุ๋ม",
 				"pos": Vector2(5.0, 3.6),
 				"character": "jum",
-				"dialog": "talk_jum_ch3"
+				"dialog": "talk_jum_ch3",
+				"poses": {"ally_jum": "shout"}
 			},
 			{
 				"id": "keng",
@@ -722,6 +737,20 @@ static func get_room(id: String) -> Dictionary:
 
 static func title(id: String) -> String:
 	return str(get_room(id).get("title", id))
+
+
+## Every flag a room's entries depend on: setting one while the rider is in
+## the room rebuilds it (ช่างแดง comes out from under the boat right away).
+static func condition_flags(room: Dictionary) -> Dictionary:
+	var out := {}
+	for key in ["props", "extra_props", "pickups", "npcs", "exits", "bots"]:
+		for e in room.get(key, []):
+			for k in ["if_flag", "if_not_flag"]:
+				if e.has(k):
+					out[str(e[k])] = true
+			for f in e.get("if_flags", []):
+				out[str(f)] = true
+	return out
 
 
 ## Spawn only when the entry's flag conditions hold.

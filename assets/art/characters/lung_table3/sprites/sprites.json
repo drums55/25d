@@ -26,6 +26,10 @@
   "walk": {
    "frames": 8,
    "fps": 12
+  },
+  "wai": {
+   "frames": 6,
+   "fps": 5
   }
  }
 }

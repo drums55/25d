@@ -14,6 +14,8 @@ const JE_DEFAULT := "je_muay"
 ## Set by tests to build a given room without moving the rider.
 var room_override := ""
 var room_id := ""
+## [CharacterView, {flag: anim}] of people with special poses (recipe "poses").
+var _posers: Array = []
 
 
 func _ready() -> void:
@@ -24,6 +26,8 @@ func _ready() -> void:
 	art_name = room_id
 	_build(Rooms.get_room(room_id))
 	super._ready()
+	GameState.flag_changed.connect(_on_flag)
+	_apply_poses()
 
 
 func _build(r: Dictionary) -> void:
@@ -114,12 +118,35 @@ func _add_npc(world: Node, n: Dictionary) -> void:
 	var rig := npc.get_node("Rig")
 	rig.character_name = n.get("character", JE_DEFAULT)
 	rig.modulate = n.get("tint", Color.WHITE)
+	if n.has("poses"):
+		_posers.append([rig, n["poses"]])
 	var it := npc.get_node("Interactable") as Interactable
 	it.thing_id = n["id"]
 	it.dialog_id = n.get("dialog", "")
 	it.prompt = "คุย"
 	world.add_child(npc)
 	_name_tag(npc, n.get("name", ""))
+
+
+func _on_flag(flag: String, _value: bool) -> void:
+	_apply_poses()
+	if Rooms.condition_flags(Rooms.get_room(room_id)).has(flag) and room_override.is_empty():
+		# someone/something should appear or go (owner 2026-10-02: ช่างแดง only came
+		# out after leaving and coming back)
+		get_tree().call_group("main", "refresh_room")
+
+
+## Special animations whose flag is set (live: ป้าจุ๋ม grabs the megaphone mid-talk).
+func _apply_poses() -> void:
+	for p in _posers:
+		var view = p[0]
+		if not is_instance_valid(view) or not view.has_method("set_pose"):
+			continue
+		var pose := ""
+		for flag in p[1]:
+			if GameState.has_flag(flag):
+				pose = p[1][flag]
+		view.set_pose(pose)
 
 
 func _add_exit(world: Node, e: Dictionary, node_name: String) -> void:

@@ -56,6 +56,11 @@
   - ท่าพิเศษ = anim เสริมในชีต: rider `ride` (นั่งขี่ 4f@8, ถอดกล่องหลัง+ประแจตอน render), nuad `dance` (รำวง 8f@8).
     `CharacterView.set_pose(anim)` ค้างท่า (loop, ชนะ walk; ตั้งก่อน _ready ได้). BoatRide ใช้ `ride` ที่ `RIDER_SEAT`,
     PatrolBot ที่ถูก distract เล่น `distract_pose` (default "dance") ถ้าตัวนั้นมี. ท่าใหม่ = เพิ่ม kind ใน `pose_frame` + ใส่ชื่อใน `LOOPING_ANIMS`
+  - ท่าพิเศษเพิ่ม (2026-10-02): jum `shout` (โทรโข่งติดกระดูก Head + มือเท้าสะเอว), pa_nok/lung_table3 `wai` (งานแต่ง: พวงมาลัย + มงคลแฝด),
+    nuad `dance` แก้ใหม่ (เจ้าของ: "เหมือนโหนบาร์ ขาลอย") = แบมือรำวง ศอกต่ำ + ย่อเข่าทีละข้าง + `feet_z()` ล็อกเท้าติดพื้น.
+    `EXTRA_ANIMS` ใน char_q.py; ของที่โผล่เฉพาะท่าตั้งชื่อ `Only<anim>_...` (ซ่อนท่าอื่น) / `Not<anim>_...` (ซ่อนเฉพาะท่านั้น).
+    render ท่าเดียว: `ONLY=<anim>` แล้ว merge `anims` เข้า sprites.json เดิม. ห้อง: npc `"poses": {flag: anim}` → `AdventureRoom._apply_poses`
+    (สดๆ ตอน flag เปลี่ยน). งานแต่ง = ลุงโต๊ะสามมี 2 entry (ที่โต๊ะสาม `if_not_flag ally_nok` / ข้างป้านก `if_flag ally_nok`)
   - ขนาด: `CharacterView.SIZE = 0.84` (เดิมคนสูงกว่าประตู); ป้ายชื่อ NPC -222, เครื่องหมายหุ่น (! ? ~เต้น~) -300
   - render: `pip install bpy==4.2.0` + `python3 tools/art/3d/fetch_quaternius.py <QDIR>` (โหลดชุดฟรีจาก itch.io) แล้ว
     `QDIR=<QDIR> python3 char_q.py <name> <out>` + `pack.py <out>` (~2 นาที/ตัว, segfault ตอนปิด bpy ไม่เป็นไร)
@@ -207,6 +212,12 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   ฟอนต์: **Sriracha** = ลายมือ, **Mali SemiBold** = ตัวเขียนป้าย (OFL ทั้งคู่, `assets/fonts/OFL-*.txt`), Kanit = เนื้อความยาว.
   `UiKit.juice()` = ยุบตอนกด เด้งตอนปล่อย. ยังไม่ได้ขัด: แถบกระเป๋า, กล่อง dialog, หน้าแรก (ใช้ป้าย/กระดาษแล้วแต่ยังไม่มีฉากหลัง)
 - `internationalization/locale/include_text_server_data=true` (ตัดคำไทยบน APK ต้องใช้ข้อมูล ICU)
+- **ห้องอัปเดตทันทีเมื่อ flag เปลี่ยน (2026-10-02, เจ้าของ: "ช่างแดงไม่ออกมาจากเรือ ทั้งที่ดึงฟิวส์แล้ว — ออกมาหลังไปที่อื่น")**:
+  เดิมห้องสร้างครั้งเดียวตอนเข้า → อะไรที่ `if_flag`/`if_not_flag`/`if_flags` ผูกกับ flag ที่ตั้งในห้องเดียวกันไม่โผล่/ไม่หาย
+  (ช่างแดง, ทางเข้าสถานีหลังหมุนประตูน้ำ, งานแต่ง). ตอนนี้ `AdventureRoom._on_flag` → ถ้า flag อยู่ใน `Rooms.condition_flags(room)` →
+  `Main.refresh_room()` (รอ dialog จบก่อน) → โหลดห้องใหม่ไม่ fade ที่ spawn `"keep"` (ไรเดอร์อยู่ที่เดิม; `GameState.spawn` ไม่เปลี่ยน
+  เซฟยังโหลดที่ประตูจริง). การรอน้ำ (ม้านั่ง) ก็ใช้ทางนี้. test `test_room_updates_when_a_flag_changes_while_inside`
+- ข้อความไทยที่วาดลง PNG (PIL) ต้องเผื่อที่ด้านบนให้วรรณยุกต์ — ป้าย "หนี้" บนไอคอนสมุดเคยเหลือ "หนี" (ใช้ anchor "ms" + กรอบสูง)
 - **PatrolBot** (A0): ไล่ถ้า `chases` (ไม่มีเงื่อนไขถือของแล้ว), จับได้ = `catch_dialog` + ผลัก, `distract_flag`/`distract_dir`/`distract_mark`
   = หยุดถาวรเมื่อ flag ถูกตั้ง (เช็คตอน `_ready` + `GameState.flag_changed`)
 - Gotcha: script ที่รันด้วย `godot -s` (shot/tool) ห้ามอ้าง class ที่อ้าง autoload ตอน compile (เช่น `Rooms` → `GameState` → `Puzzles`)
@@ -282,5 +293,5 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
 ## สถานะ / ยังไม่ได้ทำ
 - **A0–A4 เสร็จ (2026-10-02)**: เกมเล่นจบได้ 3 บท 8 ห้อง ตอนจบ 4 แบบ, plot ย่อย 3 สาย (ลุงโต๊ะสาม×ป้านก → งานแต่ง, ลอตเตอรี่ป้าจุ๋ม, หุ่นเก้า), 66 tests
 - UI: เมนูในเกม + การ์ด + ตัวเลือก + ปุ่มหน้าแรก ขัดแล้ว (2026-10-02); เหลือแถบกระเป๋า, กล่อง dialog, ฉากหลังหน้าแรก
-- ยังไม่มี: เสียง; ท่าพิเศษอื่น (ป้าจุ๋มตะโกนโทรโข่ง, งานแต่ง, ตอนจบ)
+- ยังไม่มี: เสียง; ท่าพิเศษตอนจบ
 - ลบ save บนแท็บเล็ต = `adb shell run-as com.drums55.game25d rm files/save_0.json`
