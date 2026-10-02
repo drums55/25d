@@ -18,7 +18,8 @@ const CH3_LATE := [
 	"ch3",
 	"ally_nine",
 	"ally_nok",
-	"ally_jum"
+	"ally_jum",
+	"ending_five_stars"
 ]
 ## A prop is fine when at least this share of its opaque art picks it.
 const MIN_PROP_SHARE := 0.35

@@ -26,7 +26,11 @@ func test_sprite_set_reads_json_and_sheets():
 
 func test_build_sprite_frames_names_loops_and_regions():
 	var frames := ArtLibrary.build_sprite_frames(ArtLibrary.sprite_set("rider"))
-	assert_eq(frames.get_animation_names().size(), 4 * 8, "idle, walk, attack, ride")
+	assert_eq(
+		frames.get_animation_names().size(),
+		8 * 8,
+		"idle, walk, attack, ride + the endings: cheer, shrug, sit_sad, phone"
+	)
 	assert_true(frames.has_animation("walk_3"))
 	assert_false(frames.has_animation("default"))
 	assert_eq(frames.get_frame_count("walk_3"), 8)

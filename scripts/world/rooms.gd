@@ -281,6 +281,33 @@ const ROOMS := {
 				"dialog": "talk_lung_ch3",
 				"if_not_flag": "ally_nok"
 			},
+			# ไรเดอร์ห้าดาว: the whole soi came to the wedding (the ending tableau)
+			{
+				"id": "nuad",
+				"name": "พี่หนวด",
+				"pos": Vector2(7.0, 1.6),
+				"character": "nuad",
+				"dialog": "talk_nuad_ch3",
+				"if_flag": "ending_five_stars",
+				"poses": {"ending_five_stars": "dance"}
+			},
+			{
+				"id": "jum",
+				"name": "ป้าจุ๋ม",
+				"pos": Vector2(2.0, 3.4),
+				"character": "jum",
+				"dialog": "talk_jum_ch3",
+				"if_flag": "ending_five_stars",
+				"poses": {"ending_five_stars": "shout"}
+			},
+			{
+				"id": "keng",
+				"name": "น้องเก่ง",
+				"pos": Vector2(2.4, 5.0),
+				"character": "keng",
+				"dialog": "talk_keng_ch3",
+				"if_flag": "ending_five_stars"
+			},
 			# the wedding: ลุงโต๊ะสาม finally leaves table three to stand by ป้านก
 			{
 				"id": "lung_table3",

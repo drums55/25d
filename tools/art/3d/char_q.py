@@ -339,6 +339,8 @@ RIDE_DROP = float(os.environ.get("RIDE_DROP", "-0.3"))
 RIDE = (4, 8)
 ## Special moments get their own move (owner 2026-10-02): extra animations per character.
 EXTRA_ANIMS = {
+    # the endings (Main.ENDING_SCENES)
+    "rider": {"ride": (4, 8), "cheer": (8, 10), "shrug": (6, 6), "sit_sad": (6, 4), "phone": (6, 5)},
     "nuad": {"dance": (8, 8)},        # พี่หนวด dancing to the steam radio
     "jum": {"shout": (6, 8)},         # ป้าจุ๋ม waking the soi with the megaphone
     "pa_nok": {"wai": (6, 5)},        # the wedding on the noodle boat
@@ -420,6 +422,51 @@ def pose_frame(arm, kind, t, weapon=False, akimbo=False, hunch=False):
             rot_bone(arm, "thigh_" + side, X, -22 * k)
             rot_bone(arm, "calf_" + side, X, 40 * k)
         bob = ground - feet_z(arm)
+    elif kind == "cheer":
+        # ไรเดอร์ห้าดาว: jumping with both arms up (wrench and all)
+        ground = feet_z(arm)
+        hop = max(0.0, s)
+        for sx, side in ((1, "l"), (-1, "r")):
+            aim_bone(arm, "upperarm_" + side, (sx * 0.4, -0.1, 0.9))
+            aim_bone(arm, "lowerarm_" + side, (sx * (0.15 + 0.1 * c), -0.1, 1.0))
+        open_hands(arm)
+        rot_bone(arm, "Head", X, -10)
+        for side in ("l", "r"):
+            rot_bone(arm, "thigh_" + side, X, -14 * (1 - hop))
+            rot_bone(arm, "calf_" + side, X, 26 * (1 - hop) + 10 * hop)
+        bob = ground - feet_z(arm) + 0.09 * hop
+    elif kind == "shrug":
+        # รอดแบบเปียก: soaked, palms up, laughing it off
+        rot_bone(arm, "Head", Y, 8 * s)
+        rot_bone(arm, "Head", X, -5)
+        rot_bone(arm, "spine_03", X, -3 * abs(s))
+        for sx, side in ((1, "l"), (-1, "r")):
+            aim_bone(arm, "upperarm_" + side, (sx * 0.5, -0.2, -0.85 + 0.1 * abs(s)))
+            aim_bone(arm, "lowerarm_" + side, (sx * 0.5, -0.8, 0.45 + 0.1 * abs(s)))
+            aim_bone(arm, "hand_" + side, (sx * 0.9, -0.3, 0.35))
+        open_hands(arm)
+    elif kind == "sit_sad":
+        # ซอยจมทั้งคืน: sitting on a roof, hugging the knees, head down
+        for sx, side in ((1, "l"), (-1, "r")):
+            aim_bone(arm, "thigh_" + side, (sx * 0.15, -0.8, 0.55))
+            aim_bone(arm, "calf_" + side, (sx * 0.05, 0.25, -1.0))
+            aim_bone(arm, "foot_" + side, (0, -1.0, -0.1))
+            aim_bone(arm, "upperarm_" + side, (sx * 0.25, -0.65, -0.5))
+            aim_bone(arm, "lowerarm_" + side, (-sx * 0.75, -0.45, 0.25))
+        rot_bone(arm, "spine_01", X, -14)
+        rot_bone(arm, "spine_02", X, -10 - 2 * s)
+        rot_bone(arm, "Head", X, 22)
+        bpy.context.view_layer.update()
+        bob = 0.16 - arm.pose.bones["pelvis"].head.z
+    elif kind == "phone":
+        # ขายกล่อง: alone, staring at five stars on the phone
+        rot_bone(arm, "Head", X, 18)
+        rot_bone(arm, "spine_02", X, -4)
+        aim_bone(arm, "upperarm_r", (-0.15, -0.35, -0.9))
+        aim_bone(arm, "lowerarm_r", (0.3, -0.75, 0.6))
+        aim_bone(arm, "hand_r", (0.2, -0.6, 0.7))
+        aim_bone(arm, "upperarm_l", (0.2, 0.1, -1.0))
+        rot_bone(arm, "spine_03", X, 1.0 * s)
     elif kind == "shout":
         # ป้าจุ๋ม on top of the water tank: megaphone at her mouth, other hand on her hip,
         # leaning back and shaking with every word
@@ -801,6 +848,11 @@ def accessories(name, B, arm):
         B.torus("Belt", bone_world(arm, "pelvis") + Vector((0, 0, 0.07)), 0.16, 0.02, "belt", "pelvis", scale=(1.0, 0.72, 1.0), ink=0.006)
         B.cyl("Gauge", bone_world(arm, "pelvis") + Vector((0.12, -0.09, 0.06)), 0.032, 0.02, "brass", "pelvis", rot=(math.radians(90), 0, math.radians(30)))
         delivery_box(B, arm)
+        # the ending where the box was sold: five stars glowing on the phone
+        B.box("Onlyphone_Phone", hc + Vector((0.03, -0.26, -0.17)), (0.07, 0.012, 0.13), "steel", "Head",
+              rot=(math.radians(-35), 0, 0), bevel=0.008, ink=0.004)
+        B.box("Onlyphone_Screen", hc + Vector((0.03, -0.268, -0.167)), (0.058, 0.004, 0.11), "lens", "Head",
+              rot=(math.radians(-35), 0, 0), bevel=0.002, ink=0.0)
         # wrench built in the T-pose hand frame: handle along the hand (-X at rest), jaw toward the front (-Y)
         hR = bone_world(arm, "hand_r")
         ry = (0, math.radians(90), 0)
@@ -844,8 +896,6 @@ def main():
     accessories(name, B, arm)
     ranges, frame = {}, 1
     anims = dict(ANIMS)
-    if name == "rider":
-        anims["ride"] = RIDE
     anims.update(EXTRA_ANIMS.get(name, {}))
     only = os.environ.get("ONLY")
     if only:
@@ -863,13 +913,16 @@ def main():
     os.makedirs(tmp, exist_ok=True)
     dirs = [2, 1, 0, 6] if still else range(8)
     # on the bike the backpack box and the wrench come off (the bike has its own box)
-    off_bike = ("Box", "Lid", "BoxStrip", "Corner", "Strap", "Chimney", "ChimCap", "BoxGauge",
-                "BoxGaugeFace", "WHandle", "WJaw", "WHook", "WNut")
+    box_parts = {"Box", "Lid", "BoxStrip", "Corner", "Strap", "Chimney", "ChimCap", "BoxGauge", "BoxGaugeFace"}
+    wrench = {"WHandle", "WJaw", "WHook", "WNut"}
+    # parts put away for an animation: on the bike the backpack box (the bike has
+    # its own) and the wrench; hands busy with a phone or hugging knees: no wrench
+    put_away = {"ride": box_parts | wrench, "phone": wrench, "sit_sad": wrench, "shrug": wrench}
     for anim, (f0, n, fps) in ranges.items():
         for o in bpy.data.objects:
             base = o.name.split(".")[0]
-            if base in off_bike:
-                o.hide_render = anim == "ride"
+            if base in box_parts | wrench:
+                o.hide_render = base in put_away.get(anim, ())
             elif base.startswith("Only"):
                 # "Only<anim>_..." props exist for one animation (megaphone, garland),
                 # "Not<anim>_..." ones are put away for it (the phone while shouting)

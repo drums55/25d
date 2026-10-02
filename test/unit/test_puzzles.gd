@@ -425,6 +425,10 @@ func test_walkthrough_chapter_three_best_ending():
 	assert_true(GameState.ui_open, "the valve card is up")
 	_main._open_valve()
 	assert_true(GameState.has_flag("ending_five_stars"))
+	await wait_seconds(0.8)
+	assert_eq(_room().room_id, "noodle_boat", "the wedding boat at dawn")
+	assert_not_null(_thing("nuad"), "the whole soi came")
+	assert_true(_player.rig.get_node("Sprite").animation.begins_with("cheer"))
 
 
 func test_chapter_three_sell_the_box():
@@ -438,7 +442,13 @@ func test_chapter_three_sell_the_box():
 	assert_true(GameState.ui_open, "the offer card is up")
 	_main.end_game("sold")
 	assert_true(GameState.has_flag("ending_sold"))
-	assert_true(GameState.ui_open, "ending card")
+	await wait_seconds(0.8)
+	assert_eq(_room().room_id, "home", "the ending is staged at home")
+	assert_true(
+		_player.rig.get_node("Sprite").animation.begins_with("phone"), "staring at the phone"
+	)
+	await wait_seconds(_main.ENDING_HOLD)
+	assert_true(GameState.ui_open, "then the ending card")
 
 
 func test_room_updates_when_a_flag_changes_while_inside():

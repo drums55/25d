@@ -61,6 +61,10 @@
     `EXTRA_ANIMS` ใน char_q.py; ของที่โผล่เฉพาะท่าตั้งชื่อ `Only<anim>_...` (ซ่อนท่าอื่น) / `Not<anim>_...` (ซ่อนเฉพาะท่านั้น).
     render ท่าเดียว: `ONLY=<anim>` แล้ว merge `anims` เข้า sprites.json เดิม. ห้อง: npc `"poses": {flag: anim}` → `AdventureRoom._apply_poses`
     (สดๆ ตอน flag เปลี่ยน). งานแต่ง = ลุงโต๊ะสามมี 2 entry (ที่โต๊ะสาม `if_not_flag ally_nok` / ข้างป้านก `if_flag ally_nok`)
+  - **ฉากตอนจบ (2026-10-02, เจ้าของ: "ทำท่าพิเศษตอนจบด้วย")**: `Main.end_game(id)` → `go_room` ไปห้องของตอนจบ (`ENDING_SCENES`:
+    five_stars = เรือป้านกตอนรุ่งเช้า ไรเดอร์ `cheer` + แขกงานแต่ง (npc `if_flag ending_five_stars`: พี่หนวดเต้น ป้าจุ๋มตะโกน น้องเก่ง);
+    wet = ชุมชนยกเสาเช้า `shrug`; sunk = ชุมชนยกเสากลางคืน `sit_sad`; sold = ห้องเช่ากลางคืน `phone` (ห้าดาวบนมือถือ)) →
+    `_stage_ending` ล็อก input, ตั้งท่า + หัวข้อ, รอ `ENDING_HOLD` 3.5 วิ แล้วค่อยขึ้นการ์ด. rider ซ่อนประแจในท่า phone/sit_sad/shrug (`put_away`)
   - ขนาด: `CharacterView.SIZE = 0.84` (เดิมคนสูงกว่าประตู); ป้ายชื่อ NPC -222, เครื่องหมายหุ่น (! ? ~เต้น~) -300
   - render: `pip install bpy==4.2.0` + `python3 tools/art/3d/fetch_quaternius.py <QDIR>` (โหลดชุดฟรีจาก itch.io) แล้ว
     `QDIR=<QDIR> python3 char_q.py <name> <out>` + `pack.py <out>` (~2 นาที/ตัว, segfault ตอนปิด bpy ไม่เป็นไร)
@@ -277,6 +281,9 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
 - SceneRouter.go_to ที่ค้าง await fade อยู่ตอน Main ถูก free (กลับหน้าแรก / test จบกลางทาง) เคยทำ `_busy` ค้างตลอดไป
   → ตรวจ `is_instance_valid(_host)` หลัง fade แล้วรีเซ็ต. test ที่เขียน settings ต้องใช้ path ชั่วคราว (`save_settings(path)`)
   ไม่งั้นค่า skip_ride ของ test ไปติดใน `user://settings.cfg` จริง
+- **adb wireless (2026-10-02)**: เจ้าของใช้ **Tailscale** และเครื่อง build อยู่คนละที่กับแท็บเล็ต → `update.ps1 -Device 190:40011`
+  (สั้น = หา peer ใน `tailscale status` ที่ IP ลงท้าย .190 ก่อน ไม่เจอค่อยใช้ prefix LAN ของ PC; IP เต็ม/ชื่อ MagicDNS ก็ได้) → `adb connect`
+  → จำไว้ใน `tools/.adb_device` (gitignored) รอบหน้าไม่ต้องใส่. พอร์ต wireless debugging เปลี่ยนทุกครั้งที่เปิดใหม่ → ใส่ -Device ใหม่
 - `adb` ไม่อ่าน `ADB_SERIAL` เอง (มันอ่าน `ANDROID_SERIAL`) — script ส่ง `-s $env:ADB_SERIAL` ให้
 - Export template มี 1.1 GB; dev_setup แตกเฉพาะไฟล์ android_* เก็บไว้
 
@@ -293,5 +300,5 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
 ## สถานะ / ยังไม่ได้ทำ
 - **A0–A4 เสร็จ (2026-10-02)**: เกมเล่นจบได้ 3 บท 8 ห้อง ตอนจบ 4 แบบ, plot ย่อย 3 สาย (ลุงโต๊ะสาม×ป้านก → งานแต่ง, ลอตเตอรี่ป้าจุ๋ม, หุ่นเก้า), 66 tests
 - UI: เมนูในเกม + การ์ด + ตัวเลือก + ปุ่มหน้าแรก ขัดแล้ว (2026-10-02); เหลือแถบกระเป๋า, กล่อง dialog, ฉากหลังหน้าแรก
-- ยังไม่มี: เสียง; ท่าพิเศษตอนจบ
+- ยังไม่มี: เสียง
 - ลบ save บนแท็บเล็ต = `adb shell run-as com.drums55.game25d rm files/save_0.json`

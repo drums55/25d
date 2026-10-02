@@ -34,6 +34,22 @@
   "ride": {
    "frames": 4,
    "fps": 8
+  },
+  "cheer": {
+   "frames": 8,
+   "fps": 10
+  },
+  "shrug": {
+   "frames": 6,
+   "fps": 6
+  },
+  "sit_sad": {
+   "frames": 6,
+   "fps": 4
+  },
+  "phone": {
+   "frames": 6,
+   "fps": 5
   }
  }
 }

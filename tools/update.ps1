@@ -11,8 +11,13 @@
   powershell -ExecutionPolicy Bypass -File tools\update.ps1
   powershell -ExecutionPolicy Bypass -File tools\update.ps1 -Log        # tail game logs after launch
   powershell -ExecutionPolicy Bypass -File tools\update.ps1 -NoPull -NoInstall
+  powershell -ExecutionPolicy Bypass -File tools\update.ps1 -Device 190:40011
+    (wireless debugging: runs 'adb connect' first. A short '190:40011' = the
+    Tailscale peer whose IP ends in .190 (else this PC's LAN prefix); a full
+    IP or MagicDNS name works too. Remembered in tools\.adb_device)
 #>
 param(
+    [string]$Device = '',
     [switch]$NoPull,
     [switch]$NoInstall,
     [switch]$Log
@@ -67,6 +72,41 @@ try {
         }
     }
     if (-not $adb) { throw "adb not found (add platform-tools to PATH)." }
+    $DeviceFile = Join-Path $PSScriptRoot '.adb_device'
+    if (-not $Device -and -not $env:ADB_SERIAL -and (Test-Path $DeviceFile)) {
+        $Device = (Get-Content $DeviceFile -Raw).Trim()
+    }
+    if ($Device) {
+        if ($Device -match '^\d+:\d+$') {
+            # only the last part of the IP: a Tailscale peer ending in it first
+            # (tablet on the tailnet, PC anywhere), else this PC's LAN prefix
+            $last = $Device.Split(':')[0]
+            $port = $Device.Split(':')[1]
+            $full = ''
+            $ts = (Get-Command tailscale -ErrorAction SilentlyContinue).Source
+            if (-not $ts -and (Test-Path "$env:ProgramFiles\Tailscale\tailscale.exe")) { $ts = "$env:ProgramFiles\Tailscale\tailscale.exe" }
+            if ($ts) {
+                foreach ($line in (Invoke-Native { & $ts status 2>&1 })) {
+                    $ip = ($line.Trim() -split '\s+')[0]
+                    if ($ip -match "^\d+\.\d+\.\d+\.$last$") { $full = $ip; Write-Host "Tailscale peer: $line"; break }
+                }
+            }
+            if (-not $full) {
+                $lan = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+                    Where-Object { $_.IPAddress -match '^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)' } |
+                    Select-Object -First 1
+                if (-not $lan) { throw "No Tailscale peer or LAN address ending in .$last; pass the full address, e.g. -Device 100.x.y.$last`:$port" }
+                $full = $lan.IPAddress.Substring(0, $lan.IPAddress.LastIndexOf('.')) + ".$last"
+            }
+            $Device = "$full`:$port"
+        }
+        Step "adb connect $Device"
+        $out = Invoke-Native { & $adb connect $Device 2>&1 } | Out-String
+        Write-Host $out.Trim()
+        if ($out -notmatch 'connected') { throw "adb connect $Device failed (Wireless debugging on? same Wi-Fi or Tailscale up on both? the port changes each time it is toggled)" }
+        Set-Content -Path $DeviceFile -Value $Device -Encoding ASCII
+        $env:ADB_SERIAL = $Device
+    }
     $dev = @()
     if ($env:ADB_SERIAL) { $dev = @('-s', $env:ADB_SERIAL) }
 

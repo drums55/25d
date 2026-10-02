@@ -36,6 +36,30 @@ const KEEP_SPOT := "keep"
 const CHAPTER_INTROS := {2: "intro_ch2", 3: "intro_ch3"}
 ## Chapter 3 happens at night.
 const NIGHT_TINT := Color(0.62, 0.66, 0.92)
+const DAWN_TINT := Color(1.0, 0.86, 0.74)
+## Where each ending is staged, the rider's pose there and the tint
+## (owner 2026-10-02: the endings get their own moves too).
+const ENDING_SCENES := {
+	"five_stars":
+	{
+		"room": "noodle_boat",
+		"pose": "cheer",
+		"tint": DAWN_TINT,
+		"caption": "เช้าแรกที่ซอยส่งไวโผล่พ้นน้ำ"
+	},
+	"wet":
+	{
+		"room": "stilts",
+		"pose": "shrug",
+		"tint": DAWN_TINT,
+		"caption": "เช้าวันต่อมา ... เปียกแต่รอด"
+	},
+	"sunk":
+	{"room": "stilts", "pose": "sit_sad", "tint": NIGHT_TINT, "caption": "บนหลังคา จนถึงเช้า"},
+	"sold": {"room": "home", "pose": "phone", "tint": NIGHT_TINT, "caption": "ห้าดาว จากบริษัท"},
+}
+## Seconds the ending tableau plays before its card.
+const ENDING_HOLD := 3.5
 
 var _card_pending := ""
 var _reload_after_dialog := false
@@ -43,6 +67,8 @@ var _kept_position := Vector2.ZERO
 ## "sell" / "valve": the big choice card waiting for the dialog to end.
 var _choice_after_dialog := ""
 var _dialog_after_load := ""
+## The ending being staged ("" while playing).
+var _ending := ""
 
 @onready var _room_holder: Node2D = $RoomHolder
 @onready var _player: Player = $Player
@@ -139,6 +165,8 @@ func load_room(room_path: String, spawn_id: String) -> bool:
 		return false
 	_hud.set_riding(false)
 	room.modulate = NIGHT_TINT if GameState.chapter >= 3 else Color.WHITE
+	if not _ending.is_empty():
+		room.modulate = ENDING_SCENES[_ending]["tint"]
 	_room_holder.add_child(room)
 	room.get_world().add_child(_player)
 	if spawn_id == KEEP_SPOT:
@@ -150,7 +178,9 @@ func load_room(room_path: String, spawn_id: String) -> bool:
 	_fit_camera(room)
 	_hud.show_title(room.room_title)
 	var enter: Dictionary = Rooms.get_room(GameState.room).get("enter", {})
-	if not _dialog_after_load.is_empty():
+	if not _ending.is_empty():
+		_stage_ending.call_deferred()
+	elif not _dialog_after_load.is_empty():
 		Dialog.start.call_deferred(_dialog_after_load)
 		_dialog_after_load = ""
 	elif not enter.is_empty() and not GameState.has_flag(enter["flag"]):
@@ -267,12 +297,34 @@ func _open_valve() -> void:
 func end_game(ending: String) -> void:
 	GameState.set_flag("ending_" + ending)
 	GameState.save_game(0)
+	_hud.hide_overlay()
+	_ending = ending
+	go_room(ENDING_SCENES[ending]["room"], "default")
+
+
+## The ending tableau: the rider strikes the ending's pose for a few seconds,
+## then the ending card comes down over it.
+func _stage_ending() -> void:
+	var scene: Dictionary = ENDING_SCENES[_ending]
+	GameState.input_locked = true
+	_player.cancel_order()
+	_player.facing = Iso.Dir.S
+	_player.rig.set_facing(Iso.Dir.S)
+	_player.rig.set_pose(scene["pose"])
+	_hud.show_title(scene["caption"])
+	var ending := _ending
+	await get_tree().create_timer(ENDING_HOLD).timeout
+	if not is_inside_tree() or _ending != ending:
+		return
 	var t: Array = Endings.TEXT[ending]
 	_hud.show_overlay(t[0], t[1], [["เล่นใหม่", _new_game], ["หน้าแรก", go_title]])
 
 
 func _new_game() -> void:
 	_hud.hide_overlay()
+	_ending = ""
+	_player.rig.set_pose("")
+	GameState.input_locked = false
 	GameState.new_game()
 	_dialog_after_load = "intro"
 	go_room("home", "default")
