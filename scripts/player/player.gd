@@ -16,6 +16,8 @@ enum Order { NONE, MOVE, INTERACT, TAMPER }
 const TAMPER_RANGE := 80.0
 ## Seconds of blinking after a patrol bot caught the rider.
 const CAUGHT_BLINK := 0.8
+## How far outside a bot's zone a shove leaves the rider (ground px).
+const SHOVE_MARGIN := 26.0
 ## Hold a finger this long without dragging = show every tappable thing.
 const LONG_PRESS_MS := 450
 const LONG_PRESS_SLOP := 30.0
@@ -242,10 +244,24 @@ func highlight_things() -> int:
 func caught_by(bot: Node2D) -> void:
 	cancel_order()
 	_blink = CAUGHT_BLINK
-	var push := (global_position - bot.global_position).normalized()
-	if push.length_squared() > 0.0:
-		velocity = push * 1600.0
-		move_and_slide()
+	shoved_by(bot)
+
+
+## Pushed just outside the bot's zone on the floor (owner 2026-10-02: the
+## old push was ~27px, so after the catch one could walk straight through
+## while the bot was calming down). Walls still stop the shove.
+func shoved_by(bot: Node2D) -> void:
+	cancel_order()
+	var d := global_position - bot.global_position
+	var g := Vector2(d.x, d.y * 2.0)
+	if g.length_squared() < 1.0:
+		g = Vector2(0, 2)
+	var reach: float = bot.get("zone_range") if bot.get("zone_range") != null else 150.0
+	var need := maxf(reach + SHOVE_MARGIN - g.length(), 0.0)
+	var dir := g.normalized()
+	velocity = Vector2(dir.x, dir.y * 0.5) * need / get_physics_process_delta_time()
+	move_and_slide()
+	velocity = Vector2.ZERO
 
 
 func _on_interact() -> void:

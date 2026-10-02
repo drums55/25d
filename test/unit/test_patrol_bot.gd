@@ -59,6 +59,21 @@ func test_walking_into_the_zone_is_caught():
 	assert_gt(_player.global_position.distance_to(_bot.global_position), 100.0, "pushed back")
 
 
+func test_the_zone_stays_solid_while_it_calms_down():
+	# owner 2026-10-02: "มีหุ่นนะ แต่ไขประตูแล้วเข้าได้" — one could be caught,
+	# then walk through during the calm seconds
+	_player.global_position = _bot.global_position + Vector2(100, 0)
+	await wait_physics_frames(3)
+	TestHelpers.finish_dialog()
+	assert_false(_bot.in_zone(_player.global_position), "shoved right out of the zone")
+	_player.global_position = _bot.global_position + Vector2(60, 0)
+	_player.order = Player.Order.MOVE
+	await wait_physics_frames(3)
+	assert_false(Dialog.is_active(), "no second speech while calming down")
+	assert_false(_bot.in_zone(_player.global_position), "but still no way through")
+	assert_eq(_player.order, Player.Order.NONE)
+
+
 func test_caught_with_an_item_held_seizes_it_to_the_raft():
 	GameState.give_item("hanger")
 	GameState.held_item = "hanger"

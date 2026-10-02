@@ -333,6 +333,16 @@ func test_old_gate_robot_guards_the_sluice_until_the_forecast_says_high():
 	await _go("old_gate", "default")
 	var bot := _room().get_world().get_node_or_null("GateBot") as PatrolBot
 	assert_not_null(bot, "the company's old robot stands on the sluice at low tide")
+	# walking up to either end of the sluice with the crank = caught, not in
+	GameState.give_item("crank")
+	for side in [Vector2(4.6, 1.2), Vector2(7.4, 1.2)]:
+		_player.global_position = Iso.grid_to_world(side)
+		GameState.held_item = "crank"
+		_player.click_at(_thing("sluice_gate").global_position)
+		await wait_seconds(2.0)
+		TestHelpers.finish_dialog()
+		assert_false(GameState.has_flag("gate_open"), "the robot stands in the way at %s" % side)
+	assert_true(GameState.has_flag("met_gate_bot"))
 	GameState.set_flag("forecast_high")
 	await wait_seconds(0.5)
 	assert_null(_room().get_world().get_node_or_null("GateBot"))

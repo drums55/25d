@@ -640,7 +640,8 @@ const ROOMS := {
 				"art": "brass_automaton",
 				"pos": Vector2(6.0, 2.4),
 				"facing": Vector2(0, 1),
-				"zone_range": 170.0,
+				# covers both ends of the sluice and the way in, not the bench
+				"zone_range": 210.0,
 				"turns_to_noise": false,
 				"tint": Color(0.75, 0.8, 0.9),
 				"catch_dialog": "catch_gate_bot",

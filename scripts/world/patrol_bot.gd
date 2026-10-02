@@ -197,8 +197,12 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector2.ZERO
 	else:
 		_patrol_step()
-	if player and _calm == 0.0 and in_zone(player.global_position):
-		_catch(player)
+	if player and in_zone(player.global_position):
+		if _calm == 0.0:
+			_catch(player)
+		elif player.has_method("shoved_by"):
+			# still a wall while it calms down: no words, just no way through
+			player.shoved_by(self)
 	if _rig:
 		_rig.set_facing(Iso.dir8(_screen(facing)))
 		_rig.set_walk(1.0 if velocity.length() > 1.0 else 0.0)

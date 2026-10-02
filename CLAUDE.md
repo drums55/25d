@@ -287,6 +287,9 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   (flag `<id>_off_d<day>` + `<id>_fused`); แตะจากด้านหน้า = โดนจับ. คน (`character`) เดิน `patrol` โซนรอบตัว `tamperable=false`. `distract_flag` หยุดถาวร (เดิม).
   ตัดออก: STARE/CHASE/STUNNED, `steam_valve` event, `chases`, `view_range`, `chase_speed`. บท 1: เตะลังอะไหล่ในอู่ (`look_garage_crate` มี event noise) → เบอร์ 9 หัน
   → อ้อมไปดึงฟิวส์ (B1 จะเปลี่ยนเป็นประทัดจากวัด); บท 3 หุ่นบริษัทที่ประตูน้ำ `zone_range 240` ครอบแหวน (แหวนย้ายไป (2.8,5.4)) จนกว่าเก้าจะไปคุย
+- **ประตูมีชีวิตต้องทึบ (2026-10-02, เจ้าของ: "ไปสถานีสูบน้ำ มีหุ่นนะ แต่ไขประตูแล้วเข้าได้")**: เดิม `caught_by` ผลักแค่ ~27px แล้วหุ่น "ใจเย็น" 3 วิ → เดินทะลุไปไขประตูได้.
+  ตอนนี้ `Player.shoved_by(bot)` ดันออกไปนอกโซน (`zone_range` + 26) ด้วย move_and_slide (ผนังยังกั้น) และระหว่าง `_calm` หุ่นยังดันทุกเฟรมโดยไม่พูด (`PatrolBot._physics_process`).
+  gate_bot ประตูน้ำ zone 210 คลุมปลายประตูน้ำทั้งสองข้าง (เดิม 170 เข้าทางซ้ายได้). test: `test_the_zone_stays_solid_while_it_calms_down`, gate test เดินจริงด้วย `click_at` ทั้งสองฝั่ง
 - navmesh sliver บอกตำแหน่งแล้ว: warning "navmesh edge ... at cell (x, y)" — ป้ายใกล้ผนังขวา/ซ้ายต้องแนบผนัง (เหลือ 0.15) ไม่งั้นมุม inflate ชนกับผนัง
 - Gotcha: script ที่รันด้วย `godot -s` (shot/tool) ห้ามอ้าง class ที่อ้าง autoload ตอน compile (เช่น `Rooms` → `GameState` → `Puzzles`)
   → "Identifier not found" — ใช้ `load("res://...")` ตอน runtime แทน
