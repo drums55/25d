@@ -108,6 +108,15 @@ func get_corners() -> PackedVector2Array:
 	)
 
 
+## World-space rect the camera zooms to fill: the painted backdrop when there
+## is one (it covers its whole rect), else the floor + walls + margin.
+func get_view_rect() -> Rect2:
+	if has_node("Backdrop"):
+		var r := get_backdrop_rect()
+		return Rect2(to_global(r.position), r.size)
+	return get_camera_rect()
+
+
 ## World-space rect the camera may show (floor + back walls + margin).
 func get_camera_rect(margin := 160.0) -> Rect2:
 	var c := get_corners()

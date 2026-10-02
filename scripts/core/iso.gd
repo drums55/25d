@@ -53,6 +53,16 @@ static func footprint(size_cells: Vector2) -> PackedVector2Array:
 	)
 
 
+## Camera zoom that makes `rect` (a room's backdrop) cover the whole view,
+## so no black shows around it (owner 2026-10-02: "ขอบดำเยอะ"). Art is painted
+## at 2x, so up to 2.0 nothing blurs; never below 1.0.
+static func fill_zoom(rect_size: Vector2, view_size: Vector2, max_zoom := 2.0) -> float:
+	if rect_size.x <= 0.0 or rect_size.y <= 0.0:
+		return 1.0
+	var z := maxf(view_size.x / rect_size.x, view_size.y / rect_size.y)
+	return clampf(z, 1.0, max_zoom)
+
+
 ## Grows `rect` (centred) so it is at least `view_size`, for Camera2D limits.
 static func fit_camera_rect(rect: Rect2, view_size: Vector2) -> Rect2:
 	var size := rect.size.max(view_size)

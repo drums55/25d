@@ -2,6 +2,8 @@ extends GutTest
 ## Smoke test: every scene instantiates, every room builds a valid navmesh
 ## (no slivers, spawns clear of props) and keeps the gap rule.
 
+const MAIN_SCENE := "res://scenes/main.tscn"
+
 
 func _scene_paths(dir := "res://scenes") -> Array:
 	var out: Array = []
@@ -51,7 +53,7 @@ func test_menu_boots_and_new_game_enters_a_place():
 	add_child_autofree(menu)
 	await wait_frames(2)
 	TestHelpers.start_in("home")
-	var main := (load("res://scenes/main.tscn") as PackedScene).instantiate()
+	var main := (load(MAIN_SCENE) as PackedScene).instantiate()
 	add_child_autofree(main)
 	await wait_physics_frames(3)
 	var player := get_tree().get_first_node_in_group("player") as Player
@@ -94,3 +96,22 @@ func test_rooms_avoid_sliver_gaps():
 					d > bad.x and d < bad.y,
 					"%s %s ~ %s gap %.2f" % [id, items[i][0], items[j][0], d]
 				)
+
+
+func test_camera_zooms_each_room_to_fill_the_screen():
+	TestHelpers.start_in("pier")
+	var main := (load(MAIN_SCENE) as PackedScene).instantiate()
+	add_child_autofree(main)
+	await wait_physics_frames(3)
+	var player: Player = get_tree().get_first_node_in_group("player")
+	var room := player.get_parent().get_parent() as IsoRoom
+	var view := get_viewport().get_visible_rect().size
+	var want := Iso.fill_zoom(room.get_view_rect().size, view)
+	assert_almost_eq(player.camera.zoom.x, want, 0.001)
+	assert_gt(want, 1.3, "the pier's painting is zoomed in")
+	# the camera never leaves the painting
+	var r := room.get_view_rect()
+	assert_eq(player.camera.limit_left, floori(r.position.x))
+	assert_eq(player.camera.limit_right, ceili(r.end.x))
+	assert_true(player.camera.limit_bottom - player.camera.limit_top >= view.y / want - 1.0)
+	GameState.new_game()

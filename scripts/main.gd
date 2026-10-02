@@ -371,10 +371,14 @@ func go_title() -> void:
 	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
 
 
+## Zoom so the room's painting fills the screen, then clamp the camera to it.
 func _fit_camera(room: IsoRoom) -> void:
 	var cam := _player.camera
+	var rect := room.get_view_rect()
+	var zoom := Iso.fill_zoom(rect.size, get_viewport().get_visible_rect().size)
+	cam.zoom = Vector2(zoom, zoom)
 	var view := get_viewport().get_visible_rect().size / cam.zoom
-	var r := Iso.fit_camera_rect(room.get_camera_rect(), view)
+	var r := Iso.fit_camera_rect(rect, view)
 	cam.limit_left = floori(r.position.x)
 	cam.limit_top = floori(r.position.y)
 	cam.limit_right = ceili(r.end.x)

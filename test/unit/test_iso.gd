@@ -49,3 +49,13 @@ func test_fit_camera_rect_grows_small_rooms_but_keeps_big_ones():
 	assert_eq(fitted.get_center(), small.get_center())
 	var big := Rect2(-100, -100, 4000, 3000)
 	assert_eq(Iso.fit_camera_rect(big, Vector2(1920, 1200)), big)
+
+
+func test_fill_zoom_covers_the_view_without_blurring():
+	# a 12x9 room's painting (1344x912) on the 1920x1200 design screen
+	assert_almost_eq(Iso.fill_zoom(Vector2(1344, 912), Vector2(1920, 1200)), 1.4286, 0.001)
+	# never below 1 (a huge room scrolls) and never above 2 (art is 2x)
+	assert_eq(Iso.fill_zoom(Vector2(4000, 3000), Vector2(1920, 1200)), 1.0)
+	assert_eq(Iso.fill_zoom(Vector2(400, 300), Vector2(1920, 1200)), 2.0)
+	# a wide phone picks the larger ratio so both axes are covered
+	assert_almost_eq(Iso.fill_zoom(Vector2(1344, 912), Vector2(2600, 1200)), 1.9345, 0.001)
