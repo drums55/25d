@@ -44,8 +44,9 @@ func _ready() -> void:
 ## Pickable (group "pickable") under `world_pos`. A node whose visuals are
 ## sprites is hit only where they are opaque (PickTest); the front-most (largest
 ## y) such hit wins, as that is the one drawn on top. Nodes without sprites
-## (doors, placeholder props) use `pick_rect` around their origin and only win
-## when no sprite was hit; then the nearest rect centre wins.
+## (items on the floor, exits, placeholder props) use `pick_rect` around their
+## origin (nearest rect centre among them); such a node beats a sprite hit
+## when it stands in front of it (larger y), as it is drawn over that art.
 static func pick(nodes: Array, world_pos: Vector2) -> Node2D:
 	var best: Node2D = null
 	var fallback: Node2D = null
@@ -65,7 +66,14 @@ static func pick(nodes: Array, world_pos: Vector2) -> Node2D:
 				if d < fallback_d:
 					fallback = n
 					fallback_d = d
-	return best if best else fallback
+	if best == null:
+		return fallback
+	# a rect-only thing (an item lying on the floor, an exit) standing in front
+	# of the art that was hit wins: it is drawn on top of it (owner 2026-10-02:
+	# the remote in front of the bed could not be picked up)
+	if fallback and fallback.global_position.y >= best.global_position.y:
+		return fallback
+	return best
 
 
 ## What a pickable looks like: an Interactable is a child of the prop / NPC

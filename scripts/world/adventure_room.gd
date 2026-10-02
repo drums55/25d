@@ -101,7 +101,8 @@ func _add_pickup(world: Node, p: Dictionary, node_name: String) -> void:
 	it.pickup_item = p["item"]
 	it.pickup_text = p.get("text", "")
 	it.prompt = "เก็บ"
-	it.pick_rect = Rect2(-50, -90, 100, 110)
+	# the icon is drawn 96 px tall above the spot; a little slack around it
+	it.pick_rect = Rect2(-60, -116, 120, 132)
 	spot.add_child(it)
 	world.add_child(spot)
 
@@ -133,7 +134,9 @@ func _add_exit(world: Node, e: Dictionary, node_name: String) -> void:
 	it.exit_to = e["to"]
 	it.exit_spawn = e.get("spawn", "default")
 	it.prompt = "ไป"
-	it.pick_rect = Rect2(-80, -200, 160, 240)
+	# ring on the floor + the bobbing arrow (not the whole column above it,
+	# or it would steal taps meant for props behind it)
+	it.pick_rect = Rect2(-80, -130, 160, 165)
 	spot.add_child(it)
 	world.add_child(spot)
 

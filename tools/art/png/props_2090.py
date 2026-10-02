@@ -174,9 +174,83 @@ def pump_engine(out):
     c.finish(out)
 
 
+def rental_bed(out):
+    """ที่นอนห้องเช่า: low wooden platform, kapok mattress, rubber-duck blanket."""
+    c = Canvas(520, 380, seed=211)
+    p = c.p
+    c.ground_shadow(1.6, 0.8)
+    c.box(-0.8, -0.4, 0.8, 0.4, 0, 22, WOOD_D, rim=0.5)
+    c.box(-0.76, -0.36, 0.76, 0.36, 22, 50, hexc("#E9E2D2"), rim=0.7)
+    c.box(-0.74, -0.34, -0.42, 0.34, 50, 70, WHITE, rim=0.8)  # pillow
+    blanket = c.mask_poly([p(-0.3, -0.37, 52), p(0.78, -0.37, 52), p(0.78, 0.37, 50), p(-0.3, 0.37, 50)])
+    c.paint(blanket, c.grad(hexc("#F2C230")), outline=1.6, rim=0.5)
+    c.box(-0.3, 0.36, 0.78, 0.38, 22, 52, hexc("#E0B020"), rim=0.3, outline=1.4)
+    for gx in (0.0, 0.35, 0.65):
+        x, y = p(gx, 0.0, 53)
+        c.disc(x, y, 10 * c.ss, 6 * c.ss, hexc("#F07A1E"), outline=1.0, dome=False)
+    c.finish(out)
+
+
+def debt_board(out):
+    """กระดานหนี้ติดผนัง: cork board on two legs, notes, red figures."""
+    c = Canvas(300, 520, seed=212)
+    p = c.p
+    c.ground_shadow(0.5, 0.3)
+    for x in (-0.2, 0.2):
+        c.box(x - 0.02, -0.02, x + 0.02, 0.02, 0, 160, WOOD_D, rim=0.3, outline=1.4)
+    c.box(-0.25, -0.05, 0.25, 0.05, 140, 300, hexc("#B88A5A"), rim=0.7)
+    c.box(-0.21, 0.05, 0.21, 0.06, 150, 290, hexc("#C9A06A"), rim=0.2, outline=1.0)
+    c.text("หนี้", p(-0.18, 0.061, 280), p(0.18, 0.061, 280), 18, RED_P)
+    c.text("30,000", p(-0.18, 0.061, 245), p(0.18, 0.061, 245), 16, RED_P)
+    c.box(0.04, 0.06, 0.18, 0.065, 160, 210, hexc("#FFF4A0"), rim=0.1, outline=1.0)  # sticky note
+    c.box(-0.18, 0.06, -0.04, 0.065, 170, 215, hexc("#A0E0FF"), rim=0.1, outline=1.0)
+    c.finish(out)
+
+
+def boat_noodle_stall(out):
+    """แผงก๋วยเตี๋ยวเรือ: big brass pot on a wooden stand, bowls, chilli jars."""
+    c = Canvas(520, 520, seed=213)
+    p = c.p
+    c.ground_shadow(1.6, 0.9)
+    c.box(-0.8, -0.45, 0.8, 0.45, 0, 80, WOOD_L, rim=0.6)
+    c.box(-0.82, -0.47, 0.82, 0.47, 80, 88, WOOD_D, rim=0.5)
+    _, _, (tx, ty, rx, ry, _bx, _by) = c.cylinder(-0.3, 0.0, 0.32, 88, 190, BRASS, spec=0.9)
+    c.disc(tx, ty, rx * 0.86, ry * 0.86, hexc("#6B3A1E"), outline=1.2, dome=False)  # the broth
+    for k in range(3):
+        c.stroke([(tx - 30 * c.ss + k * 30 * c.ss, ty - 20 * c.ss), (tx - 20 * c.ss + k * 30 * c.ss, ty - 70 * c.ss)],
+                 6.0, hexc("#F2EFE6"), 0.35)  # steam
+    for k in range(3):
+        x, y = p(0.35, -0.25 + k * 0.22, 88)
+        c.disc(x, y, 22 * c.ss, 11 * c.ss, WHITE, dome=False)
+        c.disc(x, y, 15 * c.ss, 7 * c.ss, hexc("#3E7F8C"), outline=0.8, dome=False)
+    for k, col in enumerate((RED_P, hexc("#F2C230"), OLIVE)):
+        c.cylinder(0.7, -0.3 + k * 0.2, 0.05, 88, 118, col, spec=0.8)
+    c.text("ก๋วยเตี๋ยวเรือ", p(-0.7, 0.451, 60), p(0.7, 0.451, 60), 26, WHITE)
+    c.finish(out)
+
+
+def kiao_desk(out):
+    """โต๊ะเจ๊เกียว: red lacquer desk, gold trim, abacus, three calculators."""
+    c = Canvas(700, 460, seed=214)
+    p = c.p
+    c.ground_shadow(2.4, 0.7)
+    c.box(-1.2, -0.35, 1.2, 0.35, 0, 90, hexc("#8E2A24"), rim=0.7)
+    c.box(-1.22, -0.37, 1.22, 0.37, 90, 100, BRASS, rim=0.8)
+    c.text("เงินด่วน ดอกไม่ด่วน", p(-1.0, 0.351, 66), p(1.0, 0.351, 66), 30, BRASS_L)
+    for k in range(3):
+        c.box(-0.9 + k * 0.3, -0.15, -0.72 + k * 0.3, 0.1, 100, 108, hexc("#2B2629"), rim=0.4, outline=1.4)
+    c.box(0.3, -0.2, 0.9, 0.15, 100, 104, WOOD_D, rim=0.3)
+    for k in range(5):
+        c.stroke([p(0.32, -0.15 + k * 0.07, 106), p(0.88, -0.15 + k * 0.07, 106)], 2.0, BRASS_D, 0.9)
+        for j in range(4):
+            x, y = p(0.4 + j * 0.13, -0.15 + k * 0.07, 108)
+            c.disc(x, y, 4 * c.ss, 3 * c.ss, RED_P, outline=0.6)
+    c.finish(out)
+
+
 PROPS = {f.__name__: f for f in (steam_radio, wardrobe, floor_gap, upturned_boat, sluice_gate,
                                  sluice_flooded, tide_gauge, wait_bench, house_zero_plate,
-                                 pump_engine)}
+                                 pump_engine, rental_bed, debt_board, boat_noodle_stall, kiao_desk)}
 
 if __name__ == "__main__":
     name = sys.argv[1]

@@ -39,7 +39,7 @@ const ROOMS := {
 		[
 			{
 				"id": "bed",
-				"art": "sofa",
+				"art": "rental_bed",
 				"pos": Vector2(2.0, 0.6),
 				"foot": Vector2(1.6, 0.8),
 				"h": 45.0,
@@ -57,7 +57,7 @@ const ROOMS := {
 			},
 			{
 				"id": "debt_board",
-				"art": "sign",
+				"art": "debt_board",
 				"pos": Vector2(7.2, 0.15),
 				"foot": Vector2(0.5, 0.3),
 				"h": 110.0,
@@ -155,14 +155,16 @@ const ROOMS := {
 				"art": "crate",
 				"pos": Vector2(3.0, 4.2),
 				"foot": Vector2(0.9, 0.9),
-				"h": 60.0
+				"h": 60.0,
+				"dialog": "look_pier_crate"
 			},
 			{
 				"id": "crate",
 				"art": "crate",
 				"pos": Vector2(3.0, 5.4),
 				"foot": Vector2(0.9, 0.9),
-				"h": 60.0
+				"h": 60.0,
+				"dialog": "look_pier_crate"
 			},
 			{
 				"id": "jar",
@@ -215,7 +217,7 @@ const ROOMS := {
 		[
 			{
 				"id": "noodle_pot",
-				"art": "noodle_cart",
+				"art": "boat_noodle_stall",
 				"pos": Vector2(4.5, 0.8),
 				"foot": Vector2(1.6, 0.9),
 				"h": 90.0,
@@ -235,14 +237,16 @@ const ROOMS := {
 				"art": "red_stool",
 				"pos": Vector2(5.4, 4.6),
 				"foot": Vector2(0.4, 0.4),
-				"h": 30.0
+				"h": 30.0,
+				"dialog": "look_boat_stool"
 			},
 			{
 				"id": "stool",
 				"art": "red_stool",
-				"pos": Vector2(7.6, 4.6),
+				"pos": Vector2(7.4, 3.0),
 				"foot": Vector2(0.4, 0.4),
-				"h": 30.0
+				"h": 30.0,
+				"dialog": "look_boat_stool"
 			},
 			{
 				"id": "jar",
@@ -312,7 +316,8 @@ const ROOMS := {
 				"art": "plant_pots",
 				"pos": Vector2(6.0, 0.5),
 				"foot": Vector2(0.6, 0.6),
-				"h": 60.0
+				"h": 60.0,
+				"dialog": "look_stilt_plant"
 			},
 			{
 				"id": "stilt_gate",
@@ -391,14 +396,16 @@ const ROOMS := {
 				"art": "tire_stack",
 				"pos": Vector2(0.8, 4.5),
 				"foot": Vector2(0.6, 0.6),
-				"h": 60.0
+				"h": 60.0,
+				"dialog": "look_garage_tires"
 			},
 			{
 				"id": "crate",
 				"art": "crate",
 				"pos": Vector2(1.0, 7.0),
 				"foot": Vector2(0.9, 0.9),
-				"h": 60.0
+				"h": 60.0,
+				"dialog": "look_garage_crate"
 			},
 			{
 				"id": "float_bike",
@@ -541,7 +548,7 @@ const ROOMS := {
 		[
 			{
 				"id": "kiao_desk",
-				"art": "reception_desk",
+				"art": "kiao_desk",
 				"pos": Vector2(5.0, 0.6),
 				"foot": Vector2(2.4, 0.7),
 				"h": 85.0,
