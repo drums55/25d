@@ -284,6 +284,7 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
 - **adb wireless (2026-10-02)**: เจ้าของใช้ **Tailscale** และเครื่อง build อยู่คนละที่กับแท็บเล็ต → `update.ps1 -Device 190:40011`
   (สั้น = หา peer ใน `tailscale status` ที่ IP ลงท้าย .190 ก่อน ไม่เจอค่อยใช้ prefix LAN ของ PC; IP เต็ม/ชื่อ MagicDNS ก็ได้) → `adb connect`
   → จำไว้ใน `tools/.adb_device` (gitignored) รอบหน้าไม่ต้องใส่. พอร์ต wireless debugging เปลี่ยนทุกครั้งที่เปิดใหม่ → ใส่ -Device ใหม่
+  Redmi Pad Pro ใน Tailscale = `100.90.8.123` (ใช้ `-Device 100.90.8.123:<พอร์ตจากหน้า Wireless debugging>` หรือสั้นๆ `123:<พอร์ต>`)
 - `adb` ไม่อ่าน `ADB_SERIAL` เอง (มันอ่าน `ANDROID_SERIAL`) — script ส่ง `-s $env:ADB_SERIAL` ให้
 - Export template มี 1.1 GB; dev_setup แตกเฉพาะไฟล์ android_* เก็บไว้
 
