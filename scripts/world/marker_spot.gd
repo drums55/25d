@@ -7,6 +7,9 @@ extends Node2D
 @export var kind := "exit"
 @export var label := ""
 @export var color := Color(0.95, 0.78, 0.4)
+## Item art drawn instead of the diamond (no Sprite2D on purpose: taps use
+## the Interactable's generous pick_rect, not the small icon's pixels).
+var icon: Texture2D
 
 var _t := 0.0
 
@@ -57,6 +60,11 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, 26.0, Color(0, 0, 0, 0.25))
 	draw_set_transform(Vector2.ZERO)
 	var bob := -6.0 * sin(_t * 2.0)
+	if icon:
+		var sz := Vector2(96, 96)
+		draw_texture_rect(icon, Rect2(Vector2(-sz.x * 0.5, -sz.y - 8 + bob), sz), false)
+		draw_circle(Vector2(26, -78 + bob), 2.0 + 3.0 * pulse, Color(1, 1, 1, 0.4 + 0.5 * pulse))
+		return
 	var d := PackedVector2Array(
 		[
 			Vector2(0, -60 + bob),

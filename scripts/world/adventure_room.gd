@@ -93,6 +93,7 @@ func _add_pickup(world: Node, p: Dictionary, node_name: String) -> void:
 	spot.kind = "item"
 	spot.label = p.get("label", "")
 	spot.color = Puzzles.item_color(p["item"])
+	spot.icon = ArtLibrary.item(p["item"])
 	spot.position = Iso.grid_to_world(p["pos"])
 	var it := INT_SCENE.instantiate() as Interactable
 	it.name = "Interactable"

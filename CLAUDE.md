@@ -161,6 +161,14 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   (ผู้ซื้อ: บจ.ป้องกันภัย, ชื่อไรเดอร์อันดับแรก) → ป้าจุ๋มเกือบเซ็น "ใบรับรางวัลลอตเตอรี่" ที่คือใบขายบ้าน → ได้แว่น → ป้านกอ่านจดหมายรัก
   30 ปีของลุงโต๊ะสาม (ป.ล. ตีสามบริษัทเปิดท่อเข้าซอย) → คุณนายวรรณที่บ้านเลขที่ 0 เฉลย (แก้มลิงลับ, หนี้ถูกซื้อ, กุญแจกลับทิศน้ำแต่ซอยจมหนึ่งคืน)
   → `chapter2_done`. test `test_walkthrough_chapter_two`
+- **ฉาก + ภาพของ (2026-10-02, เจ้าของ: "ทำฉากให้เรียบร้อย ก่อนไป A4 / ทำ item ที่ตกให้เป็นภาพ และ item ใน inventory ด้วย")**:
+  - backdrop ทุกห้อง = `tools/art/png/rooms_2090.py all` → `assets/art/rooms/<room id>.png` (ใช้ helper ของ room.py: teak_wall,
+    zinc_wall, brick_wall, concrete_floor, tile_floor + ของใหม่ plaster_wall (หน้าต่างเห็นตึกหลังกำแพงกันทะเล), plank_floor,
+    flood_line (คราบน้ำท่วมบนผนัง), flood_surround (มุมนอกพื้น = น้ำคลอง + ผักตบ + ขอบพื้นยกสูง)). render ทั้งหมด ~7 นาที
+    เพิ่มห้องใหม่ = เพิ่มฟังก์ชันใน ROOMS ของไฟล์นี้ (ขนาด grid ต้องตรงกับ rooms.gd). สี floor/wall ใน recipe ใช้แค่ตอนไม่มี backdrop
+  - ไอคอนของ = `tools/art/png/items.py all assets/art/items` (192×192, ตัดขอบ+จัดกลาง) → `ArtLibrary.item(id)`;
+    `MarkerSpot` วาดไอคอนด้วย `draw_texture_rect` (ไม่ใช้ Sprite2D เพื่อให้แตะด้วย pick_rect กว้างๆ), ปุ่มกระเป๋า `icon` + ชื่อ.
+    ของใหม่ต้องเพิ่มฟังก์ชันใน `ITEMS` ของ items.py
 - **PatrolBot** (A0): ไล่ถ้า `chases` (ไม่มีเงื่อนไขถือของแล้ว), จับได้ = `catch_dialog` + ผลัก, `distract_flag`/`distract_dir`/`distract_mark`
   = หยุดถาวรเมื่อ flag ถูกตั้ง (เช็คตอน `_ready` + `GameState.flag_changed`)
 - Gotcha: script ที่รันด้วย `godot -s` (shot/tool) ห้ามอ้าง class ที่อ้าง autoload ตอน compile (เช่น `Rooms` → `GameState` → `Puzzles`)
@@ -236,6 +244,6 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
 ## สถานะ / ยังไม่ได้ทำ
 - **A0–A3 เสร็จ (2026-10-02)**: บท 1 + บท 2 เล่นจบได้ 8 ห้อง, plot ย่อย 3 สาย (ลุงโต๊ะสาม×ป้านก, ลอตเตอรี่ป้าจุ๋ม, หุ่นเก้า), 59 tests
 - ต่อไป A4 (DESIGN 11.8): บท 3 + ตอนจบหลายแบบ (อพยพทั้งซอยด้วยเครือข่ายป้าจุ๋ม/งานเลี้ยงลุงโต๊ะสาม×ป้านก/น้องเก่งคุมวาล์ว/เก้าเลือกข้าง/
-  ขายกล่องให้บริษัท), เจ๊เกียวเลือกข้าง; ยังค้าง: backdrop วาดทั้งห้อง, ไอคอนของในกระเป๋า
+  ขายกล่องให้บริษัท), เจ๊เกียวเลือกข้าง. (backdrop ทุกห้อง + ไอคอนของ ทำแล้ว 2026-10-02)
 - ยังไม่มี: เสียง, sprite จริงของ NPC แต่ละแบบ, ไอคอนของในกระเป๋า (ตอนนี้เป็นปุ่มสีตามของ + ชื่อ)
 - ลบ save บนแท็บเล็ต = `adb shell run-as com.drums55.game25d rm files/save_0.json`

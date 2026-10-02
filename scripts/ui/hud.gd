@@ -12,7 +12,7 @@ extends CanvasLayer
 const TITLE_HOLD := 1.6
 const TITLE_FADE := 0.6
 const NOTICE_HOLD := 2.2
-const SLOT_SIZE := Vector2(170, 130)
+const SLOT_SIZE := Vector2(150, 150)
 
 var _title_tween: Tween
 var _notices: Array[String] = []
@@ -109,7 +109,12 @@ func _slot(item: String) -> Button:
 	b.custom_minimum_size = SLOT_SIZE
 	b.text = Puzzles.item_name(item)
 	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	b.add_theme_font_size_override("font_size", 22)
+	b.add_theme_font_size_override("font_size", 18)
+	b.icon = ArtLibrary.item(item)
+	b.expand_icon = true
+	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	b.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
+	b.add_theme_constant_override("icon_max_width", 84)
 	b.add_theme_color_override("font_color", UiKit.TEXT)
 	var held := GameState.held_item == item
 	var base := Puzzles.item_color(item).darkened(0.45)

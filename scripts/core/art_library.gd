@@ -115,6 +115,11 @@ static func prop(prop_name: String) -> Texture2D:
 	return load_art("%s/props/%s" % [ROOT, prop_name])
 
 
+## Item icon (bag slot + lying on the floor): assets/art/items/<id>.png.
+static func item(item_id: String) -> Texture2D:
+	return load_art("%s/items/%s" % [ROOT, item_id])
+
+
 static func room(room_name: String) -> Texture2D:
 	return load_art("%s/rooms/%s" % [ROOT, room_name])
 
