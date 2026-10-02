@@ -36,7 +36,7 @@ func _build(r: Dictionary) -> void:
 	var flags := GameState.flags
 	var tide := GameState.tide
 	var i := 0
-	for p in r.get("props", []):
+	for p in r.get("props", []) + r.get("extra_props", []):
 		if Rooms.present_now(p, flags, tide):
 			_add_prop(world, p, "Prop%d" % i)
 		i += 1

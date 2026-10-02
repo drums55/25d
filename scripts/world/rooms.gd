@@ -1,3 +1,4 @@
+# gdlint: disable=max-file-lines
 class_name Rooms
 extends RefCounted
 ## Hand-made rooms of กรุงเทพฯ 2090 (DESIGN 11), keyed by room id; built by
@@ -16,7 +17,8 @@ extends RefCounted
 ##              catch_dialog, talk_dialog, distract_flag?, distract_dir?,
 ##              art?, steam_powered?, tamperable?, distract_mark?}]
 ##   enter    {dialog, flag}  played once on arrival (flag marks it seen)
-## Any entry may carry "if_flag" / "if_not_flag" / "if_tide" (spawn only then).
+## Any entry may carry "if_flag" / "if_not_flag" / "if_flags" [all] / "if_tide"
+## (spawn only then). Chapter 2 people/things use "if_flag": "ch2".
 ## Places the bike can ride to are in TRAVEL (spawn "from_bike" there).
 ## A painted backdrop drops in as assets/art/rooms/<room id>.png.
 ## Gap rule as before: nothing 0.85-1.15 cells from a wall or another solid
@@ -185,7 +187,20 @@ const ROOMS := {
 				"catch_dialog": "catch_nuad",
 				"talk_dialog": "talk_nuad",
 				"distract_flag": "radio_on",
-				"distract_dir": Vector2(-1, 0.5)
+				"distract_dir": Vector2(-1, 0.5),
+				"if_not_flag": "ch2"
+			},
+		],
+		"npcs":
+		[
+			{
+				"id": "nuad",
+				"name": "พี่หนวด (ตกงาน)",
+				"pos": Vector2(5.6, 4.5),
+				"character": LUNG,
+				"tint": Color(0.8, 0.5, 0.45),
+				"dialog": "talk_nuad_ch2",
+				"if_flag": "ch2"
 			},
 		],
 	},
@@ -396,6 +411,19 @@ const ROOMS := {
 			},
 		],
 		"pickups": [{"item": "tape", "pos": Vector2(9.0, 2.0), "label": "เทปพันสายไฟ"}],
+		"extra_props":
+		[
+			{
+				"id": "no9_awake",
+				"art": "brass_automaton",
+				"pos": Vector2(3.5, 4.6),
+				"foot": Vector2(0.6, 0.6),
+				"h": 150.0,
+				"dialog": "talk_nine",
+				"prompt": "หุ่นเบอร์ 9",
+				"if_flag": "ch2"
+			},
+		],
 		"npcs":
 		[
 			{
@@ -425,7 +453,8 @@ const ROOMS := {
 				"talk_dialog": "catch_no9",
 				"distract_flag": "no9_fused",
 				"distract_mark": "zz",
-				"speed": 60.0
+				"speed": 60.0,
+				"if_not_flag": "ch2"
 			},
 		],
 	},
@@ -500,6 +529,87 @@ const ROOMS := {
 			},
 		],
 	},
+	"kiao_raft":
+	{
+		"title": "เรือนแพเจ๊เกียว · เงินด่วน ดอกไม่ด่วน",
+		"grid": Vector2i(10, 8),
+		"floor": [Color(0.42, 0.26, 0.2), Color(0.38, 0.23, 0.18)],
+		"wall": Color(0.55, 0.18, 0.16),
+		"spawns": {"default": Vector2(6.8, 6.0), "from_bike": Vector2(6.8, 6.0)},
+		"enter": {"dialog": "enter_kiao", "flag": "seen_kiao"},
+		"props":
+		[
+			{
+				"id": "kiao_desk",
+				"art": "reception_desk",
+				"pos": Vector2(5.0, 0.6),
+				"foot": Vector2(2.4, 0.7),
+				"h": 85.0,
+				"dialog": "look_kiao_desk"
+			},
+			{
+				"id": "kiao_files",
+				"art": "parcel_shelf",
+				"pos": Vector2(9.0, 0.6),
+				"foot": Vector2(0.8, 0.8),
+				"h": 60.0,
+				"dialog": "look_kiao_files"
+			},
+			{
+				"id": "kiao_sofa",
+				"art": "sofa",
+				"pos": Vector2(1.6, 4.5),
+				"foot": Vector2(1.6, 0.8),
+				"h": 45.0,
+				"color": Color(0.6, 0.15, 0.15),
+				"dialog": "look_kiao_sofa"
+			},
+			{
+				"id": "rental_robot",
+				"art": "brass_automaton",
+				"pos": Vector2(2.0, 1.0),
+				"foot": Vector2(0.6, 0.6),
+				"h": 150.0,
+				"dialog": "look_rental_robot"
+			},
+			{
+				"id": "rental_robot",
+				"art": "brass_automaton",
+				"pos": Vector2(7.8, 2.8),
+				"foot": Vector2(0.6, 0.6),
+				"h": 150.0,
+				"dialog": "look_rental_robot"
+			},
+			{
+				"id": "jar",
+				"art": "dragon_jar",
+				"pos": Vector2(1.0, 7.0),
+				"foot": Vector2(0.8, 0.8),
+				"h": 90.0,
+				"dialog": "look_kiao_jar"
+			},
+			{
+				"id": "float_bike",
+				"art": "steam_bike",
+				"pos": Vector2(8.6, 6.9),
+				"foot": Vector2(1.4, 0.7),
+				"h": 90.0,
+				"prompt": "รถลอยน้ำ",
+				"action": "travel"
+			},
+		],
+		"npcs":
+		[
+			{
+				"id": "kiao",
+				"name": "เจ๊เกียว",
+				"pos": Vector2(5.0, 2.0),
+				"character": JE,
+				"tint": Color(1, 0.85, 0.5),
+				"dialog": "talk_kiao"
+			},
+		],
+	},
 	"station":
 	{
 		"title": "บ้านเลขที่ 0 · สถานีสูบน้ำใต้ซอย",
@@ -538,6 +648,18 @@ const ROOMS := {
 		],
 		"exits":
 		[{"to": "old_gate", "spawn": "from_station", "pos": Vector2(9.2, 4.0), "label": "ออก"}],
+		"npcs":
+		[
+			{
+				"id": "wan",
+				"name": "คุณนายวรรณ",
+				"pos": Vector2(5.5, 3.0),
+				"character": JE,
+				"tint": Color(0.75, 0.8, 0.95),
+				"dialog": "talk_wan",
+				"if_flags": ["ch2", "got_debt_list", "nok_love"]
+			},
+		],
 	},
 }
 
@@ -548,6 +670,7 @@ const TRAVEL := {
 	"stilts": {"name": "ชุมชนยกเสา (ป้าจุ๋ม)", "flag": "know_stilts"},
 	"boat_garage": {"name": "อู่เรือช่างแดง", "flag": "know_garage"},
 	"old_gate": {"name": "ประตูระบายน้ำเก่าใต้สะพาน", "flag": "know_gate"},
+	"kiao_raft": {"name": "เรือนแพเจ๊เกียว", "flag": "know_kiao"},
 }
 
 
@@ -569,6 +692,9 @@ static func present(entry: Dictionary, flags: Dictionary) -> bool:
 		return false
 	if entry.has("item") and flags.get("got_%s" % entry["item"], false):
 		return false
+	for f in entry.get("if_flags", []):
+		if not flags.get(f, false):
+			return false
 	return true
 
 

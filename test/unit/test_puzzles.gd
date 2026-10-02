@@ -89,7 +89,7 @@ func test_every_use_target_and_dialog_exists_in_a_room():
 	var things := {}
 	for id in Rooms.ROOMS:
 		var r: Dictionary = Rooms.ROOMS[id]
-		for p in r.get("props", []):
+		for p in r.get("props", []) + r.get("extra_props", []):
 			things[p["id"]] = true
 			for key in ["dialog", "locked_dialog"]:
 				if p.has(key):
@@ -246,6 +246,83 @@ func test_walkthrough_chapter_one():
 	_tap("zero_plate")
 	await wait_physics_frames(2)
 	assert_true(GameState.has_flag("chapter1_done"))
+	assert_true(GameState.ui_open, "chapter card is up")
+
+
+func test_walkthrough_chapter_two():
+	for f in [
+		"got_float_key",
+		"radio_on",
+		"bike_ready",
+		"got_box",
+		"know_stilts",
+		"jum_friend",
+		"know_garage",
+		"know_gate",
+		"no9_fused",
+		"got_broken_crank",
+		"crank_fixed",
+		"gate_open",
+		"seen_station",
+		"chapter1_done"
+	]:
+		GameState.set_flag(f)
+	GameState.give_item("brass_box")
+	TestHelpers.finish_dialog()
+	_main.start_chapter(2)
+	await wait_seconds(0.8)
+	TestHelpers.finish_dialog()
+	assert_eq(GameState.chapter, 2)
+	assert_true(GameState.has_flag("know_kiao"), "เจ๊เกียว called")
+	# เจ๊เกียว: the debt was sold, ask the robots
+	await _go("pier", "from_home")
+	assert_null(_room().get_world().get_node_or_null("Collector"), "พี่หนวด lost his job")
+	assert_not_null(_thing("nuad"))
+	await _ride_to("kiao_raft")
+	TestHelpers.finish_dialog()
+	_tap("kiao")
+	assert_true(GameState.has_flag("met_kiao"))
+	# เก้า: a name for a memory
+	await _ride_to("boat_garage")
+	assert_null(_room().get_world().get_node_or_null("No9"), "no patrol in chapter 2")
+	GameState.held_item = "debt_book"
+	_tap("no9_awake")
+	assert_true(GameState.has_item("memory_chip"))
+	# น้องเก่ง reads it
+	await _ride_to("stilts")
+	GameState.held_item = "memory_chip"
+	_tap("keng")
+	assert_true(GameState.has_item("debt_list"))
+	# ป้าจุ๋ม almost sold her house for a lottery prize
+	_tap("jum")
+	GameState.held_item = "debt_list"
+	_tap("jum")
+	assert_true(GameState.has_flag("jum_saved"))
+	assert_true(GameState.has_item("reading_glasses"))
+	# ลุงโต๊ะสาม's thirty-year-old letter
+	await _ride_to("noodle_boat")
+	_tap("lung_table3")
+	assert_true(GameState.has_item("love_letter"))
+	GameState.held_item = "love_letter"
+	_tap("pa_nok")
+	assert_false(GameState.has_flag("nok_love"), "cannot read it without glasses")
+	assert_true(GameState.has_item("love_letter"))
+	GameState.held_item = "reading_glasses"
+	_tap("pa_nok")
+	GameState.held_item = "love_letter"
+	_tap("pa_nok")
+	assert_true(GameState.has_flag("nok_love"))
+	# คุณนายวรรณ waits at บ้านเลขที่ 0
+	await _ride_to("old_gate")
+	_tap("bench")
+	await wait_seconds(0.8)
+	assert_eq(GameState.tide, "low")
+	_tap("exit_station")
+	await wait_seconds(0.8)
+	assert_eq(_room().room_id, "station")
+	_tap("wan")
+	await wait_physics_frames(2)
+	assert_true(GameState.has_flag("chapter2_done"))
 	assert_true(GameState.ui_open, "chapter card is up")
 
 

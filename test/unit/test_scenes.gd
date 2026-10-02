@@ -76,7 +76,7 @@ func test_rooms_avoid_sliver_gaps():
 	for id in Rooms.ROOMS:
 		var r: Dictionary = Rooms.ROOMS[id]
 		var items := []
-		for p in r.get("props", []):
+		for p in r.get("props", []) + r.get("extra_props", []):
 			items.append(
 				["%s%s" % [p["id"], p["pos"]], Rect2(p["pos"] - p["foot"] * 0.5, p["foot"])]
 			)

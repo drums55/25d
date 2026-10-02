@@ -8,11 +8,34 @@ extends Node
 ## Arrive here from the main menu after GameState.new_game() or load_game().
 
 const BOAT_SCENE := "res://scenes/ride/boat_ride.tscn"
-## Story beat that ends chapter 1 (DESIGN 11.8): the box reached บ้านเลขที่ 0.
-const CHAPTER_END_FLAG := "chapter1_done"
+## Flag that ends each chapter -> [title, card text, next chapter or 0].
+const CHAPTERS := {
+	"chapter1_done":
+	[
+		"จบบทที่ 1",
+		(
+			"กล่องทองเหลืองถึงบ้านเลขที่ 0 แล้ว ... แต่บ้านหลังนี้ไม่มีคนอยู่ มีแต่เครื่องสูบน้ำ"
+			+ "ที่ใครบางคนปิดไว้เมื่อสามสิบปีก่อน กับเสียงผู้หญิงในกล่องที่บอกว่า 'อย่าเพิ่ง'"
+		),
+		2,
+	],
+	"chapter2_done":
+	[
+		"จบบทที่ 2",
+		(
+			"หนี้ของทั้งซอยถูกซื้อโดยบริษัทที่คุมเครื่องสูบน้ำ ซอยส่งไวคือแก้มลิงลับ"
+			+ " และกุญแจในกล่องคือทางเดียวที่จะเปลี่ยนทิศน้ำ ... ถ้ากล้าให้ซอยจมหนึ่งคืน\n\n"
+			+ "(บทที่ 3 ยังไม่ได้สร้าง — ขอบคุณที่เล่นถึงตรงนี้)"
+		),
+		0,
+	],
+}
+## Spoken when a chapter starts.
+const CHAPTER_INTROS := {2: "intro_ch2"}
 
-var _end_pending := false
+var _card_pending := ""
 var _reload_after_dialog := false
+var _dialog_after_load := ""
 
 @onready var _room_holder: Node2D = $RoomHolder
 @onready var _player: Player = $Player
@@ -28,6 +51,22 @@ func _ready() -> void:
 	SceneRouter.go_to(GameState.ROOM_SCENE, GameState.spawn, false)
 	if not GameState.has_flag("intro_done"):
 		Dialog.start("intro")
+	# a save from between chapters: show the card again
+	for flag in CHAPTERS:
+		var next: int = CHAPTERS[flag][2]
+		if GameState.has_flag(flag) and next > 0 and GameState.chapter < next:
+			_show_card(flag)
+
+
+## Next chapter: new day, tide high, wake up at home.
+func start_chapter(n: int) -> void:
+	_hud.hide_overlay()
+	GameState.chapter = n
+	GameState.day = n
+	GameState.set_flag("ch%d" % n)
+	GameState.set_tide("high")
+	_dialog_after_load = CHAPTER_INTROS.get(n, "")
+	go_room("home", "default")
 
 
 ## Exits (Interactable.exit_to) walk the rider into another room.
@@ -100,15 +139,18 @@ func load_room(room_path: String, spawn_id: String) -> bool:
 	_fit_camera(room)
 	_hud.show_title(room.room_title)
 	var enter: Dictionary = Rooms.get_room(GameState.room).get("enter", {})
-	if not enter.is_empty() and not GameState.has_flag(enter["flag"]):
+	if not _dialog_after_load.is_empty():
+		Dialog.start.call_deferred(_dialog_after_load)
+		_dialog_after_load = ""
+	elif not enter.is_empty() and not GameState.has_flag(enter["flag"]):
 		GameState.set_flag(enter["flag"])
 		Dialog.start.call_deferred(enter["dialog"])
 	return true
 
 
 func _on_flag(flag: String, value: bool) -> void:
-	if value and flag == CHAPTER_END_FLAG:
-		_end_pending = true
+	if value and CHAPTERS.has(flag):
+		_card_pending = flag
 
 
 ## Dialog line events the game reacts to.
@@ -124,17 +166,22 @@ func _on_dialog_finished(_id: String) -> void:
 	if _reload_after_dialog:
 		_reload_after_dialog = false
 		go_room(GameState.room, "default")
-	if not _end_pending:
+	if _card_pending.is_empty():
 		return
-	_end_pending = false
-	var body := (
-		"กล่องทองเหลืองถึงบ้านเลขที่ 0 แล้ว ... แต่บ้านหลังนี้ไม่มีคนอยู่ มีแต่เครื่องสูบน้ำ"
-		+ "ที่ใครบางคนปิดไว้เมื่อสามสิบปีก่อน กับเสียงผู้หญิงในกล่องที่บอกว่า 'อย่าเพิ่ง'\n\n"
-		+ "(บทที่ 2 ยังไม่ได้สร้าง — ขอบคุณที่เล่นถึงตรงนี้)"
-	)
-	_hud.show_overlay(
-		"จบบทที่ 1", body, [["เดินเล่นต่อ", _hud.hide_overlay], ["หน้าแรก", go_title]]
-	)
+	var flag := _card_pending
+	_card_pending = ""
+	_show_card(flag)
+
+
+func _show_card(flag: String) -> void:
+	var c: Array = CHAPTERS[flag]
+	var next: int = c[2]
+	var buttons: Array = [["หน้าแรก", go_title]]
+	if next > 0:
+		buttons.push_front(["ไปบทที่ %d" % next, start_chapter.bind(next)])
+	else:
+		buttons.push_front(["เดินเล่นต่อ", _hud.hide_overlay])
+	_hud.show_overlay(c[0], c[1], buttons)
 
 
 func go_title() -> void:
