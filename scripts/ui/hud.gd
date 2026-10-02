@@ -21,9 +21,8 @@ var _bag: PanelContainer
 var _slots: HBoxContainer
 var _held_label: Label
 var _menu_button: Button
-var _menu: PanelContainer
-var _menu_body: VBoxContainer
-var _overlay: PanelContainer
+var _menu: MenuBook
+var _overlay: Control
 var _tide_label: Label
 var _riding := false
 
@@ -35,7 +34,8 @@ func _ready() -> void:
 	add_to_group("hud")
 	_build_bag()
 	_build_menu_button()
-	_tide_label = UiKit.label("", 26, Color(0.6, 0.85, 1.0))
+	_tide_label = UiKit.label("", 30, Color(0.62, 0.88, 1.0))
+	_tide_label.add_theme_font_override("font", UiKit.FONT_SIGN)
 	_tide_label.position = Vector2(40, 30)
 	_tide_label.size = Vector2(400, 40)
 	_tide_label.add_theme_color_override("font_outline_color", Color(0.05, 0.08, 0.1))
@@ -73,14 +73,33 @@ func _build_bag() -> void:
 	add_child(_bag)
 
 
+## The menu button is the closed debt notebook (the menu is the open one).
 func _build_menu_button() -> void:
-	_menu_button = UiKit.button("เมนู", toggle_menu, 30, 80)
+	_menu_button = Button.new()
+	_menu_button.name = "MenuButton"
+	_menu_button.flat = true
+	_menu_button.icon = UiKit.tex("menu_book")
+	_menu_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_menu_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
+	_menu_button.text = "เมนู"
+	_menu_button.add_theme_font_override("font", UiKit.FONT_SIGN)
+	_menu_button.add_theme_font_size_override("font_size", 28)
+	_menu_button.add_theme_color_override("font_color", Color(1, 0.95, 0.85))
+	_menu_button.add_theme_color_override("font_hover_color", Color(1, 0.85, 0.5))
+	_menu_button.add_theme_color_override("font_pressed_color", Color(1, 0.85, 0.5))
+	_menu_button.add_theme_color_override("font_outline_color", Color(0.1, 0.06, 0.04))
+	_menu_button.add_theme_constant_override("outline_size", 8)
+	_menu_button.add_theme_constant_override("h_separation", 0)
+	for state in ["normal", "hover", "pressed", "focus"]:
+		_menu_button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
 	_menu_button.anchor_left = 1.0
 	_menu_button.anchor_right = 1.0
-	_menu_button.offset_left = -200
-	_menu_button.offset_right = -30
-	_menu_button.offset_top = 30
-	_menu_button.offset_bottom = 110
+	_menu_button.offset_left = -190
+	_menu_button.offset_right = -24
+	_menu_button.offset_top = 12
+	_menu_button.offset_bottom = 190
+	_menu_button.pressed.connect(toggle_menu)
+	UiKit.juice(_menu_button)
 	add_child(_menu_button)
 
 
@@ -168,140 +187,101 @@ func toggle_menu() -> void:
 		close_menu()
 		return
 	GameState.ui_open = true
-	_menu = PanelContainer.new()
-	_menu.add_theme_stylebox_override(
-		"panel", UiKit.panel_style(UiKit.PANEL, 24, UiKit.ACCENT_DARK)
-	)
-	_menu.anchor_left = 0.5
-	_menu.anchor_top = 0.5
-	_menu.anchor_right = 0.5
-	_menu.anchor_bottom = 0.5
-	_menu.offset_left = -560
-	_menu.offset_right = 560
-	_menu.offset_top = -470
-	_menu.offset_bottom = 470
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 12)
-	var bar := HBoxContainer.new()
-	bar.add_theme_constant_override("separation", 8)
-	var hint_btn := UiKit.button("คำใบ้", _hint, 28, 70)
-	hint_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bar.add_child(hint_btn)
-	for page in [["บันทึก", "save"], ["โหลด", "load"], ["ตั้งค่า", "settings"]]:
-		var b := UiKit.button(page[0], _menu_page.bind(page[1]), 28, 70)
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		bar.add_child(b)
-	bar.add_child(
-		UiKit.button("หน้าแรก", func(): get_tree().call_group("main", "go_title"), 28, 70)
-	)
-	bar.add_child(UiKit.button("ปิด", close_menu, 28, 70))
-	v.add_child(bar)
-	_menu_body = VBoxContainer.new()
-	_menu_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	v.add_child(_menu_body)
-	_menu.add_child(v)
+	_menu = MenuBook.new()
+	_menu.closed.connect(_on_menu_closed)
+	_menu.title_requested.connect(func(): get_tree().call_group("main", "go_title"))
 	add_child(_menu)
-	_menu_page("save")
 
 
-func _hint() -> void:
-	close_menu()
-	Puzzles.hint()
-
-
-func _menu_page(page: String) -> void:
-	UiKit.clear(_menu_body)
-	match page:
-		"save":
-			_menu_body.add_child(SaveSlots.new("save"))
-		"load":
-			var slots := SaveSlots.new("load")
-			slots.loaded.connect(_on_loaded)
-			_menu_body.add_child(slots)
-		"settings":
-			_menu_body.add_child(SettingsPanel.new())
-
-
-func _on_loaded(_slot: int) -> void:
-	close_menu()
-	get_tree().call_group("main", "go_room", GameState.room, GameState.spawn)
+func _on_menu_closed() -> void:
+	_menu = null
+	GameState.ui_open = _overlay != null
 
 
 func close_menu() -> void:
 	if _menu:
-		_menu.queue_free()
-		_menu = null
-	GameState.ui_open = false
+		_menu.close()
+	_menu = null
+	GameState.ui_open = _overlay != null
 
 
 # --- cards & notices ----------------------------------------------------------
-## Full-screen card (story beats, endings). `buttons` = [[text, callable], ...].
+## Full-screen card (story beats, endings): a taped paper note, the title in
+## red marker, the choices as tin signs. `buttons` = [[text, callable], ...].
 func show_overlay(title: String, body: String, buttons: Array) -> void:
-	hide_overlay()
-	GameState.ui_open = true
-	_overlay = PanelContainer.new()
-	_overlay.add_theme_stylebox_override(
-		"panel", UiKit.panel_style(UiKit.PANEL, 24, UiKit.ACCENT_DARK)
-	)
-	_overlay.anchor_left = 0.5
-	_overlay.anchor_top = 0.5
-	_overlay.anchor_right = 0.5
-	_overlay.anchor_bottom = 0.5
-	_overlay.offset_left = -620
-	_overlay.offset_right = 620
-	_overlay.offset_top = -380
-	_overlay.offset_bottom = 380
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 16)
-	v.add_child(UiKit.label(title, 48, UiKit.ACCENT))
-	var text := UiKit.label(body, 30)
-	text.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var v := _open_note(Vector2(1240, 0))
+	var head := UiKit.label(title, 56, UiKit.RED_INK)
+	head.add_theme_font_override("font", UiKit.FONT_SIGN)
+	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(head)
+	var text := UiKit.label(body, 31, UiKit.INK)
+	text.custom_minimum_size = Vector2(1060, 0)
+	text.add_theme_constant_override("line_spacing", 6)
 	v.add_child(text)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
+	row.add_theme_constant_override("separation", 28)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	for b in buttons:
-		var btn := UiKit.button(b[0], b[1], 32, 90)
-		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var btn := UiKit.sign_button(b[0], b[1], 34, 100)
+		btn.custom_minimum_size.x = 380
 		row.add_child(btn)
 	v.add_child(row)
-	_overlay.add_child(v)
-	add_child(_overlay)
+	_settle_note()
 
 
-## A list of choices (the bike's trip menu). `choices` = [[text, callable], ...];
-## a "ไม่ไปแล้ว" button closes it.
+## A list of choices (the bike's trip menu) as pier signs on a note; the
+## "ไม่ไปแล้ว" scribble closes it. `choices` = [[text, callable], ...].
 func show_choices(title: String, choices: Array) -> void:
+	var v := _open_note(Vector2(900, 0))
+	var head := UiKit.hand_label(title, 50, UiKit.RED_INK)
+	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(head)
+	for c in choices:
+		v.add_child(UiKit.sign_button(c[0], c[1], 32, 96, "teal"))
+	if choices.is_empty():
+		v.add_child(UiKit.hand_label("ยังไม่รู้จักที่ไหนให้ไป", 34, UiKit.INK_FADED))
+	var back := UiKit.hand_button("ไม่ไปแล้ว ✕", hide_overlay, 38, UiKit.RED_INK)
+	back.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(back)
+	_settle_note()
+
+
+## Dim the screen and put an empty paper note in the middle; returns its column.
+func _open_note(min_size: Vector2) -> VBoxContainer:
 	hide_overlay()
 	GameState.ui_open = true
-	_overlay = PanelContainer.new()
-	_overlay.add_theme_stylebox_override(
-		"panel", UiKit.panel_style(UiKit.PANEL, 24, UiKit.ACCENT_DARK)
-	)
-	_overlay.anchor_left = 0.5
-	_overlay.anchor_top = 0.5
-	_overlay.anchor_right = 0.5
-	_overlay.anchor_bottom = 0.5
-	_overlay.offset_left = -480
-	_overlay.offset_right = 480
-	_overlay.offset_top = -420
-	_overlay.offset_bottom = 420
+	_overlay = Control.new()
+	_overlay.name = "Overlay"
+	_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_overlay.add_child(UiKit.dim())
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.name = "Center"
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_overlay.add_child(center)
+	var card := PanelContainer.new()
+	card.name = "Card"
+	card.add_theme_stylebox_override("panel", UiKit.note_style())
+	card.custom_minimum_size = min_size
+	center.add_child(card)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 14)
-	v.add_child(UiKit.label(title, 44, UiKit.ACCENT))
-	for c in choices:
-		v.add_child(UiKit.button(c[0], c[1], 32, 90))
-	if choices.is_empty():
-		v.add_child(UiKit.label("ยังไม่รู้จักที่ไหนให้ไป", 28, UiKit.MUTED))
-	v.add_child(UiKit.button("ไม่ไปแล้ว", hide_overlay, 28, 80))
-	_overlay.add_child(v)
+	v.add_theme_constant_override("separation", 22)
+	card.add_child(v)
 	add_child(_overlay)
+	return v
+
+
+func _settle_note() -> void:
+	var card := _overlay.get_node("Center/Card") as Control
+	card.resized.connect(func(): card.pivot_offset = card.size * 0.5)
+	UiKit.drop_in(card, -0.8)
 
 
 func hide_overlay() -> void:
 	if _overlay:
 		_overlay.queue_free()
 		_overlay = null
-	GameState.ui_open = false
+	GameState.ui_open = _menu != null
 
 
 func _on_notice(text: String) -> void:

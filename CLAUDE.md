@@ -187,6 +187,15 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   prop ต้องมี ≥ 35% ของภาพที่แตะแล้วได้ตัวมัน — **วางของใหม่แล้วรัน test นี้เสมอ**. prop ทุกชิ้นต้องมี dialog (ไม่มีแตะแล้วเงียบ)
   art ที่ใช้ผิดชิ้นถูกแทนแล้ว: rental_bed (เดิมโซฟา), debt_board (เดิมป้ายเสา steampunk), boat_noodle_stall (เดิมรถเข็นมีร่ม),
   kiao_desk (เดิมโต๊ะ RECEPTION ภาษาอังกฤษ) ใน props_2090.py
+- **UI แบบของในโลกเกม (2026-10-02, เจ้าของ: "เมนูเหมือน powerpoint ไม่เหมือนเกม")**: art = `tools/art/png/ui_2090.py` → `assets/art/ui/`
+  (PIL+numpy, ~30 วิ). **เมนูในเกม = สมุดหนี้เปิดอยู่** (`MenuBook`, `scripts/ui/menu_book.gd`: หน้าซ้าย = รายการเขียนมือ + วงปากกาแดงรอบหน้าที่เปิด,
+  หน้าขวา = คำใบ้ (เขียนลงสมุด ไม่เปิด dialog) / บันทึก / โหลด / ตั้งค่า; แตะนอกสมุด/ปิดสมุด/Esc = ปิด). ปุ่มเมนูมุมขวาบน = สมุดหนี้ปิด.
+  **ปุ่ม = ป้ายสังกะสีเขียนมือ** (`UiKit.sign_button`, 9-slice `sign*.png` margin 30; "teal" = ป้ายท่าเรือในเมนูรถลอยน้ำ),
+  **การ์ดเรื่อง/ตอนจบ/ตัวเลือก = กระดาษโน้ตแปะเทป** (`UiKit.note_style`, 9-slice margin 96 + tile — เทปต้องอยู่ในมุม 96px ไม่งั้นซ้ำตามขอบ)
+  บนพื้นมืด (`UiKit.dim`) + `drop_in` (เอียงนิดๆ เด้ง). ในสมุด/กระดาษใช้ `hand_label/hand_button/hand_check/ink_slider` (หมึก).
+  ฟอนต์: **Sriracha** = ลายมือ, **Mali SemiBold** = ตัวเขียนป้าย (OFL ทั้งคู่, `assets/fonts/OFL-*.txt`), Kanit = เนื้อความยาว.
+  `UiKit.juice()` = ยุบตอนกด เด้งตอนปล่อย. ยังไม่ได้ขัด: แถบกระเป๋า, กล่อง dialog, หน้าแรก (ใช้ป้าย/กระดาษแล้วแต่ยังไม่มีฉากหลัง)
+- `internationalization/locale/include_text_server_data=true` (ตัดคำไทยบน APK ต้องใช้ข้อมูล ICU)
 - **PatrolBot** (A0): ไล่ถ้า `chases` (ไม่มีเงื่อนไขถือของแล้ว), จับได้ = `catch_dialog` + ผลัก, `distract_flag`/`distract_dir`/`distract_mark`
   = หยุดถาวรเมื่อ flag ถูกตั้ง (เช็คตอน `_ready` + `GameState.flag_changed`)
 - Gotcha: script ที่รันด้วย `godot -s` (shot/tool) ห้ามอ้าง class ที่อ้าง autoload ตอน compile (เช่น `Rooms` → `GameState` → `Puzzles`)
@@ -261,6 +270,6 @@ GODOT=$S/Godot_v4.4.1-stable_linux.x86_64 bash tools/run_tests.sh
 
 ## สถานะ / ยังไม่ได้ทำ
 - **A0–A4 เสร็จ (2026-10-02)**: เกมเล่นจบได้ 3 บท 8 ห้อง ตอนจบ 4 แบบ, plot ย่อย 3 สาย (ลุงโต๊ะสาม×ป้านก → งานแต่ง, ลอตเตอรี่ป้าจุ๋ม, หุ่นเก้า), 66 tests
-- ต่อไป: เจ้าของติ "UI ฝั่ง menu ต่างๆ ยังไม่โปร" (2026-10-02) → ขัด UI เมนู/การ์ด/กระเป๋า
+- UI: เมนูในเกม + การ์ด + ตัวเลือก + ปุ่มหน้าแรก ขัดแล้ว (2026-10-02); เหลือแถบกระเป๋า, กล่อง dialog, ฉากหลังหน้าแรก
 - ยังไม่มี: เสียง, sprite จริงของ NPC แต่ละแบบ (ป้านก/ป้าจุ๋ม/เจ๊เกียว/คุณนายวรรณ ใช้ร่างเดียวกันย้อมสี), รถลอยน้ำยังมีล้อ
 - ลบ save บนแท็บเล็ต = `adb shell run-as com.drums55.game25d rm files/save_0.json`

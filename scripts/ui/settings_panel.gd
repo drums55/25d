@@ -1,10 +1,11 @@
 class_name SettingsPanel
 extends VBoxContainer
-## Settings: text speed, volume, hints (Settings autoload).
+## Settings written in the notebook: text speed, volume, hints, skipping the
+## canal ride (Settings autoload).
 
 
 func _init() -> void:
-	add_theme_constant_override("separation", 10)
+	add_theme_constant_override("separation", 8)
 
 
 func _ready() -> void:
@@ -13,40 +14,24 @@ func _ready() -> void:
 
 func refresh() -> void:
 	UiKit.clear(self)
-	add_child(UiKit.label("ตั้งค่า", 34, UiKit.ACCENT))
-	add_child(UiKit.label("ความเร็วตัวหนังสือ", 26, UiKit.MUTED))
+	add_child(UiKit.hand_label("ตั้งค่า", 46, UiKit.RED_INK))
+	add_child(UiKit.hand_label("ความเร็วตัวหนังสือ", 30, UiKit.INK_FADED))
 	add_child(_choices(Settings.TEXT_SPEEDS.keys(), Settings.text_speed, _set_text))
-	add_child(UiKit.label("เสียง %d%%" % roundi(Settings.volume * 100), 26, UiKit.MUTED))
-	var vol := HSlider.new()
-	vol.min_value = 0.0
-	vol.max_value = 1.0
-	vol.step = 0.1
-	vol.value = Settings.volume
-	vol.custom_minimum_size = Vector2(0, 50)
-	vol.value_changed.connect(_set_volume)
-	add_child(vol)
-	var hints := CheckButton.new()
-	hints.text = "แสดงคำแนะนำ"
-	hints.button_pressed = Settings.show_hints
-	hints.add_theme_font_size_override("font_size", 28)
-	hints.toggled.connect(_set_hints)
-	add_child(hints)
-	var skip := CheckButton.new()
-	skip.text = "ข้ามช่วงขับเรือ (ถึงที่หมายทันที)"
-	skip.button_pressed = Settings.skip_ride
-	skip.add_theme_font_size_override("font_size", 28)
-	skip.toggled.connect(_set_skip)
-	add_child(skip)
+	add_child(UiKit.hand_label("เสียง %d%%" % roundi(Settings.volume * 100), 30, UiKit.INK_FADED))
+	add_child(UiKit.ink_slider(Settings.volume, _set_volume))
+	add_child(UiKit.hand_check("แสดงคำแนะนำ", Settings.show_hints, _set_hints))
+	add_child(UiKit.hand_check("ข้ามช่วงขับเรือ", Settings.skip_ride, _set_skip))
 
 
+## Options in a row; the chosen one is ticked in red.
 func _choices(keys: Array, current: String, cb: Callable) -> HBoxContainer:
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 8)
+	h.add_theme_constant_override("separation", 18)
 	for k in keys:
-		var b := UiKit.button(str(k), cb.bind(str(k)), 26, 64)
-		b.toggle_mode = true
-		b.button_pressed = k == current
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var on: bool = str(k) == current
+		var b := UiKit.hand_button(
+			("✓ " if on else "") + str(k), cb.bind(str(k)), 34, UiKit.RED_INK if on else UiKit.INK
+		)
 		h.add_child(b)
 	return h
 
@@ -60,6 +45,7 @@ func _set_text(v: String) -> void:
 func _set_volume(v: float) -> void:
 	Settings.volume = v
 	Settings.save_settings()
+	(get_child(3) as Label).text = "เสียง %d%%" % roundi(v * 100)
 
 
 func _set_hints(on: bool) -> void:

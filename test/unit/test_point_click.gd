@@ -91,6 +91,39 @@ func test_menu_blocks_world_taps():
 	assert_false(GameState.ui_open)
 
 
+func test_notebook_menu_pages_and_close():
+	var hud: Hud = get_tree().get_first_node_in_group("hud")
+	hud.toggle_menu()
+	var book := hud._menu
+	assert_not_null(book)
+	for p in MenuBook.PAGES:
+		book.open_page(p[1])
+		assert_eq(book.page, p[1])
+	book.open_page("hint")
+	var texts: Array = []
+	for c in book._right.get_children():
+		if c is Label:
+			texts.append((c as Label).text)
+	assert_has(texts, Puzzles.hint_text(Puzzles.data, GameState.flags), "the hint is written in")
+	book.close()
+	await wait_physics_frames(1)
+	assert_false(GameState.ui_open, "closing the book frees the world")
+	assert_null(hud._menu)
+
+
+func test_cards_are_notes_with_sign_buttons():
+	var hud: Hud = get_tree().get_first_node_in_group("hud")
+	var hit := [false]
+	hud.show_overlay("หัว", "เนื้อความ", [["ตกลง", func(): hit[0] = true]])
+	assert_true(GameState.ui_open)
+	var btns := hud._overlay.find_children("*", "Button", true, false)
+	assert_eq(btns.size(), 1)
+	(btns[0] as Button).pressed.emit()
+	assert_true(hit[0])
+	hud.hide_overlay()
+	assert_false(GameState.ui_open)
+
+
 func test_screen_tap_on_ui_does_not_walk():
 	var hud: Hud = get_tree().get_first_node_in_group("hud")
 	var btn := hud._menu_button
