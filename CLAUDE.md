@@ -140,7 +140,7 @@ tools/                   dev_setup.ps1, run.ps1 (เล่นบน PC), update.
   → เรือป้านก (ป้านกหูไม่ดี → ใช้สมุดหนี้เขียน → กล่องทองเหลือง `got_box` → การ์ดจบตอนทดลองใน Main; ลุงโต๊ะสามฝากน้ำจิ้มไก่ = plot ย่อย)
 - **A2 (2026-10-02) บท 1 ครบ**: ห้องเพิ่ม stilts (ป้าจุ๋ม, น้องเก่ง), boat_garage (ช่างแดงใต้เรือคว่ำ + หุ่นทวงหนี้เบอร์ 9),
   old_gate (ประตูระบายน้ำ: โผล่เฉพาะน้ำลง), station (บ้านเลขที่ 0 — ใส่กล่องในช่องใต้ป้าย = `chapter1_done` → การ์ดจบบท 1 ใน Main).
-  - **รถลอยน้ำ** = prop `action: "travel"` (+exit_flag bike_ready) → `Main.open_travel()` → `Hud.show_choices` รายการ `Rooms.TRAVEL`
+  - **มอไซ** (เดิมเรียก "รถลอยน้ำ" — เจ้าของ 2026-10-02: "ชื่อไม่เท่ รถธรรมดา = มอไซ"; ใช้คำว่ามอไซทุกที่ในเกม) = prop `action: "travel"` (+exit_flag bike_ready) → `Main.open_travel()` → `Hud.show_choices` รายการ `Rooms.TRAVEL`
     (ปลดล็อกด้วย flag `know_<...>`) → `Main.travel(dest)` → `BoatRide` (`scripts/ride/boat_ride.gd` + pure `BoatTrack`; 3 เลนในคลอง
     เรือหางยาว ลัง โอ่ง ถังขยะ ผักตบชวา(ช้า) หุ่นบนแพ — ชน = แค่สะดุด + มุก ไม่มีบทลงโทษ) → `Main.arrive(dest)` = `go_room(dest, "from_bike")`.
     ทุกห้องที่ไปได้ต้องมี spawn `from_bike`. ตั้งค่า "ข้ามช่วงขับเรือ" (`Settings.skip_ride`, test ตั้ง true เอง)

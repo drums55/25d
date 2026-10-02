@@ -119,7 +119,7 @@ const ROOMS := {
 				"pos": Vector2(10.0, 7.0),
 				"foot": Vector2(1.4, 0.7),
 				"h": 90.0,
-				"prompt": "รถลอยน้ำ",
+				"prompt": "มอไซ",
 				"action": "travel",
 				"exit_flag": "bike_ready",
 				"locked_dialog": "look_bike_locked"
@@ -262,7 +262,7 @@ const ROOMS := {
 				"pos": Vector2(8.6, 5.9),
 				"foot": Vector2(1.4, 0.7),
 				"h": 90.0,
-				"prompt": "รถลอยน้ำ",
+				"prompt": "มอไซ",
 				"action": "travel"
 			},
 		],
@@ -341,7 +341,7 @@ const ROOMS := {
 				"pos": Vector2(10.0, 7.0),
 				"foot": Vector2(1.4, 0.7),
 				"h": 90.0,
-				"prompt": "รถลอยน้ำ",
+				"prompt": "มอไซ",
 				"action": "travel"
 			},
 		],
@@ -413,7 +413,7 @@ const ROOMS := {
 				"pos": Vector2(10.0, 7.0),
 				"foot": Vector2(1.4, 0.7),
 				"h": 90.0,
-				"prompt": "รถลอยน้ำ",
+				"prompt": "มอไซ",
 				"action": "travel"
 			},
 		],
@@ -521,7 +521,7 @@ const ROOMS := {
 				"pos": Vector2(10.0, 6.2),
 				"foot": Vector2(1.4, 0.7),
 				"h": 90.0,
-				"prompt": "รถลอยน้ำ",
+				"prompt": "มอไซ",
 				"action": "travel"
 			},
 		],
@@ -648,7 +648,7 @@ const ROOMS := {
 				"pos": Vector2(8.6, 6.9),
 				"foot": Vector2(1.4, 0.7),
 				"h": 90.0,
-				"prompt": "รถลอยน้ำ",
+				"prompt": "มอไซ",
 				"action": "travel"
 			},
 		],
