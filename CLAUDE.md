@@ -107,6 +107,15 @@
 - **CI ห้าม build APK** (quota Actions 500 MB เคยเต็มใน repo blackbox) — CI = gdformat/gdlint + GUT เท่านั้น
 - Godot Android editor บน tablet = ของแถม ไม่ใช่ทางหลัก
 
+- **ภาพ = 3D จริงแบบ Blender (2026-10-19, เจ้าของ: "Texture, model ใช้ 3d แบบ blender สิ ... แบบนายก็สวยดี แต่มันไม่สุด" หลังส่งภาพโฆษณา Kingshot มาเป็นตัวอย่างความ "เท่" และเลือก "1-2" = ภาพแบบนั้น + ตัวเอกแบบนักรบ/แม่ทัพ)**:
+  PNG ลงสีด้วย numpy และ toon shader ปลอมแสง (`room3d.py` = รอบแรก เก็บไว้เทียบ) ไม่พอ → `tools/art/3d/soi_pbr.py` = ฉากทดลอง "ท่าเรือหน้าซอย" ปัจจุบัน (ไม่ใช่ 2090)
+  สร้างใน bpy ด้วย **PBR จริง**: texture CC0 จาก Poly Haven (ปูน/คอนกรีต/สังกะสี/ไม้/สนิม + HDRI ท้องฟ้า), โมเดล CC0 (Poly Haven: เก้าอี้พลาสติก กระถาง ยางรถ ต้นไม้ ลัง เสาไฟ; KayKit City Builder Bits: รถ),
+  ตึกแถว/รถเข็น/เรือหางยาว/มอไซ ปั้นในโค้ดแต่ใส่ texture (UV แบบ cube ต่อหน้า), แดด (Sun + เงาตกจริง) + ท้องฟ้า, Cycles 48 spp + OpenImageDenoise, AgX contrast.
+  กล้อง/ขนาดภาพ = กติกา backdrop ของ engine เดิม (cell → ((gx-gy)*64,(gx+gy)*32), art 2x, `wall_h` 520 px เพราะตึก 2–3 ชั้นสูงกว่า 240) → ภาพวางเป็น `assets/art/rooms/<id>.png` ได้ตรงๆ (ต้องตั้ง wall_height ของห้องให้ตรง)
+  ตัวเอกทดลอง = `--hero`: Quaternius base + ชุด Ranger ทาเป็นเกราะเหล็ก/ทอง หัวโต (Head bone scale 1.7) หมวก+หงอน+เขา ดาบในมือขวา ธงหลัง ถุงเซเว่นมือซ้าย render ในฉากเดียวกันให้แสงตรงกัน
+  assets ไม่อยู่ใน repo: `python3 tools/art/3d/fetch_assets.py <ASSETS>` (Poly Haven ต้องส่ง User-Agent ไม่งั้น 403) แล้ว `ASSETS=<dir> QDIR=<q> python3 tools/art/3d/soi_pbr.py out.png [pct] [--hero]` (50% ~2.5 นาที, 100% ~10 นาที บน 4 core)
+  **ยังเป็นแค่ look test** — ถ้าเจ้าของเอา ต้องทำ pipeline ฉากทุกห้อง + ตัวละครทุกตัว render แบบนี้ (sprite 8 ทิศใช้ shader PBR แทน toon ได้ในสคริปต์เดิม)
+
 ## แผนใหญ่
 - **`docs/DESIGN.md` = แผนใหญ่ของเกม** (เสาหลัก, core loop รายวัน, เขต, ระบบเรียงลำดับ, 3 บท, milestones M0–M4).
   เจ้าของติ 2026-10-01 ว่าเกม linear และทำมั่วไปเรื่อยๆ → ก่อนเพิ่มฟีเจอร์ต้องชี้ได้ว่าหนุนเสาหลักไหนและอยู่ milestone ไหน
