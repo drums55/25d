@@ -514,7 +514,38 @@ def build(gw, gh, wall_h, pct, hero):
 # ---------------------------------------------------------------------------
 # the hero: a fantasy warlord (Quaternius base + ranger kit, big head), lit by the same sun
 # ---------------------------------------------------------------------------
+def pbr_img(key, image, tint="#FFFFFF", rough=0.55):
+    """Principled with a UV-mapped image (the Quaternius skin texture), tinted."""
+    if key in MATS:
+        return MATS[key]
+    m = bpy.data.materials.new(key)
+    m.use_nodes = True
+    N, L = m.node_tree.nodes, m.node_tree.links
+    b = N["Principled BSDF"]
+    b.inputs["Roughness"].default_value = rough
+    t = N.new("ShaderNodeTexImage"); t.image = image
+    mix = N.new("ShaderNodeMix"); mix.data_type = "RGBA"; mix.blend_type = "MULTIPLY"; mix.inputs[0].default_value = 1.0
+    L.new(t.outputs["Color"], mix.inputs[6]); mix.inputs[7].default_value = srgb(tint)
+    L.new(mix.outputs[2], b.inputs["Base Color"])
+    MATS[key] = m
+    return m
+
+
+def clear_material():
+    m = bpy.data.materials.new("Clear")
+    m.use_nodes = True
+    N, L = m.node_tree.nodes, m.node_tree.links
+    N.clear()
+    out = N.new("ShaderNodeOutputMaterial")
+    tr = N.new("ShaderNodeBsdfTransparent")
+    L.new(tr.outputs[0], out.inputs["Surface"])
+    return m
+
+
 def warrior(loc, yaw):
+    """A fantasy warlord: Quaternius base body in a dark undersuit, with armour built as
+    pieces on top (cuirass from char_q's vest(), pauldrons, belt, tassets, greaves,
+    gauntlets, cape, open helmet with crest and horns), sword in hand, banner on the back."""
     ns = {"__name__": "charq", "__file__": os.path.join(HERE, "char_q.py")}
     src = open(os.path.join(HERE, "char_q.py")).read()
     src = src[:src.rindex("\nmain()")]
@@ -524,46 +555,90 @@ def warrior(loc, yaw):
     objs = ns["import_gltf"](ns["BASE"] + "Superhero_Male_FullBody.gltf")
     arm = [o for o in objs if o.type == "ARMATURE"][0]
     arm.rotation_mode = "XYZ"
-    gold = pbr("gold"); steel = pbr("steel"); red = pbr("cape", None, "#B8262B", rough=0.85)
-    armor = pbr("armor", "rusty_metal_02", "#D6DAE0", 2.0, metal=0.85, rough=0.3, gain=1.4)
-    leather = pbr("leather", None, "#4A3A2E", rough=0.7)
-    dark = pbr("darkcloth", None, "#2E3147", rough=0.8)
-    parts = []
-    for part, mat in (("Male_Ranger_Body.gltf", armor), ("Male_Ranger_Legs.gltf", dark), ("Male_Ranger_Arms.gltf", armor),
-                      ("Male_Ranger_Feet_Boots.gltf", leather), ("Male_Ranger_Acc_Pauldron.gltf", gold)):
-        for o in ns["rebind"](ns["import_gltf"](ns["OUTF"] + part), arm):
-            for i in range(len(o.data.materials)):
-                o.data.materials[i] = mat
-            parts.append(o)
-    ns["rebind"](ns["import_gltf"](ns["HAIR"] + "Hair_SimpleParted.gltf"), arm)
-    # chibi: big head
+    body = [o for o in objs if o.type == "MESH" and o.name.lower().startswith("superhero")][0]
+    ns["BODY"] = body
+    ns["SKIN_TONE"] = "#E8B98C"
+    skin_path = ns["UBC"] + "/Base Characters/Textures/T_Superhero_Male_Ligh.png"
+    ns["LIGHT_SKIN"][body.name[:20]] = skin_path
+    ns["PAL"] = {"cloth": ("#2E3147", 0.3, 0.0), "glove": ("#3A2E26", 0.3, 0.0)}
+
+    def region(bone, p):
+        if bone in ("Head", "neck_01"):
+            return "skin"
+        if bone.startswith(("hand", "index", "middle", "ring", "pinky", "thumb")):
+            return "glove"
+        return "cloth"
+    ns["paint_regions"](body, region)
+    skin_img = bpy.data.images.load(skin_path)
+    steel = pbr("steel"); gold = pbr("gold"); red = pbr("cape", None, "#B8262B", rough=0.85)
+    leather = pbr("leather", None, "#4A3A2E", rough=0.7); dark = pbr("darkcloth", None, "#2E3147", rough=0.8)
+    for i, m in enumerate(body.data.materials):
+        n = m.name
+        body.data.materials[i] = pbr_img("skin_pbr", skin_img, "#F2CFAE") if n.startswith("skin") else (leather if n.startswith("glove") else dark)
+    for o in ns["rebind"](ns["import_gltf"](ns["HAIR"] + "Hair_SimpleParted.gltf"), arm):
+        for i in range(len(o.data.materials)):
+            o.data.materials[i] = pbr("hair", None, "#2A2224", rough=0.6)
+    for o in ns["rebind"](ns["import_gltf"](ns["OUTF"] + "Male_Ranger_Feet_Boots.gltf"), arm):
+        for i in range(len(o.data.materials)):
+            o.data.materials[i] = leather
     HS = 1.7
     arm.pose.bones["Head"].scale = (HS, HS, HS)
     ns["pose_frame"](arm, "idle", 0.0)
     bpy.context.view_layer.update()
-    # accessories (parented to the neck so they keep their own size): open helmet with crest and horns,
-    # sword in the right hand (built in the T-pose hand frame like char_q's wrench), banner on the back
-    head = ns["bone_world"](arm, "Head")
+
+    KEY = {"steel": steel, "gold": gold, "red": red, "leather": leather, "cloth": dark}
+
+    class PB(ns["Builder"]):
+        def mat(self, key):
+            return KEY[key]
+    B = PB({})
+    B.ink = clear_material()
+    bw = ns["bone_world"]
+    # cuirass + gorget (char_q's vest: front/back plates on the torso only + a yoke to the collar)
+    ns["vest"](B, body, arm, "steel", z0=1.02)
+    # pauldrons on the shoulder joints
+    for sfx in ("l", "r"):
+        sh = bw(arm, "upperarm_" + sfx)
+        B.sphere("Pauldron", sh + Vector((0, 0, 0.03)), 0.1, "gold", "upperarm_" + sfx, scale=(1.2, 1.0, 0.85), cut=-0.15, ink=0)
+        B.torus("PauldronRim", sh + Vector((0, 0, 0.0)), 0.1, 0.014, "steel", "upperarm_" + sfx, scale=(1.2, 1.0, 1.0), ink=0)
+    # belt + buckle, cloth tassets with a steel plate in front
+    pv = bw(arm, "pelvis")
+    B.torus("Belt", pv + Vector((0, 0, 0.06)), 0.165, 0.028, "leather", "pelvis", scale=(1.0, 0.74, 1.0), ink=0)
+    B.box("Buckle", pv + Vector((0, -0.135, 0.06)), (0.08, 0.025, 0.07), "gold", "pelvis", bevel=0.006, ink=0)
+    ns["garment"](B, body, "SkirtF", "red", "pelvis", 0.70, 1.0, arc=170, pad=0.04, flare=0.1, center=-90, ink=0)
+    ns["garment"](B, body, "SkirtB", "red", "pelvis", 0.70, 1.0, arc=170, pad=0.04, flare=0.1, center=90, ink=0)
+    ns["garment"](B, body, "Tasset", "steel", "pelvis", 0.76, 0.99, arc=70, pad=0.055, flare=0.06, center=-90, ink=0)
+    # greaves and gauntlets along the bones (rest pose: legs vertical, arms along X)
+    for sfx in ("l", "r"):
+        c0, c1 = bw(arm, "calf_" + sfx), bw(arm, "calf_" + sfx, tail=True)
+        mid = (c0 + c1) / 2
+        B.cyl("Greave", mid + Vector((0, -0.012, 0)), 0.078, (c0 - c1).length * 0.8, "steel", "calf_" + sfx, seg=18, ink=0, r2=0.062)
+        a0, a1 = bw(arm, "lowerarm_" + sfx), bw(arm, "lowerarm_" + sfx, tail=True)
+        B.cyl("Gauntlet", a0 * 0.35 + a1 * 0.65, 0.062, (a0 - a1).length * 0.6, "steel", "lowerarm_" + sfx,
+              rot=(0, math.radians(90), 0), seg=18, ink=0, r2=0.05)
+    # cape from the shoulders to the knees
+    armz = bw(arm, "upperarm_l").z
+    ns["garment"](B, body, "Cape", "red", "spine_03", 0.5, armz - 0.01, arc=150, pad=0.05, flare=0.3, center=90, ink=0)
+    # open helmet with a brim, a crest and two horns (on the neck so it keeps its own size)
+    head = bw(arm, "Head")
     hc = head + Vector((0, 0.01, 0.12 * HS))
     r = 0.115 * HS
-    acc = []
-    acc.append((sphere("helm", hc + Vector((0, 0, 0.01)), r, steel, scale=(1.0, 1.06, 1.0), cut=-0.15), "neck_01"))
-    acc.append((cyl("brim", hc + Vector((0, 0, -0.01)), r + 0.012, 0.03, gold, seg=24), "neck_01"))
-    acc.append((box("crest", hc + Vector((0, 0.0, r + 0.06)), (0.03, 0.3, 0.16), red, bevel=0.005), "neck_01"))
+    B.sphere("Helm", hc + Vector((0, 0, 0.01)), r, "steel", "neck_01", scale=(1.0, 1.06, 1.0), cut=-0.15, ink=0)
+    B.cyl("Brim", hc + Vector((0, 0, -0.01)), r + 0.012, 0.03, "gold", "neck_01", seg=24, ink=0)
+    B.sphere("Plume", hc + Vector((0, 0.03, r + 0.07)), 0.07, "red", "neck_01", scale=(0.5, 1.9, 1.3), ink=0)
+    B.sphere("Plume2", hc + Vector((0, 0.13, r + 0.02)), 0.05, "red", "neck_01", scale=(0.5, 1.6, 1.0), ink=0)
     for sx in (-1, 1):
-        acc.append((cyl("horn", hc + Vector((sx * (r - 0.01), 0.0, r * 0.55)), 0.035, 0.26, gold, rot=(0, sx * math.radians(-40), 0), seg=10, r2=0.0), "neck_01"))
-    sp = ns["bone_world"](arm, "spine_03")
-    acc.append((cyl("pole", sp + Vector((-0.1, 0.16, 0.6)), 0.015, 2.0, pbr("gatew"), seg=8), "spine_03"))
-    acc.append((box("banner", sp + Vector((-0.1, 0.16, 1.1)), (0.012, 0.36, 0.75), red, bevel=0.0), "spine_03"))
-    acc.append((box("bannerw", sp + Vector((-0.1, 0.16, 1.2)), (0.014, 0.22, 0.22), pbr("trim"), bevel=0.0), "spine_03"))
-    hR = ns["bone_world"](arm, "hand_r")
-    acc.append((box("blade", hR + Vector((-0.62, -0.02, 0)), (0.95, 0.012, 0.075), steel, bevel=0.003), "hand_r"))
-    acc.append((box("guard", hR + Vector((-0.14, -0.02, 0)), (0.04, 0.05, 0.3), gold, bevel=0.005), "hand_r"))
-    acc.append((cyl("grip", hR + Vector((0.02, -0.02, 0)), 0.02, 0.26, leather, rot=(0, math.radians(90), 0), seg=10), "hand_r"))
-    hl = ns["bone_world"](arm, "hand_l")
-    acc.append((box("bag", hl + Vector((0.08, -0.02, -0.22)), (0.2, 0.12, 0.24), pbr("bag", None, "#2E8B57", rough=0.6), bevel=0.02), "hand_l"))
-    acc.append((box("bagw", hl + Vector((0.08, -0.085, -0.22)), (0.2, 0.01, 0.1), pbr("trim"), bevel=0.0), "hand_l"))
-    ns["attach_rigid"](acc, arm)
+        B.cyl("Horn", hc + Vector((sx * (r + 0.01), 0.0, r * 0.5)), 0.04, 0.34, "gold", "neck_01", rot=(0, sx * math.radians(-45), 0), seg=10, ink=0, r2=0.0)
+    # banner on the back, sword in the right hand (T-pose hand frame, blade along -X like char_q's wrench)
+    sp = bw(arm, "spine_03")
+    B.cyl("Pole", sp + Vector((-0.1, 0.16, 0.6)), 0.015, 2.0, "leather", "spine_03", seg=8, ink=0)
+    B.box("Banner", sp + Vector((-0.1, 0.16, 1.1)), (0.012, 0.36, 0.75), "red", "spine_03", bevel=0, ink=0)
+    B.box("BannerMark", sp + Vector((-0.1, 0.16, 1.2)), (0.014, 0.22, 0.22), "gold", "spine_03", bevel=0, ink=0)
+    hR = bw(arm, "hand_r")
+    B.box("Blade", hR + Vector((-0.62, -0.02, 0)), (0.95, 0.012, 0.075), "steel", "hand_r", bevel=0.003, ink=0)
+    B.box("Guard", hR + Vector((-0.14, -0.02, 0)), (0.04, 0.05, 0.3), "gold", "hand_r", bevel=0.005, ink=0)
+    B.cyl("Grip", hR + Vector((0.02, -0.02, 0)), 0.02, 0.26, "leather", "hand_r", rot=(0, math.radians(90), 0), seg=10, ink=0)
+    ns["attach_rigid"](B.parts, arm)
     arm.location = loc
     arm.rotation_euler = (0, 0, yaw)
     bpy.context.view_layer.update()
